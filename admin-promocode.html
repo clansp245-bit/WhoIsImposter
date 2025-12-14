@@ -3,69 +3,124 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>⚙️ إدارة الكودات</title>
+<title>🛠️ إدارة الأكواد - Admin</title>
+
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <script src="auth.js"></script>
+
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
 <style>
-body {font-family:'Cairo',sans-serif; background:#0f172a; color:#f1f5f9; display:flex; justify-content:center; align-items:center; height:100vh; margin:0;}
-.card {background:#1e293b; padding:30px; border-radius:12px; width:90%; max-width:450px; text-align:right;}
-input, select {width:100%; padding:12px; border-radius:8px; border:none; margin:10px 0; font-size:16px;}
-button {padding:12px 20px; border:none; border-radius:8px; background:#6366f1; color:#fff; font-weight:700; cursor:pointer; width:100%;}
-button:hover {background:#4f46e5;}
-label {margin-top:10px; display:block;}
+body { font-family: 'Cairo', sans-serif; background-color: #0f172a; color: #f1f5f9; text-align: center; padding:20px; min-height:100vh; margin:0;}
+h2 { font-size:2rem; font-weight:700; margin-bottom:25px; color:#ffd700;}
+.card { background-color:#1e293b; padding:25px; border-radius:12px; max-width:500px; margin:20px auto; box-shadow:0 4px 6px rgba(0,0,0,0.1);}
+label { display:block; margin:15px 0 5px 0; font-weight:700; color:#94a3b8;}
+input, select { width:100%; padding:10px; border-radius:6px; border:1px solid #334155; background-color:#334155; color:#f1f5f9; margin-bottom:10px;}
+button { padding:12px; border:none; border-radius:8px; font-weight:700; width:100%; cursor:pointer; background-color:#34d399; color:#fff; transition:0.3s;}
+button:hover { background-color:#10b981;}
+.promocode-list { max-height:300px; overflow-y:auto; margin-top:15px; }
+.promocode-list div { display:flex; justify-content:space-between; align-items:center; padding:5px; border-bottom:1px solid #475569; }
+.promocode-list div button { background-color:#ff4f4f; padding:4px 8px; font-size:12px; border-radius:4px; color:#fff; }
+.error-message { color:#ff4f4f; margin:10px 0; }
 </style>
 </head>
-<body>
-<div class="card">
-<h2>⚙️ إنشاء كود جديد</h2>
+<body onload="checkAdmin()">
 
-<label>نوع المكافأة</label>
-<select id="reward-type">
-    <option value="coins">كوينز</option>
-    <option value="pro">عضوية Pro</option>
-</select>
+<h2>🛠️ إدارة الأكواد - Admin</h2>
 
-<label>عدد الكوينز أو مدة Pro بالأيام</label>
-<input type="number" id="reward-value" placeholder="مثلاً 1000 أو 7">
+<div class="card" id="admin-card" style="display:none;">
+    <p class="error-message" id="error-msg" style="display:none;"></p>
+    
+    <label for="new-code">الكود الجديد</label>
+    <input type="text" id="new-code" placeholder="ادخل الكود">
 
-<label>الكود (Case Sensitive)</label>
-<input type="text" id="promocode" placeholder="أدخل الكود الفريد">
+    <label for="new-code-type">نوع الكود</label>
+    <select id="new-code-type">
+        <option value="coins">كوينز</option>
+        <option value="pro">عضوية Pro</option>
+    </select>
 
-<button onclick="createPromocode()">إنشاء الكود</button>
-<div id="msg" style="margin-top:15px; color:#ffd700;"></div>
+    <label for="new-code-amount">عدد الكوينز أو أيام Pro</label>
+    <input type="number" id="new-code-amount" placeholder="العدد">
+
+    <button onclick="createPromocode()">إنشاء كود جديد</button>
+
+    <div class="promocode-list" id="promocode-list"></div>
 </div>
 
 <script>
-async function createPromocode() {
-    const user = firebase.auth().currentUser;
-    if(!user || user.email !== "clansp245@gmail.com") { alert("غير مسموح بالدخول."); return; }
+const db = firebase.firestore();
+const errorMsg = document.getElementById("error-msg");
 
-    const type = document.getElementById("reward-type").value;
-    const value = Number(document.getElementById("reward-value").value);
-    const code = document.getElementById("promocode").value.trim();
-    const msg = document.getElementById("msg");
+async function checkAdmin(){
+    firebase.auth().onAuthStateChanged(user=>{
+        if(!user){ window.location.href="auth.html"; return;}
+        if(user.email !== "clansp245@gmail.com"){ 
+            errorMsg.innerText = "لا يحق لك الوصول لهذه الصفحة!";
+            errorMsg.style.display="block";
+            return;
+        }
+        document.getElementById("admin-card").style.display="block";
+        loadPromocodes();
+    });
+}
 
-    if(!code || isNaN(value) || value <= 0) { msg.innerText="الرجاء ملء جميع الحقول بشكل صحيح."; return; }
+async function loadPromocodes(){
+    const listDiv = document.getElementById("promocode-list");
+    listDiv.innerHTML="";
+    try{
+        const snapshot = await db.collection("promocodes").get();
+        snapshot.forEach(doc=>{
+            const data = doc.data();
+            const div = document.createElement("div");
+            div.innerHTML = `${doc.id} (${data.type} - ${data.amount}) <button onclick="deletePromocode('${doc.id}')">حذف</button>`;
+            listDiv.appendChild(div);
+        });
+    } catch(e){
+        console.error("خطأ أثناء تحميل الأكواد:",e);
+        errorMsg.innerText="حدث خطأ أثناء تحميل الأكواد!";
+        errorMsg.style.display="block";
+    }
+}
 
-    const db = firebase.firestore();
+async function createPromocode(){
+    const code = document.getElementById("new-code").value.trim();
+    const type = document.getElementById("new-code-type").value;
+    const amount = Number(document.getElementById("new-code-amount").value);
 
-    let data = { type, redeemedBy: [] };
-    if(type === "coins") data.amount = value;
-    else if(type === "pro") data.durationDays = value;
+    if(!code || !type || !amount){ 
+        errorMsg.innerText="الرجاء تعبئة جميع الحقول بشكل صحيح.";
+        errorMsg.style.display="block";
+        return;
+    }
 
-    try {
-        await db.collection("promocodes").doc(code).set(data);
-        msg.innerText = `✅ تم إنشاء الكود: ${code}`;
-        document.getElementById("promocode").value="";
-        document.getElementById("reward-value").value="";
-    } catch(err) {
-        console.error(err);
-        msg.innerText = "حدث خطأ أثناء إنشاء الكود.";
+    try{
+        await db.collection("promocodes").doc(code).set({type, amount, redeemedBy:[]});
+        document.getElementById("new-code").value="";
+        document.getElementById("new-code-amount").value="";
+        errorMsg.style.display="none";
+        loadPromocodes();
+        alert("تم إنشاء الكود بنجاح!");
+    } catch(e){
+        console.error("خطأ أثناء إنشاء الكود:",e);
+        alert("حدث خطأ أثناء إنشاء الكود!");
+    }
+}
+
+async function deletePromocode(code){
+    if(!confirm("هل أنت متأكد من حذف الكود؟")) return;
+    try{
+        await db.collection("promocodes").doc(code).delete();
+        loadPromocodes();
+    } catch(e){
+        console.error("خطأ أثناء حذف الكود:",e);
+        alert("حدث خطأ أثناء حذف الكود!");
     }
 }
 </script>
+
 </body>
 </html>
