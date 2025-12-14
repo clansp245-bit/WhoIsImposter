@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚙️ إدارة الكودات</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="auth.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body {font-family:'Cairo',sans-serif; background:#0f172a; color:#f1f5f9; display:flex; justify-content:center; align-items:center; height:100vh; margin:0;}
+.card {background:#1e293b; padding:30px; border-radius:12px; width:90%; max-width:450px; text-align:right;}
+input, select {width:100%; padding:12px; border-radius:8px; border:none; margin:10px 0; font-size:16px;}
+button {padding:12px 20px; border:none; border-radius:8px; background:#6366f1; color:#fff; font-weight:700; cursor:pointer; width:100%;}
+button:hover {background:#4f46e5;}
+label {margin-top:10px; display:block;}
+</style>
+</head>
+<body>
+<div class="card">
+<h2>⚙️ إنشاء كود جديد</h2>
+
+<label>نوع المكافأة</label>
+<select id="reward-type">
+    <option value="coins">كوينز</option>
+    <option value="pro">عضوية Pro</option>
+</select>
+
+<label>عدد الكوينز أو مدة Pro بالأيام</label>
+<input type="number" id="reward-value" placeholder="مثلاً 1000 أو 7">
+
+<label>الكود (Case Sensitive)</label>
+<input type="text" id="promocode" placeholder="أدخل الكود الفريد">
+
+<button onclick="createPromocode()">إنشاء الكود</button>
+<div id="msg" style="margin-top:15px; color:#ffd700;"></div>
+</div>
+
+<script>
+async function createPromocode() {
+    const user = firebase.auth().currentUser;
+    if(!user || user.email !== "clansp245@gmail.com") { alert("غير مسموح بالدخول."); return; }
+
+    const type = document.getElementById("reward-type").value;
+    const value = Number(document.getElementById("reward-value").value);
+    const code = document.getElementById("promocode").value.trim();
+    const msg = document.getElementById("msg");
+
+    if(!code || isNaN(value) || value <= 0) { msg.innerText="الرجاء ملء جميع الحقول بشكل صحيح."; return; }
+
+    const db = firebase.firestore();
+
+    let data = { type, redeemedBy: [] };
+    if(type === "coins") data.amount = value;
+    else if(type === "pro") data.durationDays = value;
+
+    try {
+        await db.collection("promocodes").doc(code).set(data);
+        msg.innerText = `✅ تم إنشاء الكود: ${code}`;
+        document.getElementById("promocode").value="";
+        document.getElementById("reward-value").value="";
+    } catch(err) {
+        console.error(err);
+        msg.innerText = "حدث خطأ أثناء إنشاء الكود.";
+    }
+}
+</script>
+</body>
+</html>
