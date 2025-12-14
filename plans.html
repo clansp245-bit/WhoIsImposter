@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>👑 خطط العضوية Pro</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="auth.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<style>
+/* (تنسيقات CSS التي قمت بتوفيرها) */
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #0f172a; 
+            color: #f1f5f9; 
+            text-align: center;
+            padding: 20px;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: #34d399;
+        }
+        .home-icon {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        #coin-display {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #ffd700; 
+        }
+        .plans-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            max-width: 900px;
+            margin-bottom: 30px;
+        }
+        .plan-card {
+            background-color: #1e293b;
+            padding: 25px;
+            border-radius: 12px;
+            width: 200px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 10px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+            border: 2px solid transparent;
+            transition: border-color 0.3s;
+        }
+        .plan-card.best-deal {
+            border-color: #ffd700;
+            transform: scale(1.05);
+        }
+        .plan-card h3 {
+            color: #34d399;
+            margin-top: 0;
+            font-size: 1.5rem;
+        }
+        .price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #6366f1;
+            margin: 15px 0;
+        }
+        .price span {
+            font-size: 1rem;
+            font-weight: 400;
+            color: #94a3b8;
+            display: block;
+        }
+        .buy-button {
+            margin-top: 15px; 
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px; 
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s;
+            background-color: #6366f1;
+            color: #ffffff;
+        }
+        .buy-button:hover:not(:disabled) {
+            background-color: #4f46e5;
+        }
+        .buy-button:disabled {
+            background-color: #475569 !important; /* لضمان التغيير */
+            cursor: not-allowed;
+            color: #ccc; /* لجعل النص أفتح */
+        }
+        .discount-badge {
+            position: absolute;
+            top: -15px;
+            right: -15px;
+            background-color: #ff4f4f;
+            color: #ffffff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+        .card {
+            background-color: #1e293b; 
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 450px;
+            width: 90%;
+            margin: 10px auto;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 10px 15px rgba(0, 0, 0, 0.2);
+            text-align: right;
+        }
+        .features {
+            list-style: none;
+            padding: 0;
+            margin-top: 15px;
+        }
+        .features li {
+            margin-bottom: 10px;
+            color: #94a3b8;
+            font-size: 1rem;
+        }
+        .features li i {
+            color: #34d399;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+
+<body onload="loadProData()">
+
+<h2 style="margin-top: 50px;">👑 خطط العضوية Pro</h2>
+
+<a href="index.html" class="home-icon" title="العودة للصفحة الرئيسية">
+    <i class="fas fa-home"></i>
+</a>
+<div id="coin-display">
+    <i class="fas fa-coins"></i> كوينزاتك الحالية: <span id="current-coins-value">0</span>
+</div>
+<div id="pro-status" style="color: #ffd700; margin-bottom: 20px; font-weight: 700;"></div>
+
+<div class="plans-container">
+    <div class="plan-card" data-duration-days="7" data-cost="150">
+        <h3>الخطة الأسبوعية</h3>
+        <p class="price">150 <span>كوينز</span></p>
+        <button class="buy-button" onclick="purchasePlan(7, 150)">اشتراك أسبوع</button>
+    </div>
+    <div class="plan-card" data-duration-days="30" data-cost="450">
+        <h3>الخطة الشهرية</h3>
+        <p class="price">450 <span>كوينز</span></p>
+        <button class="buy-button" onclick="purchasePlan(30, 450)">اشتراك شهر</button>
+    </div>
+    <div class="plan-card" data-duration-days="90" data-cost="1080">
+        <h3>3 أشهر (خصم 20%)</h3>
+        <div class="discount-badge">توفير!</div>
+        <p class="price">1080 <span>كوينز</span></p>
+        <button class="buy-button" onclick="purchasePlan(90, 1080)">اشتراك 3 أشهر</button>
+    </div>
+    <div class="plan-card best-deal" data-duration-days="365" data-cost="2414">
+        <h3>الخطة السنوية (أفضل صفقة)</h3>
+        <div class="discount-badge">خصم 29%</div>
+        <p class="price">2414 <span>كوينز</span></p>
+        <button class="buy-button" onclick="purchasePlan(365, 2414)">اشتراك سنة</button>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 30px; text-align: right; width: 90%; max-width: 450px; background-color: #334155; padding: 20px;">
+    <h3>مميزات العضوية المتميزة (Pro):</h3>
+    <ul class="features">
+        <li><i class="fas fa-check-circle"></i> تفعيل وضع الفوضى (Chaos Mode).</li>
+        <li><i class="fas fa-check-circle"></i> تعيين الأدوار يدويًا (اختيار المحتال/بلا كلمة).</li>
+        <li><i class="fas fa-check-circle"></i> كلمات سرية إضافية وحصرية (للمدني والمحتال).</li>
+        <li><i class="fas fa-check-circle"></i> ميزات قادمة حصرية للمحترفين!</li>
+    </ul>
+</div>
+
+<script>
+
+let currentUserData = { totalCoins: 0, proExpiryTime: 0 }; 
+
+async function loadProData() {
+    firebase.auth().onAuthStateChanged(async (user) => {
+        if (!user) {
+            window.location.href = "auth.html";
+            return;
+        }
+        
+        currentUserData = await loadUserData(); // دالة من auth.js
+        if (currentUserData) {
+            displayTotalCoins();
+            checkProStatus();
+        }
+    });
+}
+
+function getTotalCoins() {
+    return currentUserData.totalCoins || 0;
+}
+
+/**
+ * @function displayTotalCoins
+ * @description عرض الكوينزات وتحديث حالة أزرار الشراء. (مُصحَّح)
+ */
+function displayTotalCoins() {
+    document.getElementById("current-coins-value").innerText = getTotalCoins();
+    
+    document.querySelectorAll('.plan-card').forEach(card => {
+        const cost = Number(card.getAttribute('data-cost'));
+        const button = card.querySelector('.buy-button');
+        const durationDays = card.getAttribute('data-duration-days');
+        
+        // النص الافتراضي
+        let defaultText = `اشتراك ${durationDays} يوم`;
+        if (durationDays === '7') defaultText = 'اشتراك أسبوع';
+        if (durationDays === '30') defaultText = 'اشتراك شهر';
+        if (durationDays === '90') defaultText = 'اشتراك 3 أشهر';
+        if (durationDays === '365') defaultText = 'اشتراك سنة';
+
+        const isDisabled = getTotalCoins() < cost;
+        button.disabled = isDisabled;
+        
+        if (isDisabled) {
+            button.innerText = 'الكوينزات غير كافية';
+            // اللون الرصاصي يتم تطبيقه عبر CSS :disabled
+        } else {
+            button.innerText = defaultText;
+            button.style.backgroundColor = '#6366f1'; 
+        }
+    });
+}
+
+function checkProStatus() {
+    const proExpiryTime = currentUserData.proExpiryTime || 0; 
+    const now = new Date().getTime();
+    const statusDisplay = document.getElementById("pro-status");
+
+    if (proExpiryTime > now) {
+        // حساب الأيام المتبقية
+        const remainingDays = Math.ceil((proExpiryTime - now) / (1000 * 60 * 60 * 24));
+        statusDisplay.innerHTML = `<i class="fas fa-crown"></i> أنت مشترك Pro! يتبقى: ${remainingDays} يومًا.`;
+    } else {
+        statusDisplay.innerHTML = '👑 أنت مشترك عادي. اشترك الآن للحصول على الميزات!';
+    }
+}
+
+async function purchasePlan(durationDays, cost) {
+    const currentCoins = getTotalCoins();
+
+    if (currentCoins < cost) {
+        // هذا الشرط لن يتحقق فعلياً لأن الزر معطل، ولكنه كإجراء أمان
+        alert("لا تملك ما يكفي من الكوينزات لشراء هذه الخطة!");
+        return;
+    }
+    
+    if (!confirm(`هل أنت متأكد من شراء خطة ${durationDays} يومًا مقابل ${cost} كوينز؟`)) {
+        return;
+    }
+
+    const now = new Date().getTime();
+    // إذا كان هناك اشتراك سارٍ، يتم التمديد من تاريخ انتهائه
+    const currentProExpiry = currentUserData.proExpiryTime > now ? currentUserData.proExpiryTime : now;
+
+    // حساب تاريخ الانتهاء الجديد
+    const expiryTime = currentProExpiry + (durationDays * 24 * 60 * 60 * 1000);
+    const newTotalCoins = currentCoins - cost;
+    
+    const saveSuccessful = await saveUserData(newTotalCoins, expiryTime); // دالة من auth.js
+
+    if (saveSuccessful) {
+        currentUserData.totalCoins = newTotalCoins;
+        currentUserData.proExpiryTime = expiryTime;
+        
+        alert(`تهانينا! تم تمديد أو تفعيل عضوية Pro لمدة ${durationDays} يومًا.`);
+        
+        displayTotalCoins();
+        checkProStatus();
+    } else {
+        alert("فشل الحفظ. تحقق من اتصالك أو تسجيل الدخول.");
+    }
+}
+</script>
+
+</body>
+</html>

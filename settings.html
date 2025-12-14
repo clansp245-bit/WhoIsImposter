@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚙️ إعدادات اللعبة</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="auth.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<style>
+/* (تنسيقات CSS التي قمت بتوفيرها) */
+body {
+  font-family: 'Cairo', sans-serif;
+  background-color: #0f172a; 
+  color: #f1f5f9; 
+  text-align: center;
+  padding: 20px;
+  min-height: 100vh;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 25px;
+    color: #34d399;
+}
+
+.card {
+  background-color: #1e293b; 
+  padding: 30px;
+  border-radius: 12px;
+  max-width: 450px;
+  width: 90%;
+  margin: 10px auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 10px 15px rgba(0, 0, 0, 0.2);
+  text-align: right;
+}
+
+label {
+    display: block;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    font-weight: 700;
+    color: #94a3b8; 
+    font-size: 0.95rem;
+}
+
+textarea, select, input[type="number"], input[type="text"] {
+  font-family: 'Cairo', sans-serif;
+  width: 100%;
+  margin: 8px 0 15px 0;
+  padding: 14px 10px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  font-size: 16px;
+  background-color: #334155; 
+  color: #f1f5f9;
+  transition: border-color 0.3s, background-color 0.3s;
+  box-sizing: border-box;
+}
+
+textarea:disabled, select:disabled, input:disabled {
+    cursor: not-allowed;
+    background-color: #1e293b;
+    opacity: 0.8;
+}
+
+.toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 15px;
+    padding: 12px 15px;
+    background-color: #334155;
+    border-radius: 8px;
+    border-left: 5px solid transparent; 
+    transition: border-color 0.3s;
+}
+
+.toggle-container.highlight {
+    border-left-color: #ffcc00; 
+}
+
+.toggle-container label {
+    margin: 0;
+    font-weight: 700;
+    color: #f1f5f9;
+    font-size: 1rem;
+    display: inline;
+}
+
+.toggle-container input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    margin: 0;
+    background-color: #1e293b;
+    border: 1px solid #94a3b8;
+    accent-color: #34d399;
+}
+
+.manual-role-container {
+    padding: 15px;
+    border: 1px dashed #334155;
+    border-radius: 8px;
+    margin-top: 20px;
+    text-align: left;
+}
+.manual-role-container h3 {
+    font-size: 1.1rem;
+    color: #6366f1;
+    margin-top: 0;
+    border-bottom: 1px solid #334155;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+.manual-role-container textarea {
+    min-height: 80px;
+}
+
+
+button {
+  margin-top: 30px; 
+  padding: 12px 30px;
+  font-size: 18px;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px; 
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+  background-color: #6366f1;
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  width: 100%;
+}
+</style>
+</head>
+
+<body onload="loadSettings()"> 
+
+<h2>⚙️ إعدادات اللعبة</h2>
+
+<div class="card">
+  
+    <label for="discussionTimer">مؤقت المناقشة (بالثواني)</label>
+    <input type="number" id="discussionTimer" value="120" min="0" max="600" onchange="toggleNoTimer()">
+    <div class="toggle-container" style="margin-top: 10px;">
+        <label for="noTimerMode">اللعب بلا مؤقت (غير محدود)</label>
+        <input type="checkbox" id="noTimerMode" onclick="toggleTimerInput()">
+    </div>
+    <small style="color: #94a3b8; display: block; margin-top: -10px; margin-bottom: 15px;">اجعل القيمة 0 أو فعّل الخيار للعب بلا وقت.</small>
+
+    <label for="impostors">عدد المحتالين</label>
+    <input type="number" id="impostors" value="1" min="1">
+
+    <div class="toggle-container">
+        <label for="multiWordMode">كلمات مدنيين مختلفة (صعوبة عالية)</label>
+        <input type="checkbox" id="multiWordMode">
+    </div>
+    <small style="color: #94a3b8; display: block; margin-top: -10px; margin-bottom: 15px;">يستخدم هذا الوضع كلمتين مختلفتين للمدنيين والمحتال.</small>
+    
+    <div class="toggle-container">
+        <label for="noWordRole">إضافة دور "لا كلمة لك!" (مدني)</label>
+        <input type="checkbox" id="noWordRole">
+    </div>
+
+    <div class="toggle-container highlight" style="margin-top: 25px;">
+        <label for="chaosMode">وضع الفوضى (قد يكون الجميع محتالين!) <i class="fas fa-crown" style="color: #ffd700;"></i></label>
+        <input type="checkbox" id="chaosMode">
+    </div>
+
+    <div class="manual-role-container" id="manual-roles-section">
+        <h3>تعيين الأدوار يدوياً (Pro) <i class="fas fa-crown" style="color: #ffd700;"></i></h3>
+        <small style="color: #94a3b8; display: block; margin-bottom: 10px;">أدخل أسماء اللاعبين (كل اسم في سطر) الذين تريد أن يكونوا محتالين أو بلا كلمة. يتجاهل هذا الإعداد "عدد المحتالين" و "لا كلمة لك!".</small>
+        
+        <label for="manualImpostors" style="color: #ff4f4f; margin-top: 10px;">المحتالون يدوياً</label>
+        <textarea id="manualImpostors" rows="3" placeholder="أدخل أسماء المحتالين هنا..."></textarea>
+        
+        <label for="manualNoWord" style="color: #6366f1; margin-top: 5px;">بلا كلمة يدوياً</label>
+        <textarea id="manualNoWord" rows="3" placeholder="أدخل أسماء اللاعبين الذين بلا كلمة هنا..."></textarea>
+    </div>
+
+    <label for="source">مصدر الكلمات</label>
+    <select id="source">
+      <option value="default">عشوائية (من النظام)</option>
+      <option value="custom">كلماتي (مخصصة)</option>
+      <option value="both">الاثنين معًا</option>
+    </select>
+
+    <label for="words">كلماتك المخصصة (كل كلمة في سطر منفصل)</label>
+    <textarea id="words" rows="5" placeholder="أدخل كلماتك هنا..."></textarea>
+
+    <button onclick="saveSettings()">ابدأ اللعب</button>
+
+</div>
+
+<script>
+const impostorsInput = document.getElementById("impostors");
+const timerInput = document.getElementById("discussionTimer");
+const noTimerCheckbox = document.getElementById("noTimerMode");
+let currentUserData = { totalCoins: 0, proExpiryTime: 0 }; 
+
+/**
+ * @function isPro
+ * @description التحقق من ما إذا كان المستخدم يملك عضوية Pro نشطة.
+ */
+function isPro() {
+    // يجب أن تكون proExpiryTime كـ Number (timestamp)
+    const proExpiryTime = currentUserData.proExpiryTime || 0; 
+    return proExpiryTime > new Date().getTime();
+}
+
+function toggleTimerInput() {
+    if (noTimerCheckbox.checked) {
+        timerInput.value = 0;
+        timerInput.disabled = true;
+    } else {
+        if (timerInput.value == 0) timerInput.value = 120; 
+        timerInput.disabled = false;
+    }
+}
+
+/**
+ * @function loadSettings
+ * @description تحميل الإعدادات المحفوظة من التخزين المحلي وتطبيقها بعد التحقق من حالة Pro.
+ */
+async function loadSettings() {
+    // 1. التأكد من تسجيل الدخول وتحميل بيانات Pro من Firestore
+    firebase.auth().onAuthStateChanged(async (user) => {
+        if (!user) {
+            window.location.href = "auth.html";
+            return;
+        }
+        
+        const data = await loadUserData(); // دالة من auth.js
+        if (data) {
+            currentUserData = data;
+        }
+        
+        const pro = isPro(); 
+        
+        // 2. تحميل الإعدادات العامة من التخزين المحلي
+        const savedSettings = localStorage.getItem("settings");
+        let settings = {};
+        if (savedSettings) {
+             settings = JSON.parse(savedSettings);
+        }
+
+        // تحميل الإعدادات العامة
+        document.getElementById("impostors").value = settings.impostors || 1;
+        document.getElementById("source").value = settings.source || "default";
+        document.getElementById("words").value = Array.isArray(settings.customWords) ? settings.customWords.join('\n') : "";
+        
+        // تحميل مربعات الاختيار
+        const chaosCheckbox = document.getElementById("chaosMode");
+        const manualSection = document.getElementById("manual-roles-section");
+        const manualImpostors = document.getElementById("manualImpostors");
+        const manualNoWord = document.getElementById("manualNoWord");
+        
+        document.getElementById("noWordRole").checked = settings.noWordRole === true;
+        document.getElementById("multiWordMode").checked = settings.multiWordMode === true;
+        
+        // **********************************************
+        // 3. منطق تقييد ميزات Pro (تم التأكيد)
+        // **********************************************
+        chaosCheckbox.disabled = !pro;
+        manualImpostors.disabled = !pro; 
+        manualNoWord.disabled = !pro;    
+        
+        // تحميل القيم اليدوية
+        manualImpostors.value = Array.isArray(settings.manualImpostors) ? settings.manualImpostors.join('\n') : "";
+        manualNoWord.value = Array.isArray(settings.manualNoWord) ? settings.manualNoWord.join('\n') : "";
+
+        if (!pro) {
+            // إذا لم يكن Pro، يتم تعطيل خياراته وإفراغ حقول الإدخال اليدوية في الواجهة فقط
+            chaosCheckbox.checked = false;
+            manualImpostors.value = ""; 
+            manualNoWord.value = "";
+            manualSection.style.opacity = 0.6; 
+            manualSection.title = "هذه الميزة حصرية لمشتركي Pro";
+        } else {
+            // إذا كان Pro، يتم تحميل القيم التي تم تعيينها أعلاه
+            chaosCheckbox.checked = settings.chaosMode === true;
+            manualSection.style.opacity = 1;
+            manualSection.title = "";
+        }
+        
+        // تحميل المؤقت وخيار بلا مؤقت
+        const savedTimer = settings.discussionTimer || 120;
+        if (savedTimer === 0) {
+            noTimerCheckbox.checked = true;
+            timerInput.value = 0;
+            timerInput.disabled = true;
+        } else {
+            noTimerCheckbox.checked = false;
+            timerInput.value = savedTimer;
+            timerInput.disabled = false;
+        }
+    });
+}
+
+function saveSettings() {
+  const impostorsValue = Number(impostorsInput.value);
+  const sourceValue = document.getElementById("source").value;
+  const pro = isPro();
+  
+  let chaosModeEnabled = document.getElementById("chaosMode").checked;
+  const noWordEnabled = document.getElementById("noWordRole").checked;
+  const multiWordEnabled = document.getElementById("multiWordMode").checked;
+  let timerValue = noTimerCheckbox.checked ? 0 : Number(timerInput.value);
+  
+  // يتم حفظ الأدوار اليدوية فقط إذا كان المستخدم Pro
+  const manualImpostorsArray = pro ? document.getElementById("manualImpostors").value
+    .split("\n").map(w => w.trim()).filter(w => w.length > 0) : [];
+  const manualNoWordArray = pro ? document.getElementById("manualNoWord").value
+    .split("\n").map(w => w.trim()).filter(w => w.length > 0) : [];
+  
+  // التأكد من تعطيل وضع الفوضى إذا لم يكن Pro (منطق الأمان)
+  if (!pro) {
+      chaosModeEnabled = false;
+  }
+  
+  const customWordsArray = document.getElementById("words").value
+    .split("\n").map(w => w.trim()).filter(w => w.length > 0); 
+
+  // التحقق من الشروط
+  if (impostorsValue < 1 || isNaN(impostorsValue) || impostorsValue > 10) {
+      alert("الرجاء إدخال عدد صحيح للمحتالين بين 1 و 10.");
+      return;
+  }
+  if (timerValue < 0 || isNaN(timerValue)) {
+      alert("الرجاء إدخال قيمة للمؤقت موجبة أو تفعيل خيار 'بلا مؤقت'.");
+      return;
+  }
+  if ((sourceValue === "custom" || sourceValue === "both") && customWordsArray.length === 0) {
+      alert("اخترت استخدام كلمات مخصصة. الرجاء إدخال بعض الكلمات في الصندوق.");
+      return;
+  }
+  
+  let settings = {
+    impostors: impostorsValue,
+    source: sourceValue,
+    customWords: customWordsArray,
+    chaosMode: chaosModeEnabled, // تكون false إذا لم يكن Pro
+    noWordRole: noWordEnabled,      
+    multiWordMode: multiWordEnabled, 
+    discussionTimer: timerValue,     
+    
+    // تكون فارغة إذا لم يكن Pro (منطق الأمان)
+    manualImpostors: manualImpostorsArray, 
+    manualNoWord: manualNoWordArray
+  };
+  
+  localStorage.setItem("settings", JSON.stringify(settings));
+  
+  // ⚠️ يجب التأكد من وجود ملف باسم 'index.html' لغرض إدخال أسماء اللاعبين قبل game.html
+  // لكني سأتبع الرمز الذي قدمته للانتقال مباشرة
+  location.href = "game.html"; 
+}
+
+function toggleNoTimer() {
+    if (Number(timerInput.value) === 0) {
+        noTimerCheckbox.checked = true;
+        timerInput.disabled = true;
+    } else {
+         noTimerCheckbox.checked = false;
+         timerInput.disabled = false;
+    }
+}
+</script>
+
+</body>
+</html>

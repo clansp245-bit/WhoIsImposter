@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🕵️ لعبة المدني المحتال</title>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="auth.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <style>
+        /* (تنسيقات CSS سابقة) */
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #0f172a; 
+            color: #f1f5f9; 
+            text-align: center;
+            padding: 20px;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: #34d399; 
+        }
+
+        .card {
+            background-color: #1e293b; 
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 450px;
+            width: 90%;
+            margin: 10px auto;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 10px 15px rgba(0, 0, 0, 0.2);
+            text-align: right;
+        }
+
+        #player-input {
+            font-family: 'Cairo', sans-serif;
+            width: calc(100% - 24px); 
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            font-size: 16px;
+            background-color: #334155; 
+            color: #f1f5f9;
+            margin-bottom: 10px;
+        }
+
+        #add-player-btn, #settings-btn-card {
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px; 
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+        #add-player-btn {
+            background-color: #34d399; 
+            color: #ffffff;
+        }
+        #add-player-btn:hover {
+            background-color: #10b981; 
+        }
+        #settings-btn-card { 
+            background-color: #6366f1; 
+            color: #ffffff;
+            margin-bottom: 20px; 
+        }
+        #settings-btn-card:hover {
+            background-color: #4f46e5;
+        }
+
+        #player-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        #player-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            background-color: #334155;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #ff4f4f; 
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: color 0.3s;
+        }
+
+        #start-game-btn { 
+            margin-top: 30px; 
+            padding: 12px 30px;
+            font-size: 18px;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px; 
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            background-color: #6366f1;
+            color: #ffffff;
+            width: 100%;
+        }
+        #start-game-btn:hover:enabled {
+            background-color: #4f46e5; 
+            transform: translateY(-2px);
+        }
+        #start-game-btn:disabled {
+            background-color: #475569;
+            cursor: not-allowed;
+        }
+
+        #pro-plans-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            color: #ffd700; 
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        
+        #coin-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #94a3b8;
+        }
+        
+        #sign-out-btn {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: none;
+            border: none;
+            color: #ff4f4f;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+
+        .alert-message {
+            color: #ffcc00;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+    </style>
+</head>
+
+<body onload="checkAuthState()">
+
+    <a href="plans.html" id="pro-plans-btn" title="خطط العضوية المتميزة (Pro)">
+        <i class="fas fa-crown"></i>
+    </a>
+    
+    <div id="coin-display">
+        <i class="fas fa-coins"></i> الإجمالي: <span id="total-coins-value">0</span>
+    </div>
+
+    <h1>ابدأ لعبة المدني المحتال</h1>
+
+    <div class="card">
+        
+        <button id="settings-btn-card" onclick="location.href = 'settings.html'">
+            <i class="fas fa-cog"></i> الإعدادات
+        </button>
+        
+        <label for="player-input" style="font-weight: 700; color: #f1f5f9;">أضف أسماء اللاعبين:</label>
+        
+        <input type="text" id="player-input" placeholder="اسم اللاعب">
+        <button id="add-player-btn" onclick="addPlayer()">إضافة لاعب</button>
+
+        <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 15px;">يجب أن يكون لديك 3 لاعبين على الأقل.</p>
+        
+        <ul id="player-list">
+            </ul>
+        
+        <div id="player-count-alert" class="alert-message" style="display: none;">
+            الحد الأدنى للعب هو 3 لاعبين.
+        </div>
+
+        <button id="start-game-btn" disabled onclick="saveAndStartGame()">ابدأ اللعبة <i class="fas fa-play"></i></button>
+
+    </div>
+    
+    <button id="sign-out-btn" onclick="signOutUser()">تسجيل الخروج <i class="fas fa-sign-out-alt"></i></button>
+
+<script>
+    let players = []; 
+    const playerList = document.getElementById("player-list");
+    const playerInput = document.getElementById("player-input");
+    const startGameBtn = document.getElementById("start-game-btn"); 
+    const playerCountAlert = document.getElementById("player-count-alert");
+
+    // ----------------------------------
+    // دوال المصادقة والكوينزات وعرضها
+    // ----------------------------------
+    
+    /**
+     * @function checkAuthState
+     * @description التحقق من حالة المصادقة (Auth) وعرض الكوينزات.
+     */
+    async function checkAuthState() {
+         firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                // إذا كان المستخدم مسجلاً، نُحمّل بياناته
+                displayTotalCoins(); 
+                loadPlayers();
+            } else {
+                // إذا لم يكن مسجلاً، نُرسله لصفحة تسجيل الدخول
+                window.location.href = "auth.html";
+            }
+        });
+    }
+
+    /**
+     * @function displayTotalCoins
+     * @description تحميل إجمالي الكوينزات من Firestore وعرضها.
+     */
+    async function displayTotalCoins() {
+        const userData = await loadUserData(); // من auth.js
+        if (userData) {
+            document.getElementById("total-coins-value").innerText = userData.totalCoins || 0;
+        } else {
+            document.getElementById("total-coins-value").innerText = 0;
+        }
+    }
+    
+    // ----------------------------------
+    // منطق اللاعبين (يستخدم localStorage)
+    // ----------------------------------
+    
+    function renderPlayers() {
+        playerList.innerHTML = '';
+        players.forEach((player, index) => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <span>${player}</span>
+                <button class="delete-btn" onclick="removePlayer(${index})"><i class="fas fa-trash"></i></button>
+            `;
+            playerList.appendChild(li);
+        });
+        
+        if (players.length >= 3) {
+            startGameBtn.disabled = false;
+            playerCountAlert.style.display = 'none';
+        } else {
+            startGameBtn.disabled = true;
+            playerCountAlert.style.display = 'block';
+        }
+    }
+
+    function addPlayer() {
+        const playerName = playerInput.value.trim();
+        if (playerName && playerName.length > 0 && !players.includes(playerName)) {
+            players.push(playerName);
+            playerInput.value = '';
+            renderPlayers();
+            localStorage.setItem("players", JSON.stringify(players));
+        } else if (players.includes(playerName)) {
+            alert("هذا الاسم موجود بالفعل!");
+        } else if (playerName.length === 0) {
+             alert("الرجاء إدخال اسم اللاعب.");
+        }
+    }
+    
+    function removePlayer(index) {
+        players.splice(index, 1);
+        renderPlayers();
+        localStorage.setItem("players", JSON.stringify(players));
+    }
+    
+    function loadPlayers() {
+        const savedPlayers = localStorage.getItem("players");
+        if (savedPlayers) {
+            try {
+                players = JSON.parse(savedPlayers);
+                if (!Array.isArray(players)) {
+                    players = []; 
+                }
+            } catch (e) {
+                console.error("خطأ في تحليل قائمة اللاعبين المحفوظة:", e);
+                players = [];
+            }
+            renderPlayers();
+        } else {
+            renderPlayers(); 
+        }
+    }
+    
+    function saveAndStartGame() {
+        if (players.length < 3) {
+            alert("يجب إضافة 3 لاعبين على الأقل قبل بدء اللعبة.");
+            return;
+        }
+        localStorage.setItem("players", JSON.stringify(players));
+        location.href = "game.html"; 
+    }
+
+    playerInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            addPlayer();
+        }
+    });
+
+</script>
+
+</body>
+</html>
