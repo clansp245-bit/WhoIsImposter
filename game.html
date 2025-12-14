@@ -8,11 +8,11 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="auth.js"></script> <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<script src="auth.js"></script> 
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
-/* (تنسيقات CSS التي قمت بتوفيرها) */
 body {
   font-family: 'Cairo', sans-serif;
   background-color: #0f172a; 
@@ -26,103 +26,33 @@ body {
   align-items: center;
   justify-content: space-around; 
 }
-
-#player {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-top: 50px;
-    color: #34d399; 
-    min-height: 30px; 
-}
-
+#player { font-size: 2rem; font-weight: 700; margin-top: 50px; color: #34d399; min-height: 30px; }
 #card {
-  width: 300px; 
-  height: 200px; 
-  background-color: #1e293b; 
-  color: #f1f5f9;
-  border-radius: 15px;
-  margin: 50px auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  font-weight: 700;
-  cursor: pointer;
+  width: 300px; height: 200px; background-color: #1e293b; color: #f1f5f9;
+  border-radius: 15px; margin: 50px auto;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 24px; font-weight: 700; cursor: pointer;
   box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4); 
   transition: transform 0.3s ease-out, background-color 0.3s;
 }
-
-.instruction-text {
-    font-size: 16px;
-    font-weight: 400;
-    margin-top: 10px;
-    color: #94a3b8;
-}
-
-#card.revealed {
-    background-color: #6366f1; 
-    color: #ffffff;
-    transform: translateY(-20px); 
-    box-shadow: 0 12px 20px rgba(99, 102, 241, 0.5); 
-}
-
+#card.revealed { background-color: #6366f1; color: #ffffff; transform: translateY(-20px); box-shadow: 0 12px 20px rgba(99, 102, 241, 0.5); }
+.instruction-text { font-size: 16px; font-weight: 400; margin-top: 10px; color: #94a3b8; }
 button {
-  margin-top: 30px;
-  padding: 12px 30px;
-  font-size: 18px;
-  font-weight: 700;
-  border: none;
-  border-radius: 8px; 
-  cursor: pointer;
+  margin-top: 30px; padding: 12px 30px; font-size: 18px; font-weight: 700;
+  border: none; border-radius: 8px; cursor: pointer;
   transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
-  background-color: #6366f1; 
-  color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  background-color: #6366f1; color: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.15);
 }
-
-#home-icon {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    font-size: 24px;
-    color: #94a3b8;
-    cursor: pointer;
-    transition: color 0.3s;
-}
-
-#timer-container {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #ffcc00; 
-    margin-top: 30px;
-    display: none; 
-}
-
-#end-message {
-    font-size: 1.5rem;
-    color: #34d399;
-    margin: 20px;
-    display: none;
-}
-
-#coin-display {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #ffd700; 
-}
-
+#home-icon { position: absolute; top: 20px; right: 20px; font-size: 24px; color: #94a3b8; cursor: pointer; transition: color 0.3s; }
+#timer-container { font-size: 2.5rem; font-weight: 700; color: #ffcc00; margin-top: 30px; display: none; }
+#end-message { font-size: 1.5rem; color: #34d399; margin: 20px; display: none; }
+#coin-display { position: absolute; top: 20px; left: 20px; font-size: 1.2rem; font-weight: 700; color: #ffd700; }
 </style>
 </head>
 
 <body onload="loadGameData()">
 
-<a href="index.html" id="home-icon" title="العودة للصفحة الرئيسية">
-    <i class="fas fa-home"></i>
-</a>
+<a href="index.html" id="home-icon" title="العودة للصفحة الرئيسية"><i class="fas fa-home"></i></a>
 
 <div id="coin-display">
     <i class="fas fa-coins"></i> الإجمالي: <span id="total-coins-value">0</span>
@@ -138,11 +68,9 @@ button {
 <button id="nextBtn" onclick="next()">التالي <i class="fas fa-arrow-left"></i></button>
 
 <div id="timer-container">00:00</div>
-
 <div id="end-message"></div>
 
 <script>
-// ⚠️ يجب أن يكون هذا الملف محملًا مسبقًا
 let players = JSON.parse(localStorage.getItem("players") || "[]");
 let settings = JSON.parse(localStorage.getItem("settings") || "{}");
 
@@ -153,338 +81,98 @@ const timerContainer = document.getElementById("timer-container");
 const endMessage = document.getElementById("end-message");
 const totalCoinsValue = document.getElementById("total-coins-value");
 
-let i = 0; 
-let roles = []; 
-let civilWord = ""; 
-let impostorWord = ""; 
-const IMP = "IMPOSTOR_ROLE_MARKER"; // علامة داخلية للمحتال
-const NW = "NO_WORD_ROLE_MARKER";   // علامة داخلية لـ "بلا كلمة"
-let timerInterval;
-let gameCompleted = false; 
+let i = 0, roles = [], civilWord = "", impostorWord = "";
+const IMP = "IMPOSTOR_ROLE_MARKER", NW = "NO_WORD_ROLE_MARKER";
+let timerInterval, gameCompleted = false;
+let currentUserData = { totalCoins: 0, proExpiryTime: 0 };
 
-let currentUserData = { totalCoins: 0, proExpiryTime: 0 }; 
-
-/**
- * @function loadGameData
- * @description تحميل بيانات المستخدم قبل بدء اللعبة.
- */
 async function loadGameData() {
-     firebase.auth().onAuthStateChanged(async (user) => {
-        if (!user) {
-            alert("الرجاء تسجيل الدخول أولاً.");
-            window.location.href = "auth.html";
-            return;
-        }
-        
-        // ** افتراض أن 'players' قد تم حفظها مسبقاً في index.html **
-        if (players.length === 0 || !settings || players.length < 3) {
-            alert("يرجى إدخال 3 لاعبين على الأقل والإعدادات أولاً.");
-            location.href = "settings.html"; // توجيه لصفحة الإعدادات للمتابعة
-            return;
-        }
-        
-        const data = await loadUserData(); // من auth.js
-        if (data) {
-            currentUserData = data;
-        }
-        
-        displayTotalCoins(); 
-        setupGameRoles();
-        playerDisplay.innerText = `دور: ${players[i]}`; 
+    firebase.auth().onAuthStateChanged(async (user) => {
+        if (!user) { alert("الرجاء تسجيل الدخول أولاً."); window.location.href = "auth.html"; return; }
+        if (players.length < 3) { alert("يرجى إدخال 3 لاعبين على الأقل."); location.href="settings.html"; return; }
+        const data = await loadUserData();
+        if(data) currentUserData = data;
+        displayTotalCoins(); setupGameRoles(); playerDisplay.innerText = `دور: ${players[i]}`;
     });
 }
 
+function isPro() { return (currentUserData.proExpiryTime || 0) > new Date().getTime(); }
+function getTotalCoins() { return currentUserData.totalCoins || 0; }
+function displayTotalCoins() { totalCoinsValue.innerText = getTotalCoins(); }
 
-// ----------------------------------
-// 1. منطق الكوينزات والـ Pro
-// ----------------------------------
-
-function isPro() {
-    const proExpiryTime = currentUserData.proExpiryTime || 0; 
-    return proExpiryTime > new Date().getTime();
-}
-
-function getTotalCoins() {
-    return currentUserData.totalCoins || 0;
-}
-
-function displayTotalCoins() {
-    totalCoinsValue.innerText = getTotalCoins();
-}
-
-/**
- * @function calculateAndAddCoins
- * @description احتساب الكوينز المكتسبة (من 5 إلى 15) وإضافتها عبر Firestore.
- */
 async function calculateAndAddCoins() {
-    // ⚠️ تم تغيير النطاق إلى 5-15 كما طلبت
-    
-    // Pro Bonus: إذا كان المستخدم Pro، يحصل على كوينزات أكثر
-    const proMultiplier = isPro() ? 1.5 : 1; 
-    
-    // نطاق الكوينز: 5-15 (شاملة)
-    const minCoins = 5;
-    const maxCoins = 15; 
-    
-    // توليد رقم عشوائي بين 5 و 15 
-    const baseCoins = Math.floor(Math.random() * (maxCoins - minCoins + 1)) + minCoins; 
-    
-    const coinsEarned = Math.floor(baseCoins * proMultiplier);
-    
-    const currentCoins = getTotalCoins();
-    const newTotalCoins = currentCoins + coinsEarned;
-    
-    // حفظ البيانات في Firebase Firestore
-    const saveSuccessful = await saveUserData(newTotalCoins, currentUserData.proExpiryTime || 0);
-    
-    if (saveSuccessful) {
-        currentUserData.totalCoins = newTotalCoins; // تحديث البيانات المحلية
-        displayTotalCoins();
-        
-        // إظهار تنبيه للكسب
-        alert(`🎉 تهانينا! لقد ربحت ${coinsEarned} كوينزًا لبدء المناقشة. ${isPro() ? '(مكافأة Pro مطبقة!)' : ''} إجمالي الكوينزات الآن: ${newTotalCoins}`);
+    const proMultiplier = isPro()?1.5:1;
+    const baseCoins = Math.floor(Math.random()*(15-5+1))+5;
+    const coinsEarned = Math.floor(baseCoins*proMultiplier);
+    const newTotalCoins = getTotalCoins() + coinsEarned;
+    const saved = await saveUserData(newTotalCoins,currentUserData.proExpiryTime||0);
+    if(saved){ currentUserData.totalCoins=newTotalCoins; displayTotalCoins(); alert(`🎉 تم إضافة ${coinsEarned} كوينز! إجمالي الكوينز: ${newTotalCoins}`);}
+    else alert("⚠️ حدث خطأ أثناء حفظ الكوينز.");
+}
+
+function setupGameRoles(){
+    let defaultWords = ["تفاح","سيارة","مدرسة","بحر","هاتف","طائرة","جوال","مكتبة","طاولة","كرسي"];
+    let proWords = ["كوكب","جاسوس","الماس","مخترع","خوارزمية","شلال","متاهة"];
+    let words=[];
+    if(settings.source==="default") words=defaultWords;
+    else if(settings.source==="custom" && Array.isArray(settings.customWords)) words=settings.customWords;
+    else if(settings.source==="both" && Array.isArray(settings.customWords)) words=defaultWords.concat(settings.customWords);
+    if(isPro()) words=words.concat(proWords);
+    words=[...new Set(words)];
+    if(words.length===0){alert("لم يتم العثور على كلمات."); location.href="settings.html"; return;}
+    if(settings.multiWordMode && words.length>=2){ civilWord=words[Math.floor(Math.random()*words.length)]; impostorWord=words.filter(w=>w!==civilWord)[Math.floor(Math.random()*words.filter(w=>w!==civilWord).length)];}
+    else { civilWord=impostorWord=words[Math.floor(Math.random()*words.length)]; }
+    const totalPlayers=players.length;
+    roles=Array(totalPlayers).fill(null);
+    const indices=Array.from({length:totalPlayers},(_,k)=>k).sort(()=>Math.random()-0.5);
+    if(isPro()&&(settings.manualImpostors?.length||settings.manualNoWord?.length)){
+        settings.manualImpostors?.forEach(name=>{const idx=players.indexOf(name);if(idx!==-1)roles[idx]=IMP;});
+        settings.manualNoWord?.forEach(name=>{const idx=players.indexOf(name);if(idx!==-1&&roles[idx]!==IMP)roles[idx]=NW;});
+    } else if(settings.chaosMode && isPro() && Math.random()<0.2){
+        roles=Array(totalPlayers).fill(IMP);
+        for(let j=0;j<Math.floor(totalPlayers*0.2);j++) roles[indices[j]]=NW;
     } else {
-        console.error("فشل حفظ الكوينزات.");
-        alert("حدث خطأ في حفظ الكوينزات. يرجى التأكد من تسجيل الدخول.");
-    }
-    
-    return coinsEarned;
-}
-
-// ----------------------------------
-// 2. إعداد الأدوار (مُصحَّح توزيع الأدوار)
-// ----------------------------------
-
-function setupGameRoles() {
-    let defaultWords = ["تفاح", "سيارة", "مدرسة", "بحر", "هاتف", "طائرة", "جوال", "مكتبة", "طاولة", "كرسي"]; 
-    let proWords = ["كوكب", "جاسوس", "الماس", "مخترع", "خوارزمية", "شلال", "متاهة"]; 
-    let words = [];
-    const isUserPro = isPro(); 
-
-    // تجميع الكلمات
-    if (settings.source === "default") words = defaultWords;
-    else if (settings.source === "custom" && Array.isArray(settings.customWords)) words = settings.customWords;
-    else if (settings.source === "both" && Array.isArray(settings.customWords)) words = defaultWords.concat(settings.customWords);
-    else words = defaultWords; 
-
-    // إضافة كلمات Pro إذا كان مشتركاً
-    if (isUserPro) {
-        words = words.concat(proWords);
-    }
-    
-    // إزالة التكرارات بشكل اختياري
-    words = [...new Set(words)];
-
-    if (words.length === 0) {
-        alert("لم يتم العثور على كلمات. الرجاء التحقق من الإعدادات.");
-        location.href = "settings.html";
-        return;
-    }
-
-    // تعيين الكلمات أولاً
-    if (settings.multiWordMode === true && words.length >= 2) {
-        let wordIndex1 = Math.floor(Math.random() * words.length);
-        civilWord = words[wordIndex1];
-        
-        // يجب أن تكون كلمة المحتال مختلفة
-        let availableWords = words.filter((w, index) => index !== wordIndex1);
-        let wordIndex2 = Math.floor(Math.random() * availableWords.length);
-        impostorWord = availableWords[wordIndex2]; 
-        
-    } else {
-        // الوضع العادي (كلمة واحدة للجميع)
-        civilWord = words[Math.floor(Math.random() * words.length)];
-        impostorWord = civilWord; // المحتال يرى نفس كلمة المدني في هذا الوضع (لا تستخدم)
-    }
-    
-    let totalPlayers = players.length;
-    // نبدأ بتعيين الأدوار كـ null لضمان التعيين الدقيق لاحقاً
-    roles = Array(totalPlayers).fill(null); 
-    
-    // مصفوفة عشوائية لمؤشرات اللاعبين
-    let indices = Array.from({length: totalPlayers}, (v, k) => k).sort(() => Math.random() - 0.5);
-    
-    
-    // ب. الأدوار اليدوية (الأولوية لـ Pro)
-    const hasManualRoles = isUserPro && (settings.manualImpostors && settings.manualImpostors.length > 0 || settings.manualNoWord && settings.manualNoWord.length > 0);
-
-    if (hasManualRoles) {
-        
-        // تعيين المحتالين يدوياً
-        settings.manualImpostors.forEach(name => {
-            const playerIndex = players.indexOf(name);
-            if (playerIndex !== -1) {
-                roles[playerIndex] = IMP; // استخدام علامة داخلية
-            }
-        });
-
-        // تعيين "بلا كلمة" يدوياً
-        settings.manualNoWord.forEach(name => {
-            const playerIndex = players.indexOf(name);
-            if (playerIndex !== -1) {
-                if (roles[playerIndex] !== IMP) { // لا يمكن أن يكون محتال وبلا كلمة
-                    roles[playerIndex] = NW; // استخدام علامة داخلية
-                }
-            }
-        });
-        
-    } 
-    // أ. وضع الفوضى (Pro و تفعيل الخيار)
-    else if (settings.chaosMode === true && isUserPro && Math.random() < 0.20) {
-        
-        // تعيين جميع اللاعبين كـ IMP مبدئياً
-        roles = Array(totalPlayers).fill(IMP); 
-        let numNoWordChaos = Math.floor(totalPlayers * 0.2); 
-        
-        for (let j = 0; j < numNoWordChaos && j < totalPlayers; j++) {
-            roles[indices[j]] = NW; // يتم تعيين بعضهم كبلا كلمة
-        }
-        
-    } 
-    // ج. الحالة العادية (التوزيع العشوائي - المُصحَّح)
-    else {
-        
-        const numImpostors = settings.impostors || 1; 
-        let numNoWord = settings.noWordRole === true && totalPlayers > numImpostors ? 1 : 0; 
-        let currentImpostors = 0;
-        let currentNoWord = 0;
-        
-        // المرور على المؤشرات العشوائية وتعيين الأدوار غير المدنية أولاً
-        for (let j = 0; j < totalPlayers; j++) {
-            const index = indices[j];
-            
-            if (currentImpostors < numImpostors) {
-                roles[index] = IMP;
-                currentImpostors++;
-            } else if (currentNoWord < numNoWord) {
-                roles[index] = NW;
-                currentNoWord++;
-            } else {
-                // البقية يتم تعيينهم كمدنيين لاحقاً
-            }
+        const numImpostors=settings.impostors||1;
+        let numNoWord=settings.noWordRole?1:0,currImp=0,currNW=0;
+        for(let j=0;j<totalPlayers;j++){ const idx=indices[j];
+            if(currImp<numImpostors){ roles[idx]=IMP; currImp++; }
+            else if(currNW<numNoWord){ roles[idx]=NW; currNW++; }
         }
     }
-    
-    // ⚠️ التصحيح النهائي: تعيين civilWord لكل من لم يتم تعيين دور له (المدنيين)
-    for (let k = 0; k < totalPlayers; k++) {
-        if (roles[k] === null) { // إذا كان الدور لا يزال null
-            roles[k] = civilWord;
-        }
-    }
+    for(let k=0;k<totalPlayers;k++){ if(roles[k]===null)roles[k]=civilWord;}
 }
 
-
-// ----------------------------------
-// 3. دوال تفاعلية (مُصحَّح عرض الأدوار)
-// ----------------------------------
-
-/**
- * @function show
- * @description كشف الدور والكلمة للاعب الحالي. (مُصحَّح)
- */
-function show() {
-  card.classList.add("revealed");
-  
-  const roleMarker = roles[i];
-  let displayWord = "";
-  
-  // حالة المدني (يرى الكلمة المدنية)
-  if (roleMarker === civilWord) {
-      displayWord = `<span style="color: #34d399;">دورك: المدني</span>`;
-      displayWord += `<div class="instruction-text" style="font-size: 1.5rem; color: #f1f5f9; margin-top: 10px;">الكلمة: ${civilWord}</div>`;
-  } 
-  // حالة "بلا كلمة"
-  else if (roleMarker === NW) {
-      displayWord = `<span style="color: #6366f1;">لا كلمة لك!</span>`;
-  }
-  // حالة المحتال
-  else if (roleMarker === IMP) {
-      if (settings.multiWordMode === true) {
-           displayWord = `<span style="color: #ff4f4f;">دورك: المحتال 😈</span>`;
-           displayWord += `<div class="instruction-text" style="font-size: 1.5rem; color: #f1f5f9; margin-top: 10px;">كلمة المحتال: ${impostorWord}</div>`;
-           displayWord += `<div class="instruction-text" style="font-size: 0.8rem; color: #ffcc00; margin-top: 5px;">*تذكّر، كلمة المدني هي ${civilWord}*</div>`;
-      } else {
-           displayWord = `<span style="color: #ff4f4f;">أنت المحتال 😈</span>`; 
-      }
-  } 
-  // حالة احتياطية (قد لا تحدث بعد التصحيح)
-  else {
-      displayWord = `<span style="color: #ffcc00;">خطأ: دور غير معرف!</span>`;
-  }
-  
-  card.innerHTML = displayWord;
+function show(){
+    card.classList.add("revealed");
+    const roleMarker=roles[i]; let displayWord="";
+    if(roleMarker===civilWord){ displayWord=`<span style="color:#34d399;">دورك: المدني</span>`;
+        displayWord+=`<div class="instruction-text" style="font-size:1.5rem;color:#f1f5f9;">الكلمة: ${civilWord}</div>`; }
+    else if(roleMarker===NW) displayWord=`<span style="color:#6366f1;">لا كلمة لك!</span>`;
+    else if(roleMarker===IMP){ displayWord=`<span style="color:#ff4f4f;">أنت المحتال 😈</span>`;
+        if(settings.multiWordMode) displayWord+=`<div class="instruction-text" style="font-size:1.5rem;color:#f1f5f9;">كلمة المحتال: ${impostorWord}</div><div class="instruction-text" style="font-size:0.8rem;color:#ffcc00;">*تذكّر كلمة المدني: ${civilWord}*</div>`; }
+    else displayWord=`<span style="color:#ffcc00;">خطأ: دور غير معرف!</span>`;
+    card.innerHTML=displayWord;
 }
+function hide(){ card.classList.remove("revealed"); card.innerHTML=`<span>اسحب أو اضغط مع الاستمرار</span><div class="instruction-text">للكشف عن دورك</div>`; }
 
-
-function hide() {
-  card.classList.remove("revealed");
-  card.innerHTML = `<span>اسحب أو اضغط مع الاستمرار</span><div class="instruction-text">للكشف عن دورك</div>`;
-}
-
-function startTimer(duration) {
-    if (duration <= 0) {
-        timerContainer.style.display = 'none';
-        return; 
-    }
-    
-    timerContainer.style.display = 'block';
-    nextBtn.style.display = 'none'; 
-    
-    let timeRemaining = duration;
-    
-    function updateTimerDisplay() {
-        const minutes = String(Math.floor(timeRemaining / 60)).padStart(2, '0');
-        const seconds = String(timeRemaining % 60).padStart(2, '0');
-        timerContainer.innerText = `${minutes}:${seconds}`;
-
-        if (timeRemaining <= 0) {
-            clearInterval(timerInterval);
-            timerContainer.innerText = "انتهى الوقت!";
-            timerContainer.style.color = '#ff4f4f'; 
-            
-            // 🏆 منح الكوينزات عند انتهاء المؤقت (للجولات ذات المؤقت)
-            gameCompleted = true; // نؤكد اكتمال الجولة
-            calculateAndAddCoins(); 
-            
-            alert("انتهى وقت المناقشة! حان وقت التصويت.");
-        }
+function startTimer(duration){
+    if(!duration||isNaN(duration)||duration<=0){timerContainer.style.display='none'; return;}
+    timerContainer.style.display='block'; nextBtn.style.display='none';
+    let timeRemaining=duration; clearInterval(timerInterval);
+    function updateTimerDisplay(){
+        const minutes=String(Math.floor(timeRemaining/60)).padStart(2,'0');
+        const seconds=String(timeRemaining%60).padStart(2,'0');
+        timerContainer.innerText=`${minutes}:${seconds}`;
+        if(timeRemaining<=0){ clearInterval(timerInterval); timerContainer.innerText="انتهى الوقت!"; timerContainer.style.color='#ff4f4f'; calculateAndAddCoins(); alert("⏰ انتهى وقت المناقشة! حان وقت التصويت."); }
         timeRemaining--;
     }
-
-    updateTimerDisplay(); 
-    timerInterval = setInterval(updateTimerDisplay, 1000);
+    updateTimerDisplay(); timerInterval=setInterval(updateTimerDisplay,1000);
 }
 
-
-function next() {
-  if(card.classList.contains("revealed")) {
-      hide();
-  }
-  
-  i++;
-  
-  if(i >= players.length){
-    // عند الانتهاء من جميع اللاعبين
-    gameCompleted = true; // نؤكد اكتمال التوزيع (قبل بدء النقاش)
-
-    playerDisplay.innerText = "تم توزيع الأدوار! ابدأ النقاش.";
-    card.style.display = 'none'; 
-    nextBtn.style.display = 'none'; 
-    
-    endMessage.style.display = 'block';
-    endMessage.innerText = "حان وقت المناقشة 🗣️";
-
-    startTimer(settings.discussionTimer);
-
-    // 🏆 منح الكوينزات فوراً إذا لم يكن هناك مؤقت (القيمة 0)
-    if (settings.discussionTimer === 0) {
-        calculateAndAddCoins();
-    }
-    
-    return;
-  }
-  
-  playerDisplay.innerText = `دور: ${players[i]}`;
+function next(){
+    if(card.classList.contains("revealed")) hide(); i++;
+    if(i>=players.length){ gameCompleted=true; playerDisplay.innerText="تم توزيع الأدوار! ابدأ النقاش."; card.style.display='none'; nextBtn.style.display='none'; endMessage.style.display='block'; endMessage.innerText="حان وقت المناقشة 🗣️"; startTimer(settings.discussionTimer); if(!settings.discussionTimer||settings.discussionTimer===0) calculateAndAddCoins(); return;}
+    playerDisplay.innerText=`دور: ${players[i]}`;
 }
 </script>
 
