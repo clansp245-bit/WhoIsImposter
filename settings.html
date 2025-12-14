@@ -14,7 +14,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
-/* (تنسيقات CSS التي قمت بتوفيرها) */
 body {
   font-family: 'Cairo', sans-serif;
   background-color: #0f172a; 
@@ -27,14 +26,7 @@ body {
   flex-direction: column;
   align-items: center;
 }
-
-h2 {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 25px;
-    color: #34d399;
-}
-
+h2 { font-size: 2rem; font-weight: 700; margin-bottom: 25px; color: #34d399; }
 .card {
   background-color: #1e293b; 
   padding: 30px;
@@ -42,19 +34,10 @@ h2 {
   max-width: 450px;
   width: 90%;
   margin: 10px auto;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 10px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 10px 15px rgba(0,0,0,0.2);
   text-align: right;
 }
-
-label {
-    display: block;
-    margin-top: 15px;
-    margin-bottom: 5px;
-    font-weight: 700;
-    color: #94a3b8; 
-    font-size: 0.95rem;
-}
-
+label { display: block; margin-top: 15px; margin-bottom: 5px; font-weight: 700; color: #94a3b8; font-size: 0.95rem; }
 textarea, select, input[type="number"], input[type="text"] {
   font-family: 'Cairo', sans-serif;
   width: 100%;
@@ -68,97 +51,29 @@ textarea, select, input[type="number"], input[type="text"] {
   transition: border-color 0.3s, background-color 0.3s;
   box-sizing: border-box;
 }
-
-textarea:disabled, select:disabled, input:disabled {
-    cursor: not-allowed;
-    background-color: #1e293b;
-    opacity: 0.8;
-}
-
-.toggle-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 15px;
-    padding: 12px 15px;
-    background-color: #334155;
-    border-radius: 8px;
-    border-left: 5px solid transparent; 
-    transition: border-color 0.3s;
-}
-
-.toggle-container.highlight {
-    border-left-color: #ffcc00; 
-}
-
-.toggle-container label {
-    margin: 0;
-    font-weight: 700;
-    color: #f1f5f9;
-    font-size: 1rem;
-    display: inline;
-}
-
-.toggle-container input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-    margin: 0;
-    background-color: #1e293b;
-    border: 1px solid #94a3b8;
-    accent-color: #34d399;
-}
-
-.manual-role-container {
-    padding: 15px;
-    border: 1px dashed #334155;
-    border-radius: 8px;
-    margin-top: 20px;
-    text-align: left;
-}
-.manual-role-container h3 {
-    font-size: 1.1rem;
-    color: #6366f1;
-    margin-top: 0;
-    border-bottom: 1px solid #334155;
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-}
-.manual-role-container textarea {
-    min-height: 80px;
-}
-
-
-button {
-  margin-top: 30px; 
-  padding: 12px 30px;
-  font-size: 18px;
-  font-weight: 700;
-  border: none;
-  border-radius: 8px; 
-  cursor: pointer;
-  transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
-  background-color: #6366f1;
-  color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-  width: 100%;
-}
+textarea:disabled, select:disabled, input:disabled { cursor: not-allowed; background-color: #1e293b; opacity: 0.8; }
+.toggle-container { display: flex; align-items: center; justify-content: space-between; margin-top: 15px; padding: 12px 15px; background-color: #334155; border-radius: 8px; border-left: 5px solid transparent; transition: border-color 0.3s; }
+.toggle-container.highlight { border-left-color: #ffcc00; }
+.toggle-container label { margin: 0; font-weight: 700; color: #f1f5f9; font-size: 1rem; display: inline; }
+.toggle-container input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; margin: 0; background-color: #1e293b; border: 1px solid #94a3b8; accent-color: #34d399; }
+.manual-role-container { padding: 15px; border: 1px dashed #334155; border-radius: 8px; margin-top: 20px; text-align: left; }
+.manual-role-container h3 { font-size: 1.1rem; color: #6366f1; margin-top: 0; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px; }
+.manual-role-container textarea { min-height: 80px; }
+button { margin-top: 15px; padding: 12px 30px; font-size: 18px; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s; background-color: #6366f1; color: #ffffff; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
 </style>
 </head>
-
-<body onload="loadSettings()"> 
+<body onload="loadSettings()">
 
 <h2>⚙️ إعدادات اللعبة</h2>
 
 <div class="card">
-  
     <label for="discussionTimer">مؤقت المناقشة (بالثواني)</label>
     <input type="number" id="discussionTimer" value="120" min="0" max="600" onchange="toggleNoTimer()">
     <div class="toggle-container" style="margin-top: 10px;">
         <label for="noTimerMode">اللعب بلا مؤقت (غير محدود)</label>
         <input type="checkbox" id="noTimerMode" onclick="toggleTimerInput()">
     </div>
-    <small style="color: #94a3b8; display: block; margin-top: -10px; margin-bottom: 15px;">اجعل القيمة 0 أو فعّل الخيار للعب بلا وقت.</small>
+    <small style="color: #94a3b8; display:block; margin-top:-10px; margin-bottom:15px;">اجعل القيمة 0 أو فعّل الخيار للعب بلا وقت.</small>
 
     <label for="impostors">عدد المحتالين</label>
     <input type="number" id="impostors" value="1" min="1">
@@ -167,217 +82,147 @@ button {
         <label for="multiWordMode">كلمات مدنيين مختلفة (صعوبة عالية)</label>
         <input type="checkbox" id="multiWordMode">
     </div>
-    <small style="color: #94a3b8; display: block; margin-top: -10px; margin-bottom: 15px;">يستخدم هذا الوضع كلمتين مختلفتين للمدنيين والمحتال.</small>
-    
+    <small style="color:#94a3b8; display:block; margin-top:-10px; margin-bottom:15px;">يستخدم هذا الوضع كلمتين مختلفتين للمدنيين والمحتال.</small>
+
     <div class="toggle-container">
         <label for="noWordRole">إضافة دور "لا كلمة لك!" (مدني)</label>
         <input type="checkbox" id="noWordRole">
     </div>
 
-    <div class="toggle-container highlight" style="margin-top: 25px;">
-        <label for="chaosMode">وضع الفوضى (قد يكون الجميع محتالين!) <i class="fas fa-crown" style="color: #ffd700;"></i></label>
+    <div class="toggle-container highlight" style="margin-top:25px;">
+        <label for="chaosMode">وضع الفوضى (قد يكون الجميع محتالين!) <i class="fas fa-crown" style="color:#ffd700;"></i></label>
         <input type="checkbox" id="chaosMode">
     </div>
 
     <div class="manual-role-container" id="manual-roles-section">
-        <h3>تعيين الأدوار يدوياً (Pro) <i class="fas fa-crown" style="color: #ffd700;"></i></h3>
-        <small style="color: #94a3b8; display: block; margin-bottom: 10px;">أدخل أسماء اللاعبين (كل اسم في سطر) الذين تريد أن يكونوا محتالين أو بلا كلمة. يتجاهل هذا الإعداد "عدد المحتالين" و "لا كلمة لك!".</small>
-        
-        <label for="manualImpostors" style="color: #ff4f4f; margin-top: 10px;">المحتالون يدوياً</label>
+        <h3>تعيين الأدوار يدوياً (Pro) <i class="fas fa-crown" style="color:#ffd700;"></i></h3>
+        <small style="color:#94a3b8; display:block; margin-bottom:10px;">أدخل أسماء اللاعبين (كل اسم في سطر) الذين تريد أن يكونوا محتالين أو بلا كلمة.</small>
+        <label for="manualImpostors" style="color:#ff4f4f; margin-top:10px;">المحتالون يدوياً</label>
         <textarea id="manualImpostors" rows="3" placeholder="أدخل أسماء المحتالين هنا..."></textarea>
-        
-        <label for="manualNoWord" style="color: #6366f1; margin-top: 5px;">بلا كلمة يدوياً</label>
+        <label for="manualNoWord" style="color:#6366f1; margin-top:5px;">بلا كلمة يدوياً</label>
         <textarea id="manualNoWord" rows="3" placeholder="أدخل أسماء اللاعبين الذين بلا كلمة هنا..."></textarea>
     </div>
 
     <label for="source">مصدر الكلمات</label>
     <select id="source">
-      <option value="default">عشوائية (من النظام)</option>
-      <option value="custom">كلماتي (مخصصة)</option>
-      <option value="both">الاثنين معًا</option>
+        <option value="default">عشوائية (من النظام)</option>
+        <option value="custom">كلماتي (مخصصة)</option>
+        <option value="both">الاثنين معًا</option>
     </select>
 
     <label for="words">كلماتك المخصصة (كل كلمة في سطر منفصل)</label>
     <textarea id="words" rows="5" placeholder="أدخل كلماتك هنا..."></textarea>
 
     <button onclick="saveSettings()">ابدأ اللعب</button>
+</div>
 
+<!-- قسم الكودات -->
+<div class="card" id="promocode-section">
+    <h3>🎁 كود الخصم أو الكوينز</h3>
+    <input type="text" id="promocode-input" placeholder="أدخل الكود هنا">
+    <button onclick="redeemCode()">استخدم الكود</button>
+    <div id="promocode-msg" style="margin-top:10px; color:#ffd700;"></div>
+    <button id="admin-promocode-btn" style="margin-top:15px; display:none;" onclick="openAdminPage()">⚙️ إدارة الكودات</button>
 </div>
 
 <script>
 const impostorsInput = document.getElementById("impostors");
 const timerInput = document.getElementById("discussionTimer");
 const noTimerCheckbox = document.getElementById("noTimerMode");
-let currentUserData = { totalCoins: 0, proExpiryTime: 0 }; 
+let currentUserData = { totalCoins:0, proExpiryTime:0 };
 
-/**
- * @function isPro
- * @description التحقق من ما إذا كان المستخدم يملك عضوية Pro نشطة.
- */
-function isPro() {
-    // يجب أن تكون proExpiryTime كـ Number (timestamp)
-    const proExpiryTime = currentUserData.proExpiryTime || 0; 
-    return proExpiryTime > new Date().getTime();
+function isPro(){ return (currentUserData.proExpiryTime || 0) > new Date().getTime(); }
+function toggleTimerInput(){ if(noTimerCheckbox.checked){timerInput.value=0; timerInput.disabled=true;}else{if(timerInput.value==0)timerInput.value=120;timerInput.disabled=false;} }
+function toggleNoTimer(){ if(Number(timerInput.value)===0){noTimerCheckbox.checked=true; timerInput.disabled=true;}else{noTimerCheckbox.checked=false; timerInput.disabled=false;} }
+
+async function loadSettings(){
+  firebase.auth().onAuthStateChanged(async user=>{
+    if(!user){window.location.href="auth.html"; return;}
+    const data = await loadUserData();
+    if(data) currentUserData = data;
+    const pro = isPro();
+
+    const savedSettings = localStorage.getItem("settings");
+    let settings = savedSettings ? JSON.parse(savedSettings) : {};
+    document.getElementById("impostors").value = settings.impostors||1;
+    document.getElementById("source").value = settings.source||"default";
+    document.getElementById("words").value = Array.isArray(settings.customWords)?settings.customWords.join('\n'):"";
+
+    const chaosCheckbox=document.getElementById("chaosMode");
+    const manualSection=document.getElementById("manual-roles-section");
+    const manualImpostors=document.getElementById("manualImpostors");
+    const manualNoWord=document.getElementById("manualNoWord");
+    document.getElementById("noWordRole").checked = settings.noWordRole===true;
+    document.getElementById("multiWordMode").checked = settings.multiWordMode===true;
+
+    chaosCheckbox.disabled=!pro; manualImpostors.disabled=!pro; manualNoWord.disabled=!pro;
+    manualImpostors.value=Array.isArray(settings.manualImpostors)?settings.manualImpostors.join('\n'):"";
+    manualNoWord.value=Array.isArray(settings.manualNoWord)?settings.manualNoWord.join('\n'):"";
+    if(!pro){ chaosCheckbox.checked=false; manualImpostors.value=""; manualNoWord.value=""; manualSection.style.opacity=0.6; manualSection.title="هذه الميزة حصرية لمشتركي Pro"; } 
+    else{ chaosCheckbox.checked=settings.chaosMode===true; manualSection.style.opacity=1; manualSection.title=""; }
+
+    const savedTimer=settings.discussionTimer||120;
+    if(savedTimer===0){ noTimerCheckbox.checked=true; timerInput.value=0; timerInput.disabled=true; } else { noTimerCheckbox.checked=false; timerInput.value=savedTimer; timerInput.disabled=false; }
+
+    // اظهار زر الادمن للبريد المحدد
+    if(user.email==="clansp245@gmail.com"){ document.getElementById("admin-promocode-btn").style.display="block"; }
+  });
 }
 
-function toggleTimerInput() {
-    if (noTimerCheckbox.checked) {
-        timerInput.value = 0;
-        timerInput.disabled = true;
-    } else {
-        if (timerInput.value == 0) timerInput.value = 120; 
-        timerInput.disabled = false;
-    }
-}
-
-/**
- * @function loadSettings
- * @description تحميل الإعدادات المحفوظة من التخزين المحلي وتطبيقها بعد التحقق من حالة Pro.
- */
-async function loadSettings() {
-    // 1. التأكد من تسجيل الدخول وتحميل بيانات Pro من Firestore
-    firebase.auth().onAuthStateChanged(async (user) => {
-        if (!user) {
-            window.location.href = "auth.html";
-            return;
-        }
-        
-        const data = await loadUserData(); // دالة من auth.js
-        if (data) {
-            currentUserData = data;
-        }
-        
-        const pro = isPro(); 
-        
-        // 2. تحميل الإعدادات العامة من التخزين المحلي
-        const savedSettings = localStorage.getItem("settings");
-        let settings = {};
-        if (savedSettings) {
-             settings = JSON.parse(savedSettings);
-        }
-
-        // تحميل الإعدادات العامة
-        document.getElementById("impostors").value = settings.impostors || 1;
-        document.getElementById("source").value = settings.source || "default";
-        document.getElementById("words").value = Array.isArray(settings.customWords) ? settings.customWords.join('\n') : "";
-        
-        // تحميل مربعات الاختيار
-        const chaosCheckbox = document.getElementById("chaosMode");
-        const manualSection = document.getElementById("manual-roles-section");
-        const manualImpostors = document.getElementById("manualImpostors");
-        const manualNoWord = document.getElementById("manualNoWord");
-        
-        document.getElementById("noWordRole").checked = settings.noWordRole === true;
-        document.getElementById("multiWordMode").checked = settings.multiWordMode === true;
-        
-        // **********************************************
-        // 3. منطق تقييد ميزات Pro (تم التأكيد)
-        // **********************************************
-        chaosCheckbox.disabled = !pro;
-        manualImpostors.disabled = !pro; 
-        manualNoWord.disabled = !pro;    
-        
-        // تحميل القيم اليدوية
-        manualImpostors.value = Array.isArray(settings.manualImpostors) ? settings.manualImpostors.join('\n') : "";
-        manualNoWord.value = Array.isArray(settings.manualNoWord) ? settings.manualNoWord.join('\n') : "";
-
-        if (!pro) {
-            // إذا لم يكن Pro، يتم تعطيل خياراته وإفراغ حقول الإدخال اليدوية في الواجهة فقط
-            chaosCheckbox.checked = false;
-            manualImpostors.value = ""; 
-            manualNoWord.value = "";
-            manualSection.style.opacity = 0.6; 
-            manualSection.title = "هذه الميزة حصرية لمشتركي Pro";
-        } else {
-            // إذا كان Pro، يتم تحميل القيم التي تم تعيينها أعلاه
-            chaosCheckbox.checked = settings.chaosMode === true;
-            manualSection.style.opacity = 1;
-            manualSection.title = "";
-        }
-        
-        // تحميل المؤقت وخيار بلا مؤقت
-        const savedTimer = settings.discussionTimer || 120;
-        if (savedTimer === 0) {
-            noTimerCheckbox.checked = true;
-            timerInput.value = 0;
-            timerInput.disabled = true;
-        } else {
-            noTimerCheckbox.checked = false;
-            timerInput.value = savedTimer;
-            timerInput.disabled = false;
-        }
-    });
-}
-
-function saveSettings() {
+function saveSettings(){
   const impostorsValue = Number(impostorsInput.value);
   const sourceValue = document.getElementById("source").value;
   const pro = isPro();
-  
   let chaosModeEnabled = document.getElementById("chaosMode").checked;
-  const noWordEnabled = document.getElementById("noWordRole").checked;
-  const multiWordEnabled = document.getElementById("multiWordMode").checked;
-  let timerValue = noTimerCheckbox.checked ? 0 : Number(timerInput.value);
-  
-  // يتم حفظ الأدوار اليدوية فقط إذا كان المستخدم Pro
-  const manualImpostorsArray = pro ? document.getElementById("manualImpostors").value
-    .split("\n").map(w => w.trim()).filter(w => w.length > 0) : [];
-  const manualNoWordArray = pro ? document.getElementById("manualNoWord").value
-    .split("\n").map(w => w.trim()).filter(w => w.length > 0) : [];
-  
-  // التأكد من تعطيل وضع الفوضى إذا لم يكن Pro (منطق الأمان)
-  if (!pro) {
-      chaosModeEnabled = false;
-  }
-  
-  const customWordsArray = document.getElementById("words").value
-    .split("\n").map(w => w.trim()).filter(w => w.length > 0); 
+  const noWordEnabled=document.getElementById("noWordRole").checked;
+  const multiWordEnabled=document.getElementById("multiWordMode").checked;
+  let timerValue=noTimerCheckbox.checked?0:Number(timerInput.value);
+  const manualImpostorsArray=pro?document.getElementById("manualImpostors").value.split("\n").map(w=>w.trim()).filter(w=>w.length>0):[];
+  const manualNoWordArray=pro?document.getElementById("manualNoWord").value.split("\n").map(w=>w.trim()).filter(w=>w.length>0):[];
+  if(!pro) chaosModeEnabled=false;
+  const customWordsArray=document.getElementById("words").value.split("\n").map(w=>w.trim()).filter(w=>w.length>0);
 
-  // التحقق من الشروط
-  if (impostorsValue < 1 || isNaN(impostorsValue) || impostorsValue > 10) {
-      alert("الرجاء إدخال عدد صحيح للمحتالين بين 1 و 10.");
-      return;
-  }
-  if (timerValue < 0 || isNaN(timerValue)) {
-      alert("الرجاء إدخال قيمة للمؤقت موجبة أو تفعيل خيار 'بلا مؤقت'.");
-      return;
-  }
-  if ((sourceValue === "custom" || sourceValue === "both") && customWordsArray.length === 0) {
-      alert("اخترت استخدام كلمات مخصصة. الرجاء إدخال بعض الكلمات في الصندوق.");
-      return;
-  }
-  
-  let settings = {
-    impostors: impostorsValue,
-    source: sourceValue,
-    customWords: customWordsArray,
-    chaosMode: chaosModeEnabled, // تكون false إذا لم يكن Pro
-    noWordRole: noWordEnabled,      
-    multiWordMode: multiWordEnabled, 
-    discussionTimer: timerValue,     
-    
-    // تكون فارغة إذا لم يكن Pro (منطق الأمان)
-    manualImpostors: manualImpostorsArray, 
-    manualNoWord: manualNoWordArray
-  };
-  
-  localStorage.setItem("settings", JSON.stringify(settings));
-  
-  // ⚠️ يجب التأكد من وجود ملف باسم 'index.html' لغرض إدخال أسماء اللاعبين قبل game.html
-  // لكني سأتبع الرمز الذي قدمته للانتقال مباشرة
-  location.href = "game.html"; 
+  if(impostorsValue<1||impostorsValue>10||isNaN(impostorsValue)){alert("الرجاء إدخال عدد صحيح للمحتالين بين 1 و 10."); return;}
+  if(timerValue<0||isNaN(timerValue)){alert("الرجاء إدخال قيمة للمؤقت موجبة أو تفعيل خيار 'بلا مؤقت'."); return;}
+  if((sourceValue==="custom"||sourceValue==="both")&&customWordsArray.length===0){alert("اخترت استخدام كلمات مخصصة. الرجاء إدخال بعض الكلمات في الصندوق."); return;}
+
+  const settings={ impostors:impostorsValue, source:sourceValue, customWords:customWordsArray, chaosMode:chaosModeEnabled, noWordRole:noWordEnabled, multiWordMode:multiWordEnabled, discussionTimer:timerValue, manualImpostors:manualImpostorsArray, manualNoWord:manualNoWordArray };
+  localStorage.setItem("settings",JSON.stringify(settings));
+  location.href="game.html";
 }
 
-function toggleNoTimer() {
-    if (Number(timerInput.value) === 0) {
-        noTimerCheckbox.checked = true;
-        timerInput.disabled = true;
-    } else {
-         noTimerCheckbox.checked = false;
-         timerInput.disabled = false;
-    }
+// ⚡ دوال الكودات
+async function redeemCode(){
+  const code = document.getElementById('promocode-input').value.trim();
+  const msg = document.getElementById('promocode-msg');
+  if(!code){ msg.innerText="الرجاء إدخال كود صالح!"; return;}
+  const user = firebase.auth().currentUser;
+  if(!user){alert("الرجاء تسجيل الدخول."); return;}
+  const db=firebase.firestore();
+  try{
+      const codeDoc=await db.collection("promocodes").doc(code).get();
+      if(!codeDoc.exists){ msg.innerText="الكود غير موجود أو منتهي الصلاحية."; return; }
+      const data=codeDoc.data();
+      if(data.redeemedBy && data.redeemedBy.includes(user.uid)){ msg.innerText="لقد تم استخدام هذا الكود مسبقًا."; return; }
+
+      if(data.type==="coins"){
+          let userData = await loadUserData();
+          await saveUserData((userData.totalCoins||0)+data.amount, userData.proExpiryTime||0);
+          msg.innerText=`🎉 تم إضافة ${data.amount} كوينز لحسابك!`;
+      }
+      else if(data.type==="pro"){
+          let userData = await loadUserData();
+          const now=new Date().getTime();
+          const currentExpiry=(userData.proExpiryTime>now)?userData.proExpiryTime:now;
+          await saveUserData(userData.totalCoins||0, currentExpiry+data.durationDays*24*60*60*1000);
+          msg.innerText=`🎉 تم تفعيل عضوية Pro لمدة ${data.durationDays} يومًا!`;
+      }
+
+      await db.collection("promocodes").doc(code).update({ redeemedBy: firebase.firestore.FieldValue.arrayUnion(user.uid) });
+  } catch(err){ console.error(err); msg.innerText="حدث خطأ أثناء استخدام الكود."; }
 }
+
+function openAdminPage(){ window.open("admin-promocode.html","_blank"); }
 </script>
-
 </body>
 </html>
