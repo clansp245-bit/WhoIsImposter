@@ -16,7 +16,7 @@
 <style>
 body { font-family: 'Cairo', sans-serif; background-color: #0f172a; color: #f1f5f9; text-align: center; padding:20px; min-height:100vh; margin:0;}
 h2 { font-size:2rem; font-weight:700; margin-bottom:25px; color:#ffd700;}
-.card { background-color:#1e293b; padding:25px; border-radius:12px; max-width:500px; margin:20px auto; box-shadow:0 4px 6px rgba(0,0,0,0.1);}
+.card { background-color:#1e293b; padding:25px; border-radius:12px; max-width:500px; margin:20px auto; box-shadow:0 4px 6px rgba(0,0,0,0.1); display:none;}
 label { display:block; margin:15px 0 5px 0; font-weight:700; color:#94a3b8;}
 input, select { width:100%; padding:10px; border-radius:6px; border:1px solid #334155; background-color:#334155; color:#f1f5f9; margin-bottom:10px;}
 button { padding:12px; border:none; border-radius:8px; font-weight:700; width:100%; cursor:pointer; background-color:#34d399; color:#fff; transition:0.3s;}
@@ -24,16 +24,16 @@ button:hover { background-color:#10b981;}
 .promocode-list { max-height:300px; overflow-y:auto; margin-top:15px; }
 .promocode-list div { display:flex; justify-content:space-between; align-items:center; padding:5px; border-bottom:1px solid #475569; }
 .promocode-list div button { background-color:#ff4f4f; padding:4px 8px; font-size:12px; border-radius:4px; color:#fff; }
-.error-message { color:#ff4f4f; margin:10px 0; }
+#error-msg { color:#ff4f4f; margin:10px 0; }
 </style>
 </head>
-<body onload="checkAdmin()">
+<body>
 
 <h2>🛠️ إدارة الأكواد - Admin</h2>
 
-<div class="card" id="admin-card" style="display:none;">
-    <p class="error-message" id="error-msg" style="display:none;"></p>
-    
+<p id="error-msg"></p>
+
+<div class="card" id="admin-card">
     <label for="new-code">الكود الجديد</label>
     <input type="text" id="new-code" placeholder="ادخل الكود">
 
@@ -53,20 +53,24 @@ button:hover { background-color:#10b981;}
 
 <script>
 const db = firebase.firestore();
+const adminCard = document.getElementById("admin-card");
 const errorMsg = document.getElementById("error-msg");
 
-async function checkAdmin(){
-    firebase.auth().onAuthStateChanged(user=>{
-        if(!user){ window.location.href="auth.html"; return;}
-        if(user.email !== "clansp245@gmail.com"){ 
-            errorMsg.innerText = "لا يحق لك الوصول لهذه الصفحة!";
-            errorMsg.style.display="block";
-            return;
-        }
-        document.getElementById("admin-card").style.display="block";
-        loadPromocodes();
-    });
-}
+firebase.auth().onAuthStateChanged(async (user)=>{
+    if(!user){
+        errorMsg.innerText="يجب تسجيل الدخول أولاً.";
+        return;
+    }
+    if(user.email !== "clansp245@gmail.com"){
+        errorMsg.innerText="لا يحق لك الوصول لهذه الصفحة!";
+        return;
+    }
+
+    // عرض محتوى الادمن بعد التحقق
+    adminCard.style.display="block";
+    errorMsg.innerText="";
+    loadPromocodes();
+});
 
 async function loadPromocodes(){
     const listDiv = document.getElementById("promocode-list");
@@ -82,7 +86,6 @@ async function loadPromocodes(){
     } catch(e){
         console.error("خطأ أثناء تحميل الأكواد:",e);
         errorMsg.innerText="حدث خطأ أثناء تحميل الأكواد!";
-        errorMsg.style.display="block";
     }
 }
 
@@ -91,9 +94,8 @@ async function createPromocode(){
     const type = document.getElementById("new-code-type").value;
     const amount = Number(document.getElementById("new-code-amount").value);
 
-    if(!code || !type || !amount){ 
+    if(!code || !type || !amount){
         errorMsg.innerText="الرجاء تعبئة جميع الحقول بشكل صحيح.";
-        errorMsg.style.display="block";
         return;
     }
 
@@ -101,7 +103,7 @@ async function createPromocode(){
         await db.collection("promocodes").doc(code).set({type, amount, redeemedBy:[]});
         document.getElementById("new-code").value="";
         document.getElementById("new-code-amount").value="";
-        errorMsg.style.display="none";
+        errorMsg.innerText="";
         loadPromocodes();
         alert("تم إنشاء الكود بنجاح!");
     } catch(e){
