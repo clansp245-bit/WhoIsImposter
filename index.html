@@ -8,9 +8,9 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="auth.js"></script>
+    <script src="auth.js"></script> 
     
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
     <style>
@@ -52,16 +52,20 @@
             transition: color 0.3s;
         }
 
-        /* عرض اسم المستخدم (فوق العنوان) */
+        /* عرض اسم المستخدم وحالة Pro في المنتصف العلوي */
         #user-name-display {
             font-size: 1.5rem;
             font-weight: 700;
             color: #34d399; 
-            margin-top: 50px; /* لترك مساحة للكوينز والتاج */
+            margin-top: 50px; 
             margin-bottom: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
+            cursor: pointer; /* للإشارة إلى أنه يمكن النقر للتعديل */
+        }
+        #user-name-display:hover {
+            color: #10b981;
         }
         #user-name-display .pro-tag {
             color: #ffd700;
@@ -90,7 +94,7 @@
             text-align: right;
         }
 
-        #player-input {
+        #player-input, #new-display-name-input {
             font-family: 'Cairo', sans-serif;
             width: calc(100% - 24px); 
             padding: 12px;
@@ -205,7 +209,7 @@
             width: 90%;
             margin: 20px auto;
             box-shadow: 0 8px 15px rgba(0,0,0,0.3);
-            display: none; /* يتم إظهاره فقط عند الحاجة */
+            display: none; 
             text-align: center;
         }
         #save-name-btn {
@@ -232,7 +236,7 @@
         <i class="fas fa-coins"></i> الإجمالي: <span id="total-coins-value">0</span>
     </div>
 
-    <div id="user-name-display" onclick="showNameSetup()">
+    <div id="user-name-display" onclick="showNameSetup(false)">
         جاري التحميل...
     </div>
 
@@ -274,7 +278,7 @@
 <script>
     let players = []; 
     let currentUserData = {}; 
-    const db = firebase.firestore(); // تعريف Firestore هنا
+    const db = firebase.firestore(); 
     
     // العناصر الرئيسية
     const playerList = document.getElementById("player-list");
@@ -297,22 +301,28 @@
     async function checkAuthState() {
          firebase.auth().onAuthStateChanged(async (user) => {
             if (user) {
-                const data = await loadUserData(); // يفترض أن تجلب البيانات من Firestore
+                // عرض حالة تحميل مبدئية
+                userNameDisplay.innerHTML = 'جاري التحميل...'; 
+                
+                const data = await loadUserData(); 
                 if (data) {
                     currentUserData = data;
                 }
                 
-                // 🚨 التحقق من اسم العرض (DisplayName)
                 const displayName = user.displayName;
+                
+                // 🚨 المنطق الجديد: الإجبار على إعداد الاسم إذا لم يكن موجوداً
                 if (!displayName || displayName.length < 2) {
-                    // إذا لم يكن هناك اسم، اعرض بطاقة إعداد الاسم
-                    showNameSetup();
-                    // استخدام الايميل كاسم مؤقت
+                    // إظهار بطاقة إعداد الاسم ومنع ظهور اللوبي
+                    showNameSetup(true); 
+                    
+                    // استخدام الايميل كاسم مؤقت للعرض العلوي
                     const tempName = user.email ? user.email.split('@')[0] : 'ضيف';
                     displayUserName(tempName);
+                    
                 } else {
-                    // إذا كان الاسم موجوداً، اعرض اللوبي
-                    hideNameSetup();
+                    // إذا كان الاسم موجوداً: إظهار اللوبي وإخفاء إعداد الاسم
+                    hideNameSetup(); 
                     displayUserName(displayName);
                     displayTotalCoins(); 
                     await loadPlayers(); 
@@ -337,26 +347,42 @@
     }
     
     // ----------------------------------
-    // منطق إعداد وتعديل الاسم (جديد)
+    // منطق إعداد وتعديل الاسم 
     // ----------------------------------
 
-    function showNameSetup() {
-        mainLobbyCard.style.display = 'none';
+    /**
+     * @function showNameSetup
+     * @param {boolean} blockLobby - إذا كان صحيحاً، يتم إخفاء اللوبي الرئيسي.
+     */
+    function showNameSetup(blockLobby = false) {
+        if (blockLobby) {
+            mainLobbyCard.style.display = 'none';
+        } else {
+            // إذا كان المستخدم يعدل اسمه يدوياً، نعرض اللوبي بعد الانتهاء
+            mainLobbyCard.style.display = 'block'; 
+        }
+        
         nameSetupCard.style.display = 'block';
         document.getElementById('new-display-name-input').value = firebase.auth().currentUser?.displayName || '';
     }
 
     function hideNameSetup() {
         nameSetupCard.style.display = 'none';
-        mainLobbyCard.style.display = 'block';
+        mainLobbyCard.style.display = 'block'; // إظهار اللوبي
     }
 
-    // 🚨 دالة التحقق من التكرار (جديد)
+    // 🚨 دالة التحقق من التكرار 
     async function isNameTaken(name) {
         const usersRef = db.collection('users');
+        const user = firebase.auth().currentUser;
+        
         const snapshot = await usersRef.where('displayName', '==', name).limit(1).get();
+        
         // إذا كان هناك نتائج وكان UID مختلفاً عن المستخدم الحالي، فالاسم مستخدم
-        return !snapshot.empty && snapshot.docs[0].id !== firebase.auth().currentUser.uid;
+        if (!snapshot.empty) {
+             return snapshot.docs[0].id !== user.uid;
+        }
+        return false;
     }
 
     async function saveNewDisplayName() {
@@ -370,14 +396,22 @@
             return;
         }
 
+        const saveBtn = document.getElementById('save-name-btn');
+        saveBtn.disabled = true;
+        saveBtn.innerText = 'جاري التحقق...';
+
         // 1. التحقق من التكرار
         if (await isNameTaken(newName)) {
             errorMsg.innerText = '❌ هذا الاسم مستخدم بالفعل. اختر اسماً آخر.';
+            saveBtn.disabled = false;
+            saveBtn.innerText = 'حفظ الاسم';
             return;
         }
 
         const user = firebase.auth().currentUser;
         if (!user) return;
+        
+        saveBtn.innerText = 'جاري الحفظ...';
 
         try {
             // 2. تحديث اسم العرض في Firebase Auth
@@ -387,15 +421,21 @@
             
             // 4. تحديث الواجهة والتخزين المؤقت
             displayUserName(newName);
-            hideNameSetup();
+            hideNameSetup(); // 🚨 سيتم إخفاء بطاقة الإعداد وإظهار اللوبي
             alert('✅ تم حفظ اسم العرض بنجاح!');
             
-            // أعد تحميل بيانات اللوبي بالاسم الجديد
+            // إعادة تفعيل الزر
+            saveBtn.disabled = false;
+            saveBtn.innerText = 'حفظ الاسم';
+            
+            // أعد تحميل بيانات اللوبي بالاسم الجديد (لتحديث الحالة بالكامل)
             checkAuthState(); 
             
         } catch (error) {
             console.error("خطأ في حفظ الاسم:", error);
             errorMsg.innerText = 'فشل في حفظ الاسم: ' + error.message;
+            saveBtn.disabled = false;
+            saveBtn.innerText = 'حفظ الاسم';
         }
     }
     
@@ -503,3 +543,4 @@
 
 </body>
 </html>
+
