@@ -1,0 +1,288 @@
+here<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🛒 المتجر</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="auth.js"></script> 
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<style>
+/* التنسيقات العامة */
+body {
+    font-family: 'Cairo', sans-serif;
+    background-color: #0f172a;
+    color: #f1f5f9;
+    padding: 20px;
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+h2 {
+    color: #ffcc00;
+    margin-bottom: 30px;
+}
+
+/* تنسيق بطاقة العرض */
+.shop-item {
+    background-color: #1e293b;
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+    text-align: center;
+    border: 2px solid #ffcc00;
+}
+
+.shop-item h3 {
+    color: #ffcc00;
+    font-size: 1.8rem;
+    margin-top: 0;
+}
+
+.shop-item p {
+    color: #cbd5e1;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.features-list {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 25px;
+    text-align: right;
+}
+
+.features-list li {
+    background-color: #334155;
+    padding: 8px 15px;
+    margin-bottom: 8px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.features-list li i {
+    color: #34d399;
+    margin-left: 10px;
+}
+
+/* زر الشراء */
+.buy-btn {
+    padding: 12px 30px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+    background-color: #34d399; 
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.buy-btn i {
+    margin-left: 8px;
+}
+
+.buy-btn:hover {
+    background-color: #10b981;
+    transform: translateY(-1px);
+}
+
+.pro-status {
+    margin-top: 20px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #cbd5e1;
+}
+
+.pro-status.active {
+    color: #34d399;
+}
+
+.pro-status.expired {
+    color: #ff4f4f;
+}
+
+/* شاشة عرض الكوينز والرجوع */
+#coin-display {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #ffd700;
+}
+
+.home-link {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 24px;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+</style>
+</head>
+
+<body onload="loadShopData()">
+
+<div id="coin-display">
+    <i class="fas fa-coins"></i> الإجمالي: <span id="total-coins-value">0</span>
+</div>
+
+<a href="index.html" class="home-link" title="العودة للصفحة الرئيسية">
+    <i class="fas fa-home"></i>
+</a>
+
+<h2>🛒 متجر الكوينز</h2>
+
+<div id="pro-membership-card" class="shop-item">
+    <h3>عضوية Pro</h3>
+    <p>افتح جميع أقسام الكلمات والميزات المتقدمة لمدة 30 يومًا!</p>
+
+    <ul class="features-list">
+        <li><i class="fas fa-check"></i> الوصول لجميع أقسام الكلمات (أطعمة، حيوانات، أماكن، الخ).</li>
+        <li><i class="fas fa-check"></i> تفعيل دور "بلا كلمة".</li>
+        <li><i class="fas fa-check"></i> تفعيل وضع الكلمات المتعددة (لكل محتال كلمة مختلفة).</li>
+        <li><i class="fas fa-check"></i> مضاعف الكوينز (x1.5).</li>
+    </ul>
+
+    <div class="pro-status" id="proStatus">...</div>
+    
+    <button class="buy-btn" id="buyProBtn" onclick="buyProMembership()">
+        شراء لمدة 30 يوماً
+        <i class="fas fa-coins"></i> <span id="proCost">300</span>
+    </button>
+</div>
+
+<script>
+// ************* ثوابت المتجر *************
+const PRO_COST = 300; 
+const PRO_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 يوماً بالمللي ثانية
+
+const totalCoinsValue = document.getElementById("total-coins-value");
+const proCostDisplay = document.getElementById("proCost");
+const proStatusDisplay = document.getElementById("proStatus");
+const buyProBtn = document.getElementById("buyProBtn");
+
+// متغير عالمي للبيانات المحملة (يتم تحديثه في loadShopData)
+let currentUserData = { totalCoins: 0, proExpiryTime: 0, players: [], settings: {} };
+window.currentUserData = currentUserData; // ضروري للوصول إليه في auth.js
+
+proCostDisplay.innerText = PRO_COST;
+
+/**
+ * @function loadShopData
+ * @description تحميل بيانات المستخدم والتحقق من حالة Pro.
+ */
+async function loadShopData() {
+    firebase.auth().onAuthStateChanged(async (user) => {
+        if (!user) {
+            alert("الرجاء تسجيل الدخول أولاً.");
+            window.location.href = "auth.html";
+            return;
+        }
+
+        const data = await loadUserData(); 
+        if (data) {
+            // تحديث الكائن العالمي
+            Object.assign(currentUserData, data);
+            totalCoinsValue.innerText = currentUserData.totalCoins || 0;
+        }
+        
+        checkProStatus();
+    });
+}
+
+/**
+ * @function checkProStatus
+ * @description تحديث حالة اشتراك Pro في الواجهة.
+ */
+function checkProStatus() {
+    const isProActive = window.isPro(); // استخدام الدالة من auth.js
+    const expiryTime = currentUserData.proExpiryTime || 0;
+    const expiryDate = new Date(expiryTime);
+    
+    if (isProActive) {
+        proStatusDisplay.className = 'pro-status active';
+        proStatusDisplay.innerHTML = `✅ مفعل حتى: ${expiryDate.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`;
+        buyProBtn.innerText = "تمديد الاشتراك 30 يوماً";
+        // يمكن تغيير تكلفة التمديد إذا أردت
+    } else {
+        proStatusDisplay.className = 'pro-status expired';
+        if (expiryTime > 0) {
+             proStatusDisplay.innerHTML = `❌ منتهي الصلاحية في: ${expiryDate.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+        } else {
+             proStatusDisplay.innerHTML = `❌ لم يتم الشراء بعد.`;
+        }
+        buyProBtn.innerText = "شراء لمدة 30 يوماً";
+    }
+}
+
+/**
+ * @function buyProMembership
+ * @description منطق شراء عضوية Pro باستخدام الكوينز.
+ */
+async function buyProMembership() {
+    if (currentUserData.totalCoins < PRO_COST) {
+        alert("⚠️ لا تملك كوينز كافية! (المطلوب: " + PRO_COST + " كوينز)");
+        return;
+    }
+
+    if (!confirm(`هل أنت متأكد من شراء عضوية Pro مقابل ${PRO_COST} كوينز؟`)) {
+        return;
+    }
+
+    // 1. حساب الوقت الجديد
+    const now = new Date().getTime();
+    const currentExpiry = currentUserData.proExpiryTime || now;
+    
+    // إذا كان الاشتراك لا يزال سارياً، نبدأ التمديد من تاريخ انتهاء الصلاحية الحالي
+    // إذا كان منتهياً أو لم يبدأ بعد، نبدأ التمديد من الآن
+    const startTime = (currentExpiry > now) ? currentExpiry : now;
+    const newProTime = startTime + PRO_DURATION_MS;
+
+    const newCoins = currentUserData.totalCoins - PRO_COST;
+    
+    // 2. حفظ البيانات الجديدة في Firebase
+    const saveSuccessful = await saveUserData(
+        newCoins, 
+        newProTime,
+        currentUserData.players || [], // الحفاظ على بيانات اللاعبين
+        currentUserData.settings || {} // الحفاظ على الإعدادات
+    );
+
+    if (saveSuccessful) {
+        // 3. تحديث الواجهة والبيانات المحلية
+        currentUserData.totalCoins = newCoins;
+        currentUserData.proExpiryTime = newProTime;
+        
+        totalCoinsValue.innerText = newCoins;
+        alert("🎉 مبروك! تم تفعيل عضوية Pro بنجاح.");
+        checkProStatus(); 
+    } else {
+        alert("❌ فشل عملية الشراء. يرجى التأكد من تسجيل الدخول والاتصال بالإنترنت.");
+    }
+}
+</script>
+
+</body>
+</html>
