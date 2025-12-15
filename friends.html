@@ -1,68 +1,33 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <title>🤝 الأصدقاء وطلبات الصداقة</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>🤝 الأصدقاء وطلبات الصداقة</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="auth.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-    <style>
-        body {
-            font-family: 'Cairo', sans-serif;
-            background:#0f172a;
-            color:#f1f5f9;
-            padding:20px;
-        }
-        h2 { color:#34d399; text-align:center; }
-        .container { max-width:600px; margin:auto; }
-        .card {
-            background:#1e293b;
-            padding:20px;
-            border-radius:12px;
-            margin-bottom:20px;
-            text-align:right;
-        }
-        input {
-            width: calc(100% - 90px);
-            padding:10px;
-            border-radius:8px;
-            border:none;
-            background:#334155;
-            color:white;
-        }
-        button {
-            padding:10px;
-            border:none;
-            border-radius:8px;
-            font-weight:700;
-            cursor:pointer;
-        }
-        .search-btn { background:#6366f1; color:white; width:80px; }
-        .user-item {
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            padding:10px 0;
-            border-bottom:1px solid #334155;
-        }
-        .action-btn {
-            padding:5px 10px;
-            border-radius:6px;
-            font-weight:700;
-            margin-right:5px;
-        }
-        .send { background:#34d399; color:white; }
-        .accept { background:#6366f1; color:white; }
-        .reject, .remove { background:#ef4444; color:white; }
-        .loading { color:#94a3b8; padding:10px; }
-    </style>
+<style>
+body { font-family: 'Cairo', sans-serif; background:#0f172a; color:#f1f5f9; padding:20px; }
+h2 { color:#34d399; text-align:center; }
+.container { max-width:600px; margin:auto; }
+.card { background:#1e293b; padding:20px; border-radius:12px; margin-bottom:20px; text-align:right; }
+input { width: calc(100% - 90px); padding:10px; border-radius:8px; border:none; background:#334155; color:white; }
+button { padding:10px; border:none; border-radius:8px; font-weight:700; cursor:pointer; }
+.search-btn { background:#6366f1; color:white; width:80px; }
+.user-item { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #334155; }
+.action-btn { padding:5px 10px; border-radius:6px; font-weight:700; margin-right:5px; }
+.send { background:#34d399; color:white; }
+.accept { background:#6366f1; color:white; }
+.reject, .remove { background:#ef4444; color:white; }
+.loading { color:#94a3b8; padding:10px; }
+</style>
 </head>
 
 <body>
@@ -122,26 +87,27 @@ function listenUser() {
 
 // ---------------- REQUESTS ----------------
 function listenRequests() {
-    db.collection("friendRequests")
+    const incomingRef = db.collection("friendRequests")
         .where("receiverId","==",currentUserId)
-        .where("status","==","pending")
-        .onSnapshot(async snap => {
-            document.getElementById("requests-loading").style.display="none";
-            requests = [];
+        .where("status","==","pending");
 
-            const ids = snap.docs.map(d=>d.data().senderId);
-            const names = await getNames(ids);
+    incomingRef.onSnapshot(async snap => {
+        document.getElementById("requests-loading").style.display="none";
+        requests = [];
 
-            snap.forEach(doc=>{
-                requests.push({
-                    id:doc.id,
-                    senderId:doc.data().senderId,
-                    name:names[doc.data().senderId] || "مستخدم"
-                });
+        const ids = snap.docs.map(d=>d.data().senderId);
+        const names = await getNames(ids);
+
+        snap.forEach(doc=>{
+            requests.push({
+                id:doc.id,
+                senderId:doc.data().senderId,
+                name:names[doc.data().senderId] || "مستخدم"
             });
-
-            renderRequests();
         });
+
+        renderRequests();
+    });
 }
 
 // ---------------- HELPERS ----------------
@@ -149,7 +115,8 @@ async function getNames(ids){
     if(!ids.length) return {};
     const map={};
     const chunks=[];
-    while(ids.length) chunks.push(ids.splice(0,10));
+    const copy = [...ids];
+    while(copy.length) chunks.push(copy.splice(0,10));
     for(const c of chunks){
         const s=await db.collection("users")
             .where(firebase.firestore.FieldPath.documentId(),"in",c).get();
@@ -222,10 +189,16 @@ async function handleSearch(){
     }
 
     res.forEach(u=>{
+        let btnHtml = `<button class="action-btn send" onclick="send('${u.uid}')">إضافة</button>`;
+        if(friends.includes(u.uid)) btnHtml = `<span style="color:#34d399; font-weight:700;">صديق</span>`;
+
+        const incoming = requests.find(r=>r.senderId===u.uid);
+        if(incoming) btnHtml = `<button class="action-btn accept" onclick="accept('${incoming.id}','${incoming.senderId}')">قبول</button>`;
+
         el.innerHTML+=`
         <div class="user-item">
             <span>${u.displayName}</span>
-            <button class="action-btn send" onclick="send('${u.uid}')">إضافة</button>
+            ${btnHtml}
         </div>`;
     });
 }
@@ -239,6 +212,9 @@ async function accept(id,uid){
 }
 async function reject(id){
     if(await rejectFriendRequest(id)) alert("تم الرفض");
+}
+async function removeFriend(id){
+    if(await removeFriend(id)) alert("تم الحذف");
 }
 </script>
 
