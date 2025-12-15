@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎁 إرسال الهدايا</title>
+<title>🎁 إرسال الهدايا - بحث اللاعب</title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -22,9 +22,28 @@ body {
     padding: 20px;
 }
 h2 { color: #34d399; margin-bottom: 20px; }
-#player-select, #send-btn { margin: 10px 0; padding: 10px; border-radius: 8px; border: none; font-size: 16px; }
+#player-input, #send-btn { margin: 10px 0; padding: 10px; border-radius: 8px; border: none; font-size: 16px; width: 250px; }
 #send-btn { background-color: #6366f1; color: #fff; cursor: pointer; }
 #send-btn:hover { background-color: #4f46e5; }
+
+#suggestions {
+    background-color: #1e293b;
+    border-radius: 8px;
+    margin-top: 5px;
+    width: 250px;
+    max-height: 150px;
+    overflow-y: auto;
+    text-align: right;
+    padding: 0;
+}
+.suggestion-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #334155;
+}
+.suggestion-item:hover {
+    background-color: #334155;
+}
 .gift-card {
     display: inline-block;
     background-color: #1e293b;
@@ -45,9 +64,8 @@ h2 { color: #34d399; margin-bottom: 20px; }
 
 <h2>🎁 إرسال الهدايا للاعبين</h2>
 
-<select id="player-select">
-    <option value="">اختر لاعباً</option>
-</select>
+<input type="text" id="player-input" placeholder="ابحث عن لاعب..." autocomplete="off">
+<div id="suggestions"></div>
 
 <div id="gifts-container"></div>
 
@@ -55,26 +73,23 @@ h2 { color: #34d399; margin-bottom: 20px; }
 
 <script>
 let currentUserData = {};
-let players = [];
+let selectedPlayerId = null;
 let gifts = [];
 let selectedGifts = [];
 
 // ------------------- بيانات الهدايا -------------------
 function getGiftList() {
     return [
-        // عادي
         { name: 'وردة', price: 10, xp: 5, rarity: 'عادي' },
         { name: 'شوكولاتة', price: 15, xp: 8, rarity: 'عادي' },
         { name: 'كتاب', price: 20, xp: 10, rarity: 'عادي' },
         { name: 'كوب', price: 10, xp: 4, rarity: 'عادي' },
         { name: 'قبعة', price: 12, xp: 5, rarity: 'عادي' },
-        // غالي
         { name: 'سيارة', price: 200, xp: 50, rarity: 'غالي' },
         { name: 'سماعة بلوتوث', price: 150, xp: 35, rarity: 'غالي' },
         { name: 'هاتف', price: 180, xp: 45, rarity: 'غالي' },
         { name: 'ساعة ذكية', price: 160, xp: 40, rarity: 'غالي' },
         { name: 'دراجة نارية', price: 220, xp: 55, rarity: 'غالي' },
-        // أسطوري
         { name: 'طائرة خاصة', price: 1000, xp: 200, rarity: 'أسطوري' },
         { name: 'يخت فاخر', price: 1200, xp: 250, rarity: 'أسطوري' },
         { name: 'جزيرة خاصة', price: 5000, xp: 800, rarity: 'أسطوري' },
@@ -82,17 +97,37 @@ function getGiftList() {
         { name: 'سيارة رياضية نادرة', price: 800, xp: 150, rarity: 'أسطوري' }
     ];
 }
-// ------------------- تحميل اللاعبين -------------------
-async function loadPlayers() {
-    const user = firebase.auth().currentUser;
-    if (!user) return;
-    const db = firebase.firestore();
-    const snapshot = await db.collection("users").get();
-    players = snapshot.docs.map(doc => ({ id: doc.id, name: doc.data().displayName || doc.data().email }));
-    const select = document.getElementById("player-select");
-    select.innerHTML = '<option value="">اختر لاعباً</option>';
-    players.forEach(p => select.innerHTML += `<option value="${p.id}">${p.name}</option>`);
-}
+
+// ------------------- البحث عن اللاعبين -------------------
+let searchTimeout = null;
+document.getElementById("player-input").addEventListener("input", function() {
+    const query = this.value.trim().toLowerCase();
+    selectedPlayerId = null;
+    const suggestionsDiv = document.getElementById("suggestions");
+    suggestionsDiv.innerHTML = "";
+    if (query.length < 2) return;
+
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(async () => {
+        const db = firebase.firestore();
+        const snapshot = await db.collection("users")
+            .where("displayNameLower", ">=", query)
+            .where("displayNameLower", "<=", query + '\uf8ff')
+            .limit(5).get();
+        snapshot.forEach(doc => {
+            const div = document.createElement("div");
+            div.className = "suggestion-item";
+            div.textContent = doc.data().displayName || doc.data().email;
+            div.onclick = () => {
+                document.getElementById("player-input").value = div.textContent;
+                selectedPlayerId = doc.id;
+                suggestionsDiv.innerHTML = "";
+            };
+            suggestionsDiv.appendChild(div);
+        });
+    }, 300);
+});
+
 // ------------------- تحميل الهدايا -------------------
 function initGifts() {
     gifts = getGiftList();
@@ -105,7 +140,6 @@ function initGifts() {
         div.onclick = () => toggleGiftSelection(idx, div);
         container.appendChild(div);
     });
-    loadPlayers();
 }
 function toggleGiftSelection(idx, div) {
     const gift = gifts[idx];
@@ -118,10 +152,10 @@ function toggleGiftSelection(idx, div) {
         div.classList.remove("selected");
     }
 }
+
 // ------------------- إرسال الهدايا -------------------
 async function sendSelectedGifts() {
-    const playerId = document.getElementById("player-select").value;
-    if (!playerId) { alert("❌ الرجاء اختيار لاعب"); return; }
+    if (!selectedPlayerId) { alert("❌ الرجاء اختيار لاعب صحيح"); return; }
     if (selectedGifts.length === 0) { alert("❌ الرجاء اختيار هدية واحدة على الأقل"); return; }
 
     const user = firebase.auth().currentUser;
@@ -129,7 +163,7 @@ async function sendSelectedGifts() {
 
     const db = firebase.firestore();
     const senderRef = db.collection("users").doc(user.uid);
-    const recipientRef = db.collection("users").doc(playerId);
+    const recipientRef = db.collection("users").doc(selectedPlayerId);
 
     try {
         await db.runTransaction(async t => {
@@ -142,7 +176,7 @@ async function sendSelectedGifts() {
             const recipientData = recipientDoc.data();
 
             const totalCost = selectedGifts.reduce((acc,g)=>acc+(g.price||0),0);
-            if ((senderData.totalCoins||0) < totalCost) throw `❌ رصيدك (${senderData.totalCoins||0}) غير كافٍ لإرسال الهدايا (الكلفة: ${totalCost})`;
+            if ((senderData.totalCoins||0) < totalCost) throw `❌ رصيدك (${senderData.totalCoins||0}) غير كافٍ (الكلفة: ${totalCost})`;
 
             // خصم الرصيد
             t.update(senderRef,{ totalCoins: firebase.firestore.FieldValue.increment(-totalCost) });
@@ -166,6 +200,8 @@ async function sendSelectedGifts() {
         });
         alert("🎉 تم إرسال الهدايا بنجاح!");
         selectedGifts=[]; document.querySelectorAll(".gift-card.selected").forEach(d=>d.classList.remove("selected"));
+        document.getElementById("player-input").value = "";
+        selectedPlayerId = null;
     } catch(err) {
         console.error(err);
         alert(typeof err==="string"?err:"❌ حدث خطأ أثناء إرسال الهدايا");
@@ -175,4 +211,3 @@ async function sendSelectedGifts() {
 
 </body>
 </html>
-
