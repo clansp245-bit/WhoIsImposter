@@ -10,7 +10,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="auth.js"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
     <style>
@@ -214,6 +214,7 @@
 
 <script>
     let players = []; 
+    let currentUserData = {}; // لحفظ بيانات المستخدم بما في ذلك الكوينز
     const playerList = document.getElementById("player-list");
     const playerInput = document.getElementById("player-input");
     const startGameBtn = document.getElementById("start-game-btn"); 
@@ -228,11 +229,15 @@
      * @description التحقق من حالة المصادقة (Auth) وعرض الكوينزات.
      */
     async function checkAuthState() {
-         firebase.auth().onAuthStateChanged((user) => {
+         firebase.auth().onAuthStateChanged(async (user) => {
             if (user) {
                 // إذا كان المستخدم مسجلاً، نُحمّل بياناته
+                const data = await loadUserData(); // من auth.js
+                if (data) {
+                    currentUserData = data;
+                }
                 displayTotalCoins(); 
-                loadPlayers();
+                await loadPlayers(); // الانتظار لتحميل قائمة اللاعبين من Firestore
             } else {
                 // إذا لم يكن مسجلاً، نُرسله لصفحة تسجيل الدخول
                 window.location.href = "auth.html";
@@ -244,17 +249,13 @@
      * @function displayTotalCoins
      * @description تحميل إجمالي الكوينزات من Firestore وعرضها.
      */
-    async function displayTotalCoins() {
-        const userData = await loadUserData(); // من auth.js
-        if (userData) {
-            document.getElementById("total-coins-value").innerText = userData.totalCoins || 0;
-        } else {
-            document.getElementById("total-coins-value").innerText = 0;
-        }
+    function displayTotalCoins() {
+        // نستخدم currentUserData المحملة في checkAuthState
+        document.getElementById("total-coins-value").innerText = currentUserData.totalCoins || 0;
     }
     
     // ----------------------------------
-    // منطق اللاعبين (يستخدم localStorage)
+    // منطق اللاعبين (يستخدم Firestore)
     // ----------------------------------
     
     function renderPlayers() {
@@ -277,13 +278,29 @@
         }
     }
 
-    function addPlayer() {
+    /**
+     * @function savePlayersToFirestore
+     * @description يحفظ مصفوفة اللاعبين الحالية في Firestore.
+     */
+    async function savePlayersToFirestore() {
+        // 🚨 نحتاج إلى التأكد من أن دالة saveUserData في auth.js تقبل playersData
+        await saveUserData(
+            currentUserData.totalCoins || 0,
+            currentUserData.proExpiryTime || 0,
+            players, // مصفوفة اللاعبين الجديدة
+            currentUserData.settings || {} // الحفاظ على الإعدادات الحالية
+        );
+        // تحديث البيانات المحلية بعد الحفظ (للتأكد من أنها متزامنة)
+        currentUserData.players = players;
+    }
+
+    async function addPlayer() {
         const playerName = playerInput.value.trim();
         if (playerName && playerName.length > 0 && !players.includes(playerName)) {
             players.push(playerName);
             playerInput.value = '';
             renderPlayers();
-            localStorage.setItem("players", JSON.stringify(players));
+            await savePlayersToFirestore(); // حفظ التغيير في Firestore
         } else if (players.includes(playerName)) {
             alert("هذا الاسم موجود بالفعل!");
         } else if (playerName.length === 0) {
@@ -291,36 +308,38 @@
         }
     }
     
-    function removePlayer(index) {
+    async function removePlayer(index) {
         players.splice(index, 1);
         renderPlayers();
-        localStorage.setItem("players", JSON.stringify(players));
+        await savePlayersToFirestore(); // حفظ التغيير في Firestore
     }
     
-    function loadPlayers() {
-        const savedPlayers = localStorage.getItem("players");
-        if (savedPlayers) {
-            try {
-                players = JSON.parse(savedPlayers);
-                if (!Array.isArray(players)) {
-                    players = []; 
-                }
-            } catch (e) {
-                console.error("خطأ في تحليل قائمة اللاعبين المحفوظة:", e);
-                players = [];
-            }
-            renderPlayers();
+    async function loadPlayers() {
+        // نستخدم currentUserData المحملة في checkAuthState
+        const savedPlayers = currentUserData.players;
+        if (Array.isArray(savedPlayers)) {
+            players = savedPlayers;
         } else {
-            renderPlayers(); 
+            players = [];
         }
+        renderPlayers();
     }
     
-    function saveAndStartGame() {
+    async function saveAndStartGame() {
         if (players.length < 3) {
             alert("يجب إضافة 3 لاعبين على الأقل قبل بدء اللعبة.");
             return;
         }
-        localStorage.setItem("players", JSON.stringify(players));
+        
+        // 🚨 نضمن حفظ قائمة اللاعبين النهائية في Firestore قبل التوجيه
+        await savePlayersToFirestore(); 
+        
+        // **ملاحظة:** لم نعد نحفظ اللاعبين في localStorage.
+        // يجب أن نرسل اللاعبين إلى game.html عبر localStorage مؤقتاً 
+        // أو نقوم بتحميلها من Firestore في game.html.
+        // بما أنك تستخدم localStorage حالياً في game.html، سنستمر في تخزينه هنا مؤقتاً:
+        localStorage.setItem("players", JSON.stringify(players)); 
+        
         location.href = "game.html"; 
     }
 
@@ -335,3 +354,4 @@
 
 </body>
 </html>
+
