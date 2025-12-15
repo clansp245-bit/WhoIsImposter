@@ -13,19 +13,9 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
-/* ---------------------------------- */
-/* زر العودة للصفحة الرئيسية */
-#home-icon {
-    position: absolute;
-    top: 20px;
-    left: 20px; 
-    font-size: 24px;
-    color: #94a3b8;
-    cursor: pointer;
-    transition: color 0.3s;
-}
+/* CSS Styles from previous file (lobby_entry.html) */
+#home-icon { position: absolute; top: 20px; left: 20px; font-size: 24px; color: #94a3b8; cursor: pointer; transition: color 0.3s; }
 #home-icon:hover { color: #34d399; }
-/* ---------------------------------- */
 body { font-family: 'Cairo', sans-serif; background-color: #0f172a; color: #f1f5f9; text-align: center; padding: 20px; min-height: 100vh; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .card { background-color: #1e293b; padding: 40px; border-radius: 12px; max-width: 400px; width: 90%; margin: 20px auto; box-shadow: 0 8px 15px rgba(0,0,0,0.3); text-align: right; }
 h2 { font-size: 2rem; font-weight: 700; margin-bottom: 30px; color: #34d399; }
@@ -70,19 +60,22 @@ let currentUserData = {};
 let currentUID;
 const db = firebase.firestore();
 
-// 🚨 ملاحظة: يجب أن يحتوي ملف auth.js على دالة loadUserData 
+// 🚨 وظيفة التحقق والتحميل
 firebase.auth().onAuthStateChanged(async (user) => {
     if (!user) {
+        // إذا لم يكن هناك مستخدم مسجل، أعد التوجيه لصفحة تسجيل الدخول
         window.location.href = "auth.html";
         return;
     }
     currentUID = user.uid;
+    // نفترض أن دالة loadUserData موجودة في auth.js وتقوم بإرجاع بيانات المستخدم
     const data = await loadUserData(); 
     if(data) {
         currentUserData = data;
     } else {
-        // إذا لم يكن هناك بيانات، قم بتحميل الإعدادات الافتراضية
+        // بيانات افتراضية لو لم تكتمل عملية تحميل البيانات
         currentUserData.settings = { impostors: 1, selectedCategories: ['objects'] }; 
+        currentUserData.playerName = `لاعب#${currentUID.substring(0, 4)}`;
     }
 });
 
@@ -106,10 +99,9 @@ function generateRoomCode() {
 async function createRoom() {
     document.getElementById('error-msg').innerText = '';
     
-    // يجب أن تكون الإعدادات قد حُملت
+    // تحقق من وجود الإعدادات
     if (!currentUserData.settings || currentUserData.settings.selectedCategories?.length === 0) {
         document.getElementById('error-msg').innerText = '⚠️ الرجاء ضبط الإعدادات واختيار أقسام الكلمات أولاً.';
-        setTimeout(() => window.location.href = "settings.html", 2000); 
         return;
     }
     
@@ -134,22 +126,23 @@ async function createRoom() {
     }
 
     const initialSettings = currentUserData.settings || {}; 
+    const playerName = currentUserData.playerName || `لاعب#${currentUID.substring(0, 4)}`;
 
     const roomData = {
         hostUID: currentUID,
-        hostName: currentUserData.playerName || `لاعب#${currentUID.substring(0, 4)}`,
-        status: 'waiting', // الحالة الأولية
-        players: [currentUID], // المضيف هو أول لاعب
-        playerNames: { [currentUID]: currentUserData.playerName || `لاعب#${currentUID.substring(0, 4)}` }, // أسماء اللاعبين
+        hostName: playerName,
+        status: 'waiting', 
+        players: [currentUID], 
+        playerNames: { [currentUID]: playerName }, 
         settings: initialSettings,
-        currentGameData: null, 
+        currentGameData: null,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
     try {
         await roomRef.set(roomData);
-        // التوجيه إلى صفحة اللوبي
-        window.location.href = `lobby.html?id=${roomCode}`;
+        // التوجيه إلى صفحة اللوبي: room.html
+        window.location.href = `room.html?id=${roomCode}`; 
     } catch (error) {
         console.error("خطأ في إنشاء الغرفة:", error);
         document.getElementById('error-msg').innerText = `خطأ: ${error.message}`;
@@ -187,24 +180,25 @@ async function joinRoom() {
                 throw new Error("اللعبة في هذه الغرفة بدأت بالفعل أو انتهت.");
             }
             
-            // تحقق من أن اللاعب ليس موجودًا بالفعل (مهمة Transaction)
+            const playerName = currentUserData.playerName || `لاعب#${currentUID.substring(0, 4)}`;
+
+            // إضافة اللاعب إذا لم يكن موجودًا
             if (!roomData.players.includes(currentUID)) {
                 
                 if (roomData.players.length >= 10) { 
                     throw new Error("الغرفة ممتلئة (10 لاعبين كحد أقصى).");
                 }
                 roomData.players.push(currentUID);
-                roomData.playerNames[currentUID] = currentUserData.playerName || `لاعب#${currentUID.substring(0, 4)}`;
+                roomData.playerNames[currentUID] = playerName;
                 
-                // تحديث البيانات في Firestore
                 t.update(roomRef, { 
                     players: roomData.players, 
                     playerNames: roomData.playerNames 
                 });
             }
 
-            // التوجيه
-            window.location.href = `lobby.html?id=${roomCode}`;
+            // التوجيه إلى صفحة اللوبي: room.html
+            window.location.href = `room.html?id=${roomCode}`;
         });
     } catch (error) {
         console.error("خطأ في الانضمام:", error);
