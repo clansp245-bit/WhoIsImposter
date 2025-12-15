@@ -160,9 +160,11 @@ const wordCategories = {
     ]
 };
 
-// 🚨 تم تعديل هذه المتغيرات لتبدأ فارغة ويتم ملؤها من Firestore
+// ** المتغيرات العالمية للبيانات **
 let players = null; 
 let settings = null;
+let currentUserData = { totalCoins: 0, proExpiryTime: 0, players: [], settings: {} }; 
+window.currentUserData = currentUserData; // ضروري للوصول إليها في isPro() داخل auth.js
 
 const playerDisplay = document.getElementById("player");
 const card = document.getElementById("card");
@@ -180,8 +182,6 @@ const NW = "NO_WORD_ROLE_MARKER";
 let timerInterval;
 let gameCompleted = false; 
 
-// تم وضعها على نطاق window لسهولة الوصول إليها في الدوال المساعدة
-let currentUserData = { totalCoins: 0, proExpiryTime: 0 }; 
 
 /**
  * @function loadGameData
@@ -195,18 +195,23 @@ async function loadGameData() {
             return;
         }
         
-        // 🚨 1. تحميل البيانات من Firestore
+        // 1. تحميل البيانات من Firestore
         const data = await loadUserData(); // من auth.js
         if (data) {
-            currentUserData = data;
-            // 🚨 2. تعيين المتغيرات العالمية من البيانات المحملة
+            // تحديث كائن currentUserData العالمي و window.currentUserData
+            Object.assign(currentUserData, data);
+            
             players = currentUserData.players || [];
             settings = currentUserData.settings || {};
+        } else {
+            // فشل تحميل البيانات
+            players = [];
+            settings = {};
         }
         
         const selectedCategories = settings.selectedCategories || [];
         
-        // 🚨 3. التحقق من وجود إعدادات صحيحة وأقسام مختارة
+        // 2. التحقق من وجود إعدادات صحيحة وأقسام مختارة
         if (players.length < 3 || selectedCategories.length === 0) {
             alert("يرجى إدخال 3 لاعبين على الأقل واختيار قسم واحد على الأقل للكلمات من الإعدادات.");
             // التوجيه الصحيح حسب النقص
@@ -220,7 +225,7 @@ async function loadGameData() {
         
         displayTotalCoins(); 
         
-        // 4. خلط قائمة اللاعبين عشوائياً بعد تحميلها
+        // 3. خلط قائمة اللاعبين عشوائياً بعد تحميلها
         players.sort(() => Math.random() - 0.5); 
         
         setupGameRoles();
@@ -234,8 +239,8 @@ async function loadGameData() {
 // ----------------------------------
 
 function isPro() {
-    const proExpiryTime = currentUserData.proExpiryTime || 0; 
-    return proExpiryTime > new Date().getTime();
+    // نعتمد على isPro في auth.js للحصول على حالة الـ Pro
+    return window.isPro(); 
 }
 
 function getTotalCoins() {
@@ -251,6 +256,12 @@ function displayTotalCoins() {
  * @description احتساب الكوينز المكتسبة (من 5 إلى 15) وإضافتها عبر Firestore.
  */
 async function calculateAndAddCoins() {
+    // تأكد من أن الدالة لا تعمل إلا إذا كان هناك مستخدم مسجل الدخول
+    if (!firebase.auth().currentUser) {
+        alert("يجب تسجيل الدخول لمنح الكوينز!");
+        return 0;
+    }
+
     const proMultiplier = isPro() ? 1.5 : 1; 
     const minCoins = 5;
     const maxCoins = 15; 
@@ -260,12 +271,12 @@ async function calculateAndAddCoins() {
     const currentCoins = getTotalCoins();
     const newTotalCoins = currentCoins + coinsEarned;
     
-    // 🚨 الآن نمرر جميع الحقول الأربعة (Coins, ProTime, Players, Settings)
+    // 🚨 التحديث: تمرير جميع البيانات الحالية المخزنة في currentUserData
     const saveSuccessful = await saveUserData(
         newTotalCoins, 
         currentUserData.proExpiryTime || 0,
-        currentUserData.players || [], // الحفاظ على قائمة اللاعبين
-        currentUserData.settings || {} // الحفاظ على الإعدادات
+        currentUserData.players || [], // قائمة اللاعبين الحالية
+        currentUserData.settings || {}  // الإعدادات الحالية
     );
     
     if (saveSuccessful) {
@@ -275,18 +286,18 @@ async function calculateAndAddCoins() {
         alert(`🎉 تهانينا! لقد ربحت ${coinsEarned} كوينزًا لبدء المناقشة. ${isPro() ? '(مكافأة Pro مطبقة!)' : ''} إجمالي الكوينزات الآن: ${newTotalCoins}`);
     } else {
         console.error("فشل حفظ الكوينزات.");
-        alert("حدث خطأ في حفظ الكوينزات. يرجى التأكد من تسجيل الدخول.");
+        // إظهار رسالة خطأ واضحة
+        alert("⚠️ خطأ في حفظ الكوينزات! يرجى إعادة المحاولة والتأكد من الاتصال بالإنترنت.");
     }
     
     return coinsEarned;
 }
 
 // ----------------------------------
-// 2. إعداد الأدوار (يستخدم الآن قائمة players العشوائية)
+// 2. إعداد الأدوار (بدون تغيير في منطق الكلمات)
 // ----------------------------------
 
 function setupGameRoles() {
-    // يجب أن تكون players و settings قد تم تحميلهما هنا بنجاح
     if (!players || players.length < 3) return; 
 
     const isUserPro = isPro(); 
@@ -299,18 +310,17 @@ function setupGameRoles() {
     allCategories.forEach(category => {
         if (selectedIds.includes(category.id)) {
             const isProCategory = wordCategories.pro.some(p => p.id === category.id);
-            // إضافة الكلمات إذا كانت مجانية أو إذا كان المستخدم Pro
+            
             if (!isProCategory || isUserPro) { 
                 allWords.push(...category.words);
             }
         }
     });
 
-    // إزالة التكرارات
     allWords = [...new Set(allWords)];
 
     if (allWords.length === 0) {
-        alert("لم يتم العثور على كلمات في الأقسام المختارة. الرجاء التحقق من الإعدادات.");
+        alert("لم يتم العثور على كلمات في الأقسام المختارة. الرجاء التحقق من الإعدادات والتأكد من تفعيل اشتراك Pro لاستخدام أقسام Pro.");
         location.href = "settings.html";
         return;
     }
@@ -318,7 +328,7 @@ function setupGameRoles() {
     // 2. تعيين الكلمات المدنية والمحتال
     let wordIndex1 = Math.floor(Math.random() * allWords.length);
     civilWord = allWords[wordIndex1];
-    impostorWord = civilWord; // القيمة الافتراضية
+    impostorWord = civilWord; 
 
     if (settings.multiWordMode === true && allWords.length >= 2) {
         let availableWords = allWords.filter((w, index) => index !== wordIndex1);
@@ -326,25 +336,19 @@ function setupGameRoles() {
     }
     
     let totalPlayers = players.length;
-    // تعيين الأدوار بناءً على الترتيب العشوائي الحالي في مصفوفة players
     roles = Array(totalPlayers).fill(null); 
-    
-    // مصفوفة بسيطة للمؤشرات (0, 1, 2...) لضمان المرور على جميع اللاعبين
     let indices = Array.from({length: totalPlayers}, (v, k) => k);
     
     // 3. تعيين الأدوار غير المدنية
     
-    // الأولوية لـ Manual/Chaos (إذا تم تطبيقها)
     const hasManualRoles = isUserPro && (settings.manualImpostors && settings.manualImpostors.length > 0 || settings.manualNoWord && settings.manualNoWord.length > 0);
     
     if (hasManualRoles) {
         // تعيين الأدوار اليدوية
         players.forEach((name, playerIndex) => {
-             // تعيين المحتالين يدوياً
             if (settings.manualImpostors && settings.manualImpostors.includes(name)) {
                 roles[playerIndex] = IMP;
             }
-            // تعيين "بلا كلمة" يدوياً
             if (settings.manualNoWord && settings.manualNoWord.includes(name) && roles[playerIndex] !== IMP) {
                 roles[playerIndex] = NW;
             }
@@ -352,10 +356,9 @@ function setupGameRoles() {
 
         
     } else if (settings.chaosMode === true && isUserPro && Math.random() < 0.20) {
-        // وضع الفوضى (احتمالية 20% لجميع الأدوار غير المدنية)
+        // وضع الفوضى 
         roles = Array(totalPlayers).fill(IMP); 
         
-        // خلط الأدوار لتعيين من هم "بلا كلمة"
         let chaosIndices = indices.slice().sort(() => Math.random() - 0.5);
         let numNoWordChaos = Math.floor(totalPlayers * 0.2); 
         for (let j = 0; j < numNoWordChaos && j < totalPlayers; j++) {
@@ -369,10 +372,8 @@ function setupGameRoles() {
         let currentImpostors = 0;
         let currentNoWord = 0;
         
-        // خلط المؤشرات للتعيين العشوائي
         let shuffledIndices = indices.slice().sort(() => Math.random() - 0.5);
 
-        // استخدام المؤشرات العشوائية لتعيين الأدوار
         for (let j = 0; j < totalPlayers; j++) {
             const index = shuffledIndices[j]; 
             
@@ -386,7 +387,7 @@ function setupGameRoles() {
         }
     }
     
-    // 5. تعيين المدنيين (لجميع من لم يتم تعيين دور غير مدني له)
+    // 5. تعيين المدنيين
     for (let k = 0; k < totalPlayers; k++) {
         if (roles[k] === null) {
             roles[k] = civilWord;
@@ -396,7 +397,7 @@ function setupGameRoles() {
 
 
 // ----------------------------------
-// 3. دوال تفاعلية (بدون تغيير في المنطق)
+// 3. دوال تفاعلية (بدون تغيير)
 // ----------------------------------
 
 function show() {
