@@ -197,17 +197,19 @@
 
 <script>
 
-let currentUserData = { totalCoins: 0, proExpiryTime: 0 }; 
+let currentUserData = { totalCoins: 0, proExpiryTime: 0, players: [], settings: {} }; 
 
 async function loadProData() {
     firebase.auth().onAuthStateChanged(async (user) => {
         if (!user) {
+            // إذا لم يكن المستخدم مسجلاً، قم بتوجيهه لصفحة المصادقة
             window.location.href = "auth.html";
             return;
         }
         
-        currentUserData = await loadUserData(); // دالة من auth.js
-        if (currentUserData) {
+        const data = await loadUserData(); // دالة من auth.js تجلب كل شيء (بما في ذلك اللاعبين والإعدادات)
+        if (data) {
+            currentUserData = data;
             displayTotalCoins();
             checkProStatus();
         }
@@ -220,7 +222,7 @@ function getTotalCoins() {
 
 /**
  * @function displayTotalCoins
- * @description عرض الكوينزات وتحديث حالة أزرار الشراء. (مُصحَّح)
+ * @description عرض الكوينزات وتحديث حالة أزرار الشراء.
  */
 function displayTotalCoins() {
     document.getElementById("current-coins-value").innerText = getTotalCoins();
@@ -230,7 +232,6 @@ function displayTotalCoins() {
         const button = card.querySelector('.buy-button');
         const durationDays = card.getAttribute('data-duration-days');
         
-        // النص الافتراضي
         let defaultText = `اشتراك ${durationDays} يوم`;
         if (durationDays === '7') defaultText = 'اشتراك أسبوع';
         if (durationDays === '30') defaultText = 'اشتراك شهر';
@@ -242,7 +243,6 @@ function displayTotalCoins() {
         
         if (isDisabled) {
             button.innerText = 'الكوينزات غير كافية';
-            // اللون الرصاصي يتم تطبيقه عبر CSS :disabled
         } else {
             button.innerText = defaultText;
             button.style.backgroundColor = '#6366f1'; 
@@ -264,11 +264,16 @@ function checkProStatus() {
     }
 }
 
+/**
+ * @function purchasePlan
+ * @description شراء خطة Pro وتمديد المدة إذا كان الاشتراك ساريًا.
+ * @param {number} durationDays - مدة الاشتراك الجديدة بالأيام.
+ * @param {number} cost - تكلفة الاشتراك بالكوينز.
+ */
 async function purchasePlan(durationDays, cost) {
     const currentCoins = getTotalCoins();
 
     if (currentCoins < cost) {
-        // هذا الشرط لن يتحقق فعلياً لأن الزر معطل، ولكنه كإجراء أمان
         alert("لا تملك ما يكفي من الكوينزات لشراء هذه الخطة!");
         return;
     }
@@ -278,16 +283,25 @@ async function purchasePlan(durationDays, cost) {
     }
 
     const now = new Date().getTime();
-    // إذا كان هناك اشتراك سارٍ، يتم التمديد من تاريخ انتهائه
+    
+    // 🚨 منطق التمديد: إذا كان الاشتراك الحالي ساري المفعول، يتم التمديد من تاريخ انتهائه
     const currentProExpiry = currentUserData.proExpiryTime > now ? currentUserData.proExpiryTime : now;
 
     // حساب تاريخ الانتهاء الجديد
-    const expiryTime = currentProExpiry + (durationDays * 24 * 60 * 60 * 1000);
+    const extensionDurationMs = durationDays * 24 * 60 * 60 * 1000;
+    const expiryTime = currentProExpiry + extensionDurationMs;
     const newTotalCoins = currentCoins - cost;
     
-    const saveSuccessful = await saveUserData(newTotalCoins, expiryTime); // دالة من auth.js
+    // 🚨 استدعاء saveUserData بجميع الحقول الأربعة المطلوبة
+    const saveSuccessful = await saveUserData(
+        newTotalCoins, 
+        expiryTime, 
+        currentUserData.players || [], // الحفاظ على قائمة اللاعبين
+        currentUserData.settings || {} // الحفاظ على الإعدادات
+    );
 
     if (saveSuccessful) {
+        // تحديث البيانات في الذاكرة
         currentUserData.totalCoins = newTotalCoins;
         currentUserData.proExpiryTime = expiryTime;
         
@@ -296,10 +310,12 @@ async function purchasePlan(durationDays, cost) {
         displayTotalCoins();
         checkProStatus();
     } else {
-        alert("فشل الحفظ. تحقق من اتصالك أو تسجيل الدخول.");
+        // هذا الخطأ يظهر عند فشل الاتصال بقاعدة البيانات أو عدم وجود مصادقة نشطة
+        alert("فشل الحفظ. تأكد من أنك مسجل الدخول ومن اتصالك بالإنترنت.");
     }
 }
 </script>
 
 </body>
 </html>
+
