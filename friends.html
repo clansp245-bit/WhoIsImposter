@@ -79,7 +79,7 @@
             cursor: pointer;
             font-weight: 700;
             transition: background-color 0.3s;
-            margin-right: 5px; /* مسافة بين الأزرار */
+            margin-right: 5px; 
         }
         .send-btn { background-color: #34d399; color: white; }
         .send-btn:hover { background-color: #10b981; }
@@ -131,7 +131,7 @@
     const db = firebase.firestore();
     let currentUserId = null;
     let currentUserFriends = [];
-    let allRequests = []; // لتخزين الطلبات (المرسلة والمستقبلة)
+    let allRequests = []; 
 
     firebase.auth().onAuthStateChanged(user => {
         if (!user) {
@@ -139,37 +139,49 @@
             return;
         }
         currentUserId = user.uid;
-        // بدء الاستماع للتغيرات في الطلبات والأصدقاء
         listenToFriendRequests();
         listenToUserData();
     });
 
     // ----------------------------------------------------
-    // الدوال المساعدة: جلب أسماء العرض (مُحسَّن)
+    // الدوال المساعدة: جلب أسماء العرض (مُحسَّن لـ Firestore)
     // ----------------------------------------------------
 
     /**
-     * جلب أسماء العرض لعدة UIDs
+     * جلب أسماء العرض لعدة UIDs (مصحح لتجاوز حدود Firestore الـ 10)
      * @param {Array<string>} uids - قائمة بمعرفات المستخدمين (UIDs).
      * @returns {Object} كائن {uid: displayName}.
      */
     async function getDisplayNames(uids) {
         if (uids.length === 0) return {};
         const names = {};
-        
         // تصفية UIDs المكررة وغير الصالحة
         const uniqueUids = [...new Set(uids)].filter(id => id && id.trim() !== '');
 
         if (uniqueUids.length === 0) return {};
 
         try {
-             // Firestore 'in' يدعم حتى 10 قيم.
-            const snapshot = await db.collection('users').where(firebase.firestore.FieldPath.documentId(), 'in', uniqueUids.slice(0, 10)).get();
+            // تجزئة المصفوفة إلى دفعات (batches) من 10 عناصر
+            const BATCH_SIZE = 10;
+            const promises = [];
+
+            for (let i = 0; i < uniqueUids.length; i += BATCH_SIZE) {
+                const batch = uniqueUids.slice(i, i + BATCH_SIZE);
+                // دفع كل وعد جلب إلى مصفوفة promises
+                promises.push(
+                    db.collection('users').where(firebase.firestore.FieldPath.documentId(), 'in', batch).get()
+                );
+            }
             
-            snapshot.forEach(doc => {
-                // حفظ الاسم بمعرف المستخدم كـ key
-                names[doc.id] = doc.data().displayName || `مستخدم مجهول (${doc.id.substring(0, 4)}...)`;
+            // تنفيذ جميع طلبات الجلب بالتوازي
+            const snapshots = await Promise.all(promises);
+
+            snapshots.forEach(snapshot => {
+                snapshot.forEach(doc => {
+                    names[doc.id] = doc.data().displayName || `مستخدم مجهول (${doc.id.substring(0, 4)}...)`;
+                });
             });
+            
             return names;
 
         } catch(error) {
@@ -222,11 +234,10 @@
     async function processRequests(docs, type) {
         const friendIds = docs.map(doc => {
             const data = doc.data();
-            // تحديد الـ UID الذي نحتاج اسمه
             return type === 'incoming' ? data.senderId : data.receiverId;
         });
 
-        // جلب أسماء العرض للـ UIDs دفعة واحدة
+        // جلب أسماء العرض للـ UIDs دفعة واحدة باستخدام الدالة المصححة
         const friendNames = await getDisplayNames(friendIds);
 
         const requestsData = docs.map(doc => {
@@ -235,9 +246,8 @@
             return {
                 id: doc.id,
                 ...data,
-                // استخدام الاسم الذي تم جلبه
                 displayName: friendNames[targetId] || 'مستخدم غير معروف',
-                targetId: targetId, // إضافة حقل المستهدف
+                targetId: targetId, 
                 type: type 
             };
         });
@@ -246,10 +256,10 @@
         allRequests = allRequests.filter(req => req.type !== type).concat(requestsData);
         renderIncomingRequests();
         
-        // إعادة عرض نتائج البحث لتحديث الأزرار
+        // إعادة عرض نتائج البحث لتحديث الأزرار (في حال كانت نتائج البحث معروضة)
         const searchTerm = document.getElementById('search-input').value.trim();
         if (searchTerm.length >= 3) {
-             handleSearch(true); // إعادة البحث دون انتظار الضغط على الزر
+             handleSearch(true); 
         }
     }
     
@@ -302,6 +312,7 @@
             return;
         }
         
+        // جلب أسماء الأصدقاء باستخدام الدالة المصححة
         const friendNames = await getDisplayNames(currentUserFriends);
 
         currentUserFriends.forEach(friendId => {
@@ -320,7 +331,6 @@
     // 4. منطق البحث
     // ----------------------------------------------------
 
-    // إضافة معلمة 'silent' لتجنب إعادة ضبط حالة التحميل عند التحديث التلقائي
     async function handleSearch(silent = false) {
         const searchTerm = document.getElementById('search-input').value.trim();
         const resultsEl = document.getElementById('search-results');
@@ -334,7 +344,8 @@
             return;
         }
 
-        const results = await searchUsersByDisplayName(searchTerm);
+        // استخدام الدالة searchUsersByDisplayName من auth.js
+        const results = await searchUsersByDisplayName(searchTerm); 
         resultsEl.innerHTML = '';
 
         if (results.length === 0) {
@@ -380,12 +391,14 @@
     // ----------------------------------------------------
     // 5. منطق الأزرار (الربط بدوال auth.js)
     // ----------------------------------------------------
+    
+    // (بقية الدوال تعتمد على دوال auth.js)
 
     async function handleSendRequest(receiverId) {
         const success = await sendFriendRequest(receiverId);
         if (success) {
             alert("تم إرسال طلب الصداقة!");
-            handleSearch(); // تحديث قائمة البحث
+            handleSearch(); 
         } else {
             alert("فشل إرسال الطلب.");
         }
