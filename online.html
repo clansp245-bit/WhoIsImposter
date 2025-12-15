@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
-/* CSS Styles from previous file (lobby_entry.html) */
+/* CSS Styles */
 #home-icon { position: absolute; top: 20px; left: 20px; font-size: 24px; color: #94a3b8; cursor: pointer; transition: color 0.3s; }
 #home-icon:hover { color: #34d399; }
 body { font-family: 'Cairo', sans-serif; background-color: #0f172a; color: #f1f5f9; text-align: center; padding: 20px; min-height: 100vh; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
@@ -59,24 +59,31 @@ button { margin-top: 15px; padding: 14px 30px; font-size: 18px; font-weight: 700
 let currentUserData = {};
 let currentUID;
 const db = firebase.firestore();
+let isUserDataLoaded = false; 
 
 // 🚨 وظيفة التحقق والتحميل
 firebase.auth().onAuthStateChanged(async (user) => {
     if (!user) {
-        // إذا لم يكن هناك مستخدم مسجل، أعد التوجيه لصفحة تسجيل الدخول
         window.location.href = "auth.html";
         return;
     }
     currentUID = user.uid;
-    // نفترض أن دالة loadUserData موجودة في auth.js وتقوم بإرجاع بيانات المستخدم
-    const data = await loadUserData(); 
-    if(data) {
-        currentUserData = data;
-    } else {
-        // بيانات افتراضية لو لم تكتمل عملية تحميل البيانات
+    
+    try {
+        // افترض أن دالة loadUserData موجودة في auth.js
+        const data = await loadUserData(); 
+        if(data) {
+            currentUserData = data;
+        } else {
+            currentUserData.settings = { impostors: 1, selectedCategories: ['objects'] }; 
+            currentUserData.playerName = `لاعب#${currentUID.substring(0, 4)}`;
+        }
+    } catch (e) {
+        console.error("فشل في تحميل بيانات المستخدم:", e);
         currentUserData.settings = { impostors: 1, selectedCategories: ['objects'] }; 
         currentUserData.playerName = `لاعب#${currentUID.substring(0, 4)}`;
     }
+    isUserDataLoaded = true;
 });
 
 /**
@@ -84,7 +91,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
  * @description توليد رمز فريد للغرفة مكون من 6 أحرف كبيرة.
  */
 function generateRoomCode() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ13579'; // استخدام أحرف وأرقام مختارة
     let code = '';
     for (let i = 0; i < 6; i++) {
         code += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -97,9 +104,14 @@ function generateRoomCode() {
  * @description إنشاء مستند جديد للغرفة في Firestore ويكون المستخدم هو المضيف.
  */
 async function createRoom() {
-    document.getElementById('error-msg').innerText = '';
+    document.getElementById('error-msg').innerText = 'جاري إنشاء الغرفة...';
     
-    // تحقق من وجود الإعدادات
+    if (!isUserDataLoaded || !currentUID) {
+        document.getElementById('error-msg').innerText = '⚠️ جاري تحميل البيانات. حاول مرة أخرى.';
+        return;
+    }
+    
+    // التحقق من الإعدادات
     if (!currentUserData.settings || currentUserData.settings.selectedCategories?.length === 0) {
         document.getElementById('error-msg').innerText = '⚠️ الرجاء ضبط الإعدادات واختيار أقسام الكلمات أولاً.';
         return;
@@ -113,11 +125,18 @@ async function createRoom() {
     while (attempts < 5) {
         roomCode = generateRoomCode();
         roomRef = db.collection('rooms').doc(roomCode);
-        const doc = await roomRef.get();
-        if (!doc.exists) {
-            break; 
+        
+        try {
+            const doc = await roomRef.get();
+            if (!doc.exists) {
+                break; 
+            }
+            attempts++;
+        } catch (error) {
+            document.getElementById('error-msg').innerText = `خطأ في الاتصال بقاعدة البيانات: ${error.message}`;
+            console.error("Firestore connection error:", error);
+            return;
         }
-        attempts++;
     }
 
     if (attempts === 5) {
@@ -141,11 +160,11 @@ async function createRoom() {
 
     try {
         await roomRef.set(roomData);
-        // التوجيه إلى صفحة اللوبي: room.html
+        // 🚀 التوجيه الصحيح
         window.location.href = `room.html?id=${roomCode}`; 
     } catch (error) {
-        console.error("خطأ في إنشاء الغرفة:", error);
-        document.getElementById('error-msg').innerText = `خطأ: ${error.message}`;
+        console.error("خطأ في إنشاء الغرفة وحفظها:", error);
+        document.getElementById('error-msg').innerText = `خطأ: فشل في حفظ بيانات الغرفة: ${error.message}`;
     }
 }
 
@@ -157,10 +176,15 @@ async function createRoom() {
 async function joinRoom() {
     const codeInput = document.getElementById('room-code');
     const roomCode = codeInput.value.trim().toUpperCase();
-    document.getElementById('error-msg').innerText = '';
+    document.getElementById('error-msg').innerText = 'جاري محاولة الانضمام...';
 
     if (roomCode.length !== 6) {
         document.getElementById('error-msg').innerText = '❌ رمز الغرفة يجب أن يكون 6 أحرف/أرقام.';
+        return;
+    }
+
+    if (!isUserDataLoaded || !currentUID) {
+        document.getElementById('error-msg').innerText = '⚠️ جاري تحميل البيانات. حاول مرة أخرى.';
         return;
     }
 
@@ -182,7 +206,6 @@ async function joinRoom() {
             
             const playerName = currentUserData.playerName || `لاعب#${currentUID.substring(0, 4)}`;
 
-            // إضافة اللاعب إذا لم يكن موجودًا
             if (!roomData.players.includes(currentUID)) {
                 
                 if (roomData.players.length >= 10) { 
@@ -197,7 +220,7 @@ async function joinRoom() {
                 });
             }
 
-            // التوجيه إلى صفحة اللوبي: room.html
+            // 🚀 التوجيه الصحيح
             window.location.href = `room.html?id=${roomCode}`;
         });
     } catch (error) {
@@ -208,4 +231,3 @@ async function joinRoom() {
 </script>
 </body>
 </html>
-
