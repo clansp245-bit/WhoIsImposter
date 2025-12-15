@@ -8,7 +8,8 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="auth.js"></script> <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;700&display=swap" rel="stylesheet">
+<script src="auth.js"></script> 
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
@@ -182,7 +183,7 @@ let currentUserData = { totalCoins: 0, proExpiryTime: 0 };
 
 /**
  * @function loadGameData
- * @description تحميل بيانات المستخدم قبل بدء اللعبة.
+ * @description تحميل بيانات المستخدم قبل بدء اللعبة وضبط الترتيب العشوائي.
  */
 async function loadGameData() {
      firebase.auth().onAuthStateChanged(async (user) => {
@@ -205,6 +206,11 @@ async function loadGameData() {
         }
         
         displayTotalCoins(); 
+        
+        // 🚨 التصحيح الرئيسي: خلط قائمة اللاعبين عشوائياً
+        // هذا يضمن أن أول شخص يكشف دوره هو شخص عشوائي.
+        players.sort(() => Math.random() - 0.5); 
+        
         setupGameRoles();
         playerDisplay.innerText = `دور: ${players[i]}`; 
     });
@@ -212,7 +218,7 @@ async function loadGameData() {
 
 
 // ----------------------------------
-// 1. منطق الكوينزات والـ Pro (بدون تغيير)
+// 1. منطق الكوينزات والـ Pro
 // ----------------------------------
 
 function isPro() {
@@ -258,7 +264,7 @@ async function calculateAndAddCoins() {
 }
 
 // ----------------------------------
-// 2. إعداد الأدوار (المُصحَّح والمُحدَّث)
+// 2. إعداد الأدوار (يستخدم الآن قائمة players العشوائية)
 // ----------------------------------
 
 function setupGameRoles() {
@@ -299,47 +305,55 @@ function setupGameRoles() {
     }
     
     let totalPlayers = players.length;
+    // تعيين الأدوار بناءً على الترتيب العشوائي الحالي في مصفوفة players
     roles = Array(totalPlayers).fill(null); 
     
-    // 3. ترتيب المؤشرات عشوائياً (لضمان المحتال ليس أول شخص)
-    let indices = Array.from({length: totalPlayers}, (v, k) => k).sort(() => Math.random() - 0.5);
+    // مصفوفة بسيطة للمؤشرات (0, 1, 2...) لضمان المرور على جميع اللاعبين
+    let indices = Array.from({length: totalPlayers}, (v, k) => k);
     
-    // 4. تعيين الأدوار غير المدنية
+    // 3. تعيين الأدوار غير المدنية
     
     // الأولوية لـ Manual/Chaos (إذا تم تطبيقها)
     const hasManualRoles = isUserPro && (settings.manualImpostors && settings.manualImpostors.length > 0 || settings.manualNoWord && settings.manualNoWord.length > 0);
     
     if (hasManualRoles) {
         // تعيين الأدوار اليدوية
-        settings.manualImpostors.forEach(name => {
-            const playerIndex = players.indexOf(name);
-            if (playerIndex !== -1) roles[playerIndex] = IMP;
+        players.forEach((name, playerIndex) => {
+             // تعيين المحتالين يدوياً
+            if (settings.manualImpostors.includes(name)) {
+                roles[playerIndex] = IMP;
+            }
+            // تعيين "بلا كلمة" يدوياً
+            if (settings.manualNoWord.includes(name) && roles[playerIndex] !== IMP) {
+                roles[playerIndex] = NW;
+            }
         });
 
-        settings.manualNoWord.forEach(name => {
-            const playerIndex = players.indexOf(name);
-            // لا يمكن أن يكون محتال وبلا كلمة
-            if (playerIndex !== -1 && roles[playerIndex] !== IMP) roles[playerIndex] = NW;
-        });
         
     } else if (settings.chaosMode === true && isUserPro && Math.random() < 0.20) {
         // وضع الفوضى (احتمالية 20% لجميع الأدوار غير المدنية)
         roles = Array(totalPlayers).fill(IMP); 
+        
+        // خلط الأدوار لتعيين من هم "بلا كلمة"
+        let chaosIndices = indices.slice().sort(() => Math.random() - 0.5);
         let numNoWordChaos = Math.floor(totalPlayers * 0.2); 
         for (let j = 0; j < numNoWordChaos && j < totalPlayers; j++) {
-            roles[indices[j]] = NW; 
+            roles[chaosIndices[j]] = NW; 
         }
         
     } else {
-        // التوزيع العادي والعشوائي (المحتال ليس أول شخص)
+        // التوزيع العادي والعشوائي
         const numImpostors = settings.impostors || 1; 
         let numNoWord = settings.noWordRole === true && totalPlayers > numImpostors ? 1 : 0; 
         let currentImpostors = 0;
         let currentNoWord = 0;
         
+        // خلط المؤشرات للتعيين العشوائي
+        let shuffledIndices = indices.slice().sort(() => Math.random() - 0.5);
+
         // استخدام المؤشرات العشوائية لتعيين الأدوار
         for (let j = 0; j < totalPlayers; j++) {
-            const index = indices[j]; // المؤشر العشوائي
+            const index = shuffledIndices[j]; 
             
             if (currentImpostors < numImpostors) {
                 roles[index] = IMP;
@@ -357,9 +371,6 @@ function setupGameRoles() {
             roles[k] = civilWord;
         }
     }
-
-    // ملاحظة: اللاعبون يتم عرضهم بترتيبهم الأصلي في مصفوفة 'players'
-    // لكن أدوارهم (roles[k]) هي التي تم تعيينها عشوائياً.
 }
 
 
@@ -468,3 +479,4 @@ function next() {
 
 </body>
 </html>
+
