@@ -8,12 +8,27 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="auth.js"></script>
+<script src="auth.js"></script> 
 
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
+/* ---------------------------------- */
+/* إضافة زر الرجوع */
+#home-icon {
+    position: absolute;
+    top: 20px;
+    left: 20px; /* تم تغييرها لتكون في الزاوية اليسرى في وضع RTL */
+    font-size: 24px;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+#home-icon:hover {
+    color: #34d399;
+}
+/* ---------------------------------- */
 body {
   font-family: 'Cairo', sans-serif;
   background-color: #0f172a; 
@@ -128,7 +143,12 @@ button { margin-top: 15px; padding: 12px 30px; font-size: 18px; font-weight: 700
 }
 </style>
 </head>
+
 <body onload="loadSettings()">
+
+<a href="index.html" id="home-icon" title="العودة للصفحة الرئيسية">
+    <i class="fas fa-arrow-right"></i>
+</a>
 
 <h2>⚙️ إعدادات اللعبة</h2>
 
@@ -187,7 +207,8 @@ button { margin-top: 15px; padding: 12px 30px; font-size: 18px; font-weight: 700
         <label for="words">كلماتك المخصصة (كل كلمة في سطر منفصل)</label>
         <textarea id="words" rows="5" placeholder="أدخل كلماتك هنا..."></textarea>
     </div>
-    <button onclick="saveSettings()">ابدأ اللعب</button>
+    
+    <button onclick="saveSettings()">حفظ الإعدادات والعودة للرئيسية</button>
 </div>
 
 <div class="card" id="promocode-section">
@@ -202,7 +223,7 @@ button { margin-top: 15px; padding: 12px 30px; font-size: 18px; font-weight: 700
 const impostorsInput = document.getElementById("impostors");
 const timerInput = document.getElementById("discussionTimer");
 const noTimerCheckbox = document.getElementById("noTimerMode");
-let currentUserData = { totalCoins:0, proExpiryTime:0 };
+let currentUserData = { totalCoins:0, proExpiryTime:0, players:[], settings:{} }; // إضافة settings كافتراضي
 
 // ----------------------------------------------------
 // بيانات الأقسام (مدمجة هنا)
@@ -290,44 +311,48 @@ function toggleCategory(categoryId) {
     if (element && checkbox && !checkbox.disabled) {
         const isSelected = element.classList.toggle('selected');
         checkbox.checked = isSelected;
-        saveSelectedCategories();
+        // لا يتم حفظها الآن في localStorage، بل يتم جمعها عند saveSettings
     }
 }
 
-function saveSelectedCategories() {
-    const selected = Array.from(document.querySelectorAll('.word-category.selected')).map(el => el.getAttribute('data-id'));
-    localStorage.setItem("selectedCategories", JSON.stringify(selected));
+/**
+ * @function getSelectedCategoriesToSave
+ * @description تجمع الأقسام المختارة من الواجهة.
+ */
+function getSelectedCategoriesToSave() {
+    return Array.from(document.querySelectorAll('.word-category.selected')).map(el => el.getAttribute('data-id'));
 }
 
+
+/**
+ * @function loadSelectedCategories
+ * @description تحمل الأقسام المختارة من بيانات المستخدم (Firestore).
+ */
 function loadSelectedCategories() {
-    const savedCategories = localStorage.getItem("selectedCategories");
+    // 🚨 التحميل الآن من بيانات المستخدم وليس localStorage
+    const savedCategories = currentUserData.settings?.selectedCategories || []; 
     const proStatus = isPro();
     
-    if (savedCategories) {
-        try {
-            const selected = JSON.parse(savedCategories);
-            selected.forEach(id => {
-                const element = document.querySelector(`.word-category[data-id="${id}"]`);
-                const checkbox = document.getElementById(`cat-${id}`);
-                
-                if (element && checkbox) {
-                    const isProCategory = element.classList.contains('pro-category');
-                    if (!isProCategory || proStatus) { 
-                        element.classList.add('selected');
-                        checkbox.checked = true;
-                    }
-                }
-            });
-        } catch (e) {
-            console.error("خطأ في تحميل الأقسام المختارة:", e);
+    // إزالة أي تحديدات سابقة (للتأكد من أننا نبدأ من الصفر في كل تحميل)
+    document.querySelectorAll('.word-category').forEach(el => el.classList.remove('selected'));
+    document.querySelectorAll('.word-category input[type="checkbox"]').forEach(cb => cb.checked = false);
+    
+    savedCategories.forEach(id => {
+        const element = document.querySelector(`.word-category[data-id="${id}"]`);
+        const checkbox = document.getElementById(`cat-${id}`);
+        
+        if (element && checkbox) {
+            const isProCategory = element.classList.contains('pro-category');
+            if (!isProCategory || proStatus) { 
+                element.classList.add('selected');
+                checkbox.checked = true;
+            }
         }
-    }
-    // تأكد من حفظ الحالة حتى لو كانت فارغة
-    saveSelectedCategories(); 
+    });
 }
 
 function getSelectedWords() {
-    const selectedIds = JSON.parse(localStorage.getItem("selectedCategories") || "[]");
+    const selectedIds = currentUserData.settings?.selectedCategories || [];
     let combinedWords = [];
     
     const collectWords = (categories, isProCategory) => {
@@ -348,42 +373,69 @@ function getSelectedWords() {
 
 
 // ----------------------------------------------------
-// دالة بدء تشغيل الإعدادات (LoadSettings)
+// دالة بدء تشغيل الإعدادات (LoadSettings) - تم التحديث
 // ----------------------------------------------------
 async function loadSettings(){
   firebase.auth().onAuthStateChanged(async user=>{
     if(!user){window.location.href="auth.html"; return;}
-    // افترض أن loadUserData موجودة في auth.js وتُرجع بيانات المستخدم
-    const data = await loadUserData(); 
+    
+    const data = await loadUserData(); // جلب البيانات من Firestore (من auth.js)
     if(data) currentUserData = data;
     const pro = isPro();
 
-    const savedSettings = localStorage.getItem("settings");
-    let settings = savedSettings ? JSON.parse(savedSettings) : {};
-    document.getElementById("impostors").value = settings.impostors||1;
+    // 🚨 تحميل الإعدادات من Firestore
+    // المشكلة 3: تم الحل هنا بربط الإعدادات بالـ UID
+    const settings = currentUserData.settings || {}; 
     
-    // *** إزالة تحميل الحقول القديمة للكلمات (source و words) ***
-    // document.getElementById("source").value = settings.source||"default";
-    // document.getElementById("words").value = Array.isArray(settings.customWords)?settings.customWords.join('\n'):"";
+    // ----------------------------------------------
+    // المشكلة 2: الوقت الافتراضي (0 يعني غير محدود)
+    // ----------------------------------------------
+    
+    const defaultTimer = 0; 
+    // القيمة الافتراضية للمؤقت هي 0 (غير محدود) إذا لم يتم حفظها مسبقاً
+    const savedTimer = settings.discussionTimer === undefined ? defaultTimer : settings.discussionTimer; 
+    
+    // تعيين قيمة الإعدادات المحملة أو الافتراضية
+    document.getElementById("impostors").value = settings.impostors || 1;
+    document.getElementById("noWordRole").checked = settings.noWordRole === true;
+    document.getElementById("multiWordMode").checked = settings.multiWordMode === true;
 
-    // تفعيل / تعطيل خيارات Pro
+    // منطق المؤقت (القيمة 0 تعني بلا مؤقت)
+    if(savedTimer === 0){ 
+        noTimerCheckbox.checked=true; 
+        timerInput.value=0; 
+        timerInput.disabled=true; 
+    } else { 
+        noTimerCheckbox.checked=false; 
+        timerInput.value=savedTimer; 
+        timerInput.disabled=false; 
+    }
+    
+    // ----------------------------------------------
+    // تعيين خيارات Pro
+    // ----------------------------------------------
     const chaosCheckbox=document.getElementById("chaosMode");
     const manualSection=document.getElementById("manual-roles-section");
     const manualImpostors=document.getElementById("manualImpostors");
     const manualNoWord=document.getElementById("manualNoWord");
-    document.getElementById("noWordRole").checked = settings.noWordRole===true;
-    document.getElementById("multiWordMode").checked = settings.multiWordMode===true;
-
+    
     chaosCheckbox.disabled=!pro; manualImpostors.disabled=!pro; manualNoWord.disabled=!pro;
     manualImpostors.value=Array.isArray(settings.manualImpostors)?settings.manualImpostors.join('\n'):"";
     manualNoWord.value=Array.isArray(settings.manualNoWord)?settings.manualNoWord.join('\n'):"";
-    if(!pro){ chaosCheckbox.checked=false; manualImpostors.value=""; manualNoWord.value=""; manualSection.style.opacity=0.6; manualSection.title="هذه الميزة حصرية لمشتركي Pro"; } 
-    else{ chaosCheckbox.checked=settings.chaosMode===true; manualSection.style.opacity=1; manualSection.title=""; }
+    
+    if(!pro){ 
+        chaosCheckbox.checked=false; 
+        manualImpostors.value=""; 
+        manualNoWord.value=""; 
+        manualSection.style.opacity=0.6; 
+        manualSection.title="هذه الميزة حصرية لمشتركي Pro"; 
+    } else{ 
+        chaosCheckbox.checked=settings.chaosMode===true; 
+        manualSection.style.opacity=1; 
+        manualSection.title=""; 
+    }
 
-    const savedTimer=settings.discussionTimer||120;
-    if(savedTimer===0){ noTimerCheckbox.checked=true; timerInput.value=0; timerInput.disabled=true; } else { noTimerCheckbox.checked=false; timerInput.value=savedTimer; timerInput.disabled=false; }
-
-    // عرض أقسام الكلمات
+    // عرض أقسام الكلمات وتحميل الإعدادات الخاصة بها
     renderWordCategories();
     
     // اظهار زر الادمن للبريد المحدد
@@ -392,10 +444,10 @@ async function loadSettings(){
 }
 
 // ----------------------------------------------------
-// دالة حفظ الإعدادات (SaveSettings)
+// دالة حفظ الإعدادات (SaveSettings) - تم التحديث
 // ----------------------------------------------------
 
-function saveSettings(){
+async function saveSettings(){
   const impostorsValue = Number(impostorsInput.value);
   const pro = isPro();
   let chaosModeEnabled = document.getElementById("chaosMode").checked;
@@ -407,7 +459,7 @@ function saveSettings(){
   if(!pro) chaosModeEnabled=false;
 
   // *** الحصول على الأقسام المختارة ***
-  const selectedCategories = JSON.parse(localStorage.getItem("selectedCategories") || "[]");
+  const selectedCategories = getSelectedCategoriesToSave();
   if(selectedCategories.length === 0) {
       alert("الرجاء اختيار قسم واحد على الأقل للكلمات.");
       return;
@@ -424,12 +476,29 @@ function saveSettings(){
       discussionTimer:timerValue, 
       manualImpostors:manualImpostorsArray, 
       manualNoWord:manualNoWordArray, 
-      // حفظ الأقسام المختارة (بدلًا من الكلمات المخصصة القديمة)
       selectedCategories: selectedCategories 
   };
   
-  localStorage.setItem("settings",JSON.stringify(settings));
-  location.href="game.html";
+  // 🚨 المشكلة 1: حفظ الإعدادات في Firestore بدلاً من localStorage
+  const success = await saveUserData(
+      currentUserData.totalCoins || 0,
+      currentUserData.proExpiryTime || 0,
+      currentUserData.players || [], // الحفاظ على قائمة اللاعبين الحالية
+      settings // كائن الإعدادات الجديد ليتم حفظه
+  );
+  
+  if(success){
+      // تحديث بيانات المستخدم المحلية بعد الحفظ بنجاح
+      currentUserData.settings = settings; 
+      
+      // حفظها في localStorage مؤقتاً لسهولة تحميلها في game.html (يفضل تحديث game.html ليقرأ من Firestore أيضاً)
+      localStorage.setItem("settings",JSON.stringify(settings)); 
+      
+      // التوجيه إلى index.html بعد الحفظ
+      location.href="index.html"; 
+  } else {
+      alert("فشل في حفظ الإعدادات. يرجى المحاولة مرة أخرى.");
+  }
 }
 
 
