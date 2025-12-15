@@ -4,7 +4,7 @@
  */
 
 // ****************************************************
-// 1. إعدادات مشروع Firebase (كما هي)
+// 1. إعدادات مشروع Firebase (لا تعدلها)
 // ****************************************************
 const firebaseConfig = {
     apiKey: "AIzaSyBUJ-cQ-H9Ob6NOC1mARJjS2S4ooa-1z90",
@@ -31,12 +31,11 @@ async function createFirestoreUserEntry(user) {
     const doc = await userRef.get();
 
     if (!doc.exists) {
-        // تعيين displayName الافتراضي إذا لم يكن موجودًا في Firebase Auth
         const defaultDisplayName = user.displayName || user.email.split('@')[0];
         
         const initialData = {
             email: user.email || "",
-            displayName: defaultDisplayName, // حفظ الاسم الافتراضي في Firestore
+            displayName: defaultDisplayName, 
             totalCoins: 0,
             proExpiryTime: 0,
             players: [], 
@@ -55,7 +54,6 @@ async function createFirestoreUserEntry(user) {
 
 async function signUp(email, password) {
     const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-    // يمكن إضافة تحديث Profile هنا باسم افتراضي إذا لزم الأمر
     await createFirestoreUserEntry(userCredential.user);
     return userCredential;
 }
@@ -80,7 +78,7 @@ function signOutUser() {
 }
 
 // ----------------------------------------------------
-// 3. وظائف حفظ وتحميل بيانات المستخدم (مصححة)
+// 3. وظائف حفظ وتحميل بيانات المستخدم
 // ----------------------------------------------------
 
 function getCurrentUserId() {
@@ -89,7 +87,7 @@ function getCurrentUserId() {
 }
 
 /**
- * تحميل بيانات المستخدم (مصححة لضمان القيم الافتراضية)
+ * تحميل بيانات المستخدم (مع ضمان القيم الافتراضية)
  */
 async function loadUserData() {
     const userId = getCurrentUserId();
@@ -126,7 +124,7 @@ async function loadUserData() {
 }
 
 /**
- * حفظ بيانات المستخدم (محدثة للمعلمات)
+ * حفظ بيانات المستخدم 
  */
 async function saveUserData(newCoins, newProTime, playersData, settingsData, newLevel, newXP, permanentPacks, temporaryPacks) {
     const userId = getCurrentUserId();
@@ -145,7 +143,7 @@ async function saveUserData(newCoins, newProTime, playersData, settingsData, new
         xp: newXP || 0,
         ownedPacksPermanent: permanentPacks || [],
         ownedPacksTemporary: temporaryPacks || {},
-        // نحدث displayName هنا أيضاً لضمان التوافق بين Auth و Firestore
+        // ضمان تحديث الاسم في Firestore ليتطابق مع Firebase Auth
         displayName: user.displayName || user.email.split('@')[0],
         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
     };
