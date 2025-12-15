@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
-/* CSS Styles from previous file (lobby.html) */
+/* CSS Styles */
 #home-icon { position: absolute; top: 20px; left: 20px; font-size: 24px; color: #94a3b8; cursor: pointer; transition: color 0.3s; }
 #home-icon:hover { color: #ff4f4f; }
 body { font-family: 'Cairo', sans-serif; background-color: #0f172a; color: #f1f5f9; text-align: center; padding: 20px; min-height: 100vh; margin: 0; display: flex; flex-direction: column; align-items: center; }
@@ -29,7 +29,6 @@ h2 { font-size: 2rem; font-weight: 700; margin-bottom: 10px; color: #34d399; }
 .kick-btn:hover { background-color: #e53e3e; }
 #start-game-btn { margin-top: 25px; padding: 15px 30px; font-size: 20px; font-weight: 700; background-color: #34d399; color: #0f172a; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.3s; width: 100%; }
 #start-game-btn:disabled { background-color: #4b5563; cursor: not-allowed; color: #94a3b8; }
-#role-display-card { /* Your role display styles here */ }
 #role-card { background-color: #1e293b; padding: 40px; border-radius: 15px; box-shadow: 0 0 20px rgba(52, 211, 153, 0.4); margin-top: 30px; text-align: center; border: 3px solid #34d399; }
 #role-title { font-size: 2.5rem; color: #ffd700; margin-bottom: 10px; }
 #role-word { font-size: 1.8rem; color: #f1f5f9; font-weight: 700; margin-bottom: 20px; }
@@ -86,9 +85,9 @@ let roomCode;
 let roomData = null;
 let isHost = false;
 let listenerUnsubscribe = null;
-const db = firebase.firestore();
+// ملاحظة: db تم تعريفه في auth.js
 
-// 🚨 قائمة الكلمات والأقسام (Word Categories)
+// 🚨 قائمة الكلمات والأقسام 
 const wordCategories = {
     free: [
         { id: 'objects', name: 'أشياء وأدوات', words: ["قلم", "كوب", "كرسي", "مفتاح", "هاتف", "كتاب", "ساعة", "مصباح", "ملعقة", "حذاء", "حقيبة", "طاولة", "مرآة", "دفتر", "ممحاة", "جدار", "شباك", "باب", "سرير", "وسادة", "غطاء", "جرس", "مظلة", "لوحة", "مروحة", "صندوق", "فرشاة", "مشط", "ممحاة", "مطرقة", "مسمار", "خيط", "إبرة", "خزانة", "حبل", "شريط", "كاميرا", "ماوس", "بطارية", "لمبة", "مقص", "منشفة", "صنبور", "قفل", "سلة", "سلك", "شاحن", "أريكة", "رف"] },
@@ -104,27 +103,36 @@ const wordCategories = {
         { id: 'adjectives', name: 'صفات وأحوال', words: ["سريع", "بطيء", "كبير", "صغير", "طويل", "قصير", "جميل", "قبيح", "سعيد", "حزين", "غاضب", "هادئ", "صاخب", "نظيف", "متسخ", "قوي", "ضعيف", "بارد", "حار", "مشرق", "مظلم", "جديد", "قديم", "صعب", "سهل", "خفيف", "ثقيل", "جائع", "عطشان", "مريض", "سليم", "بعيد", "قريب", "حقيقي", "وهمي", "شجاع", "جبان", "مضحك", "جدي", "مألوف", "غريب", "حكيم", "أحمق", "ناجح", "فاشل"] }
     ]
 };
+// ----------------------------------------------------
 
 /**
- * @function initLobby
+ * @function initLobby 🚨 تم التعديل
  * @description تهيئة اللوبي وبدء الاستماع لحالة الغرفة.
  */
 function initLobby() {
+    // 1. استخراج رمز الغرفة فورًا
+    const urlParams = new URLSearchParams(window.location.search);
+    roomCode = urlParams.get('id');
+
+    if (!roomCode) {
+        alert("❌ لم يتم تحديد رمز الغرفة. العودة للرئيسية.");
+        window.location.href = "index.html";
+        return;
+    }
+    
+    // 2. عرض رمز الغرفة في الواجهة فورًا
+    document.getElementById('room-code-value').innerText = roomCode;
+
+    // 3. التحقق من المصادقة وبدء الاستماع
     firebase.auth().onAuthStateChanged(user => {
-        if (!user) { window.location.href = "auth.html"; return; }
-        currentUID = user.uid;
-
-        // استخراج رمز الغرفة من URL
-        const urlParams = new URLSearchParams(window.location.search);
-        roomCode = urlParams.get('id');
-
-        if (!roomCode) {
-            alert("❌ لم يتم تحديد رمز الغرفة. العودة للرئيسية.");
-            window.location.href = "index.html";
-            return;
+        if (!user) { 
+            window.location.href = "auth.html"; 
+            return; 
         }
-
-        document.getElementById('room-code-value').innerText = roomCode;
+        
+        currentUID = user.uid;
+        
+        // 4. بدء الاستماع لتحديثات الغرفة
         startRoomListener(roomCode);
     });
 }
@@ -134,15 +142,14 @@ function initLobby() {
  * @description يبدأ الاستماع في الوقت الفعلي لتحديثات الغرفة.
  */
 function startRoomListener(code) {
-    if (listenerUnsubscribe) { listenerUnsubscribe(); } // إيقاف أي استماع سابق
+    if (listenerUnsubscribe) { listenerUnsubscribe(); } 
 
     const roomRef = db.collection('rooms').doc(code);
-    // 
 
     listenerUnsubscribe = roomRef.onSnapshot(doc => {
         if (!doc.exists) {
             alert("تم إغلاق الغرفة أو طردك منها.");
-            window.location.href = "online.html"; // العودة لصفحة الدخول
+            window.location.href = "index.html";
             return;
         }
 
@@ -153,13 +160,18 @@ function startRoomListener(code) {
             displayRoleCard();
             return;
         }
+
+        if (roomData.status === 'ended') {
+            alert("انتهت اللعبة في هذه الغرفة. العودة.");
+            window.location.href = "index.html";
+            return;
+        }
         
-        // تحديث واجهة الانتظار
         updateLobbyUI();
     }, error => {
         console.error("خطأ في الاستماع للغرفة:", error);
-        alert("حدث خطأ في الاتصال بالشبكة.");
-        window.location.href = "online.html";
+        alert("حدث خطأ في الاتصال بالشبكة. العودة.");
+        window.location.href = "index.html";
     });
 }
 
@@ -177,7 +189,7 @@ function updateLobbyUI() {
     document.getElementById('player-count').innerText = playerCount;
     document.getElementById('room-title').innerText = `غرفة ${roomCode}`;
 
-    // 1. عرض ملخص الإعدادات (نفس الدالة من الكود السابق)
+    // 1. عرض ملخص الإعدادات
     const settings = roomData.settings || {};
     const selectedCategoriesNames = getCategoryNamesByIds(settings.selectedCategories);
     const summaryText = `محتالون: ${settings.impostors || 1} | مجموعات: ${selectedCategoriesNames.join(', ')}`;
@@ -189,7 +201,7 @@ function updateLobbyUI() {
         startGameBtn.innerHTML = `<i class="fas fa-play"></i> بدء اللعب (${playerCount} لاعب)`;
         document.getElementById('status-message').innerText = 'جاهز للبدء!';
         document.getElementById('status-message').style.color = '#34d399';
-        startGameBtn.style.display = 'block'; // للتأكد من ظهوره للمضيف
+        startGameBtn.style.display = 'block';
     } else if (isHost) {
         startGameBtn.disabled = true;
         startGameBtn.innerHTML = `<i class="fas fa-play"></i> بدء اللعب (يتطلب 3 لاعبين)`;
@@ -197,7 +209,7 @@ function updateLobbyUI() {
         document.getElementById('status-message').style.color = '#ffcc00';
         startGameBtn.style.display = 'block';
     } else {
-        startGameBtn.style.display = 'none'; // إخفاء زر البدء لغير المضيف
+        startGameBtn.style.display = 'none';
         document.getElementById('status-message').innerText = `جاري انتظار المضيف لبدء اللعبة. (العدد الحالي: ${playerCount}).`;
         document.getElementById('status-message').style.color = '#ffcc00';
     }
@@ -214,7 +226,6 @@ function updateLobbyUI() {
         
         let kickButtonHTML = '';
         if (isHost && !isCurrentPlayer) {
-            // زر الطرد يظهر فقط للمضيف ولا يظهر على نفسه
             kickButtonHTML = `<button class="kick-btn" onclick="kickPlayer('${uid}')"><i class="fas fa-user-times"></i> طرد</button>`;
         }
         
@@ -229,10 +240,6 @@ function updateLobbyUI() {
     });
 }
 
-/**
- * @function getCategoryNamesByIds
- * @description تحويل IDs الأقسام إلى أسماء قابلة للقراءة.
- */
 function getCategoryNamesByIds(ids) {
     if (!ids) return [];
     let names = [];
@@ -244,10 +251,6 @@ function getCategoryNamesByIds(ids) {
     return names;
 }
 
-/**
- * @function kickPlayer
- * @description دالة لطرد لاعب من الغرفة (للمضيف فقط).
- */
 async function kickPlayer(playerUID) {
     if (!isHost || !roomData) return;
     
@@ -266,13 +269,9 @@ async function kickPlayer(playerUID) {
     }
 }
 
-/**
- * @function leaveRoom
- * @description مغادرة اللاعب للغرفة.
- */
 async function leaveRoom(event) {
     event.preventDefault(); 
-    if (!roomData || !currentUID) { window.location.href = "online.html"; return; }
+    if (!roomData || !currentUID) { window.location.href = "index.html"; return; }
 
     if (!confirm("هل أنت متأكد من مغادرة الغرفة؟")) return;
 
@@ -280,11 +279,11 @@ async function leaveRoom(event) {
     
     if (isHost) {
         if (roomData.players.length === 1) {
-            // حذف الغرفة إذا كنت آخر لاعب ومضيف
             if (listenerUnsubscribe) listenerUnsubscribe();
             await roomRef.delete();
+            window.location.href = "index.html";
+            return;
         } else {
-            // تعيين مضيف جديد
             const remainingPlayers = roomData.players.filter(uid => uid !== currentUID);
             const newHostUID = remainingPlayers[0];
             if(newHostUID) {
@@ -295,20 +294,15 @@ async function leaveRoom(event) {
             }
         }
     } else {
-        // لست المضيف، فقط قم بإزالة نفسك
         await roomRef.update({
             players: firebase.firestore.FieldValue.arrayRemove(currentUID)
         });
     }
 
     if (listenerUnsubscribe) listenerUnsubscribe();
-    window.location.href = "online.html"; // العودة لصفحة الدخول
+    window.location.href = "index.html";
 }
 
-/**
- * @function startGame
- * @description توزيع الأدوار وبدء اللعبة عن طريق تحديث حالة الغرفة في Firestore.
- */
 async function startGame() {
     if (!isHost || !roomData || roomData.players.length < 3) return;
 
@@ -317,23 +311,22 @@ async function startGame() {
     
     const allWords = getAllWordsFromSelectedCategories(roomData.settings.selectedCategories);
     if (allWords.length === 0) {
-        alert("لا توجد كلمات متاحة في الأقسام المختارة. عد إلى الإعدادات.");
+        alert("لا توجد كلمات متاحة. عد إلى الإعدادات.");
         document.getElementById('start-game-btn').disabled = false;
         document.getElementById('start-game-btn').innerText = 'بدء اللعب';
         return;
     }
     
-    // 2. تطبيق منطق توزيع الأدوار (استدعاء دالة موجودة بالأسفل)
+    //  
+    // رسم تخطيطي لخطوات توزيع الأدوار
     const gameResult = distributeRoles(roomData.players, roomData.settings, allWords);
 
-    // 3. حفظ بيانات اللعبة في Firestore
     const roomRef = db.collection('rooms').doc(roomCode);
     try {
         await roomRef.update({
             status: 'playing',
             currentGameData: gameResult
         });
-        // onSnapshot سيتولى مهمة عرض البطاقة لكل لاعب
     } catch (error) {
         console.error("فشل في بدء اللعبة:", error);
         alert("حدث خطأ في حفظ بيانات اللعبة.");
@@ -364,29 +357,30 @@ function distributeRoles(players, settings, allWords) {
     // 1. اختيار الكلمات
     const randomWordIndex = Math.floor(Math.random() * allWords.length);
     const civilianWord = allWords[randomWordIndex];
-    
-    // كلمة المحتال (مؤقتاً هي نفسها المدنيين حتى يتم تفعيل وضع الكلمات المتعددة)
-    let impostorWord = civilianWord; 
-    if (settings.multiWordMode) { 
-        // إذا كان وضع الكلمات المتعددة مفعّل، نختار كلمة أخرى
-        impostorWord = allWords[(randomWordIndex + 1) % allWords.length];
-    }
+    let impostorWord = settings.multiWordMode ? allWords[(randomWordIndex + 1) % allWords.length] : civilianWord;
     
     // 2. تحديد المحتالين
     let availablePlayers = [...players];
     let selectedImpostors = [];
+    let selectedNoWord = [];
 
     for (let i = 0; i < numImpostors && availablePlayers.length > 0; i++) {
         const randomIndex = Math.floor(Math.random() * availablePlayers.length);
         selectedImpostors.push(availablePlayers.splice(randomIndex, 1)[0]);
+    }
+    
+    if (settings.noWordRole && availablePlayers.length > 0) {
+        const randomIndex = Math.floor(Math.random() * availablePlayers.length);
+        selectedNoWord.push(availablePlayers.splice(randomIndex, 1)[0]);
     }
 
     // 3. تعيين الأدوار لكل لاعب
     players.forEach(uid => {
         if (selectedImpostors.includes(uid)) {
             playerRoles[uid] = { role: 'impostor', word: impostorWord };
+        } else if (selectedNoWord.includes(uid)) {
+            playerRoles[uid] = { role: 'noWord', word: 'لا كلمة لك!' };
         } else {
-            // البقية مدنيون
             playerRoles[uid] = { role: 'civilian', word: civilianWord };
         }
     });
@@ -405,10 +399,6 @@ function distributeRoles(players, settings, allWords) {
 // دوال عرض الدور (بعد بدء اللعبة)
 // ----------------------------------------------------
 
-/**
- * @function displayRoleCard
- * @description عرض بطاقة الدور الخاصة باللاعب الحالي.
- */
 function displayRoleCard() {
     document.getElementById('waiting-lobby').style.display = 'none';
     document.getElementById('role-display-card').style.display = 'block';
@@ -418,7 +408,7 @@ function displayRoleCard() {
     const gameData = roomData.currentGameData;
     const playerRoleData = gameData.roles[currentUID];
     
-    if (!playerRoleData) return; // إذا لم يكن له دور (تم طرده مثلاً)
+    if (!playerRoleData) return;
 
     const { role, word } = playerRoleData;
     let title, color, instructions;
@@ -428,6 +418,11 @@ function displayRoleCard() {
             title = 'أنت المحتال!';
             color = '#ff4f4f';
             instructions = `كلمتك المزيفة هي: **${word}**. مهمتك هي التظاهر بأن لديك كلمة المدنيين (دون كشف كلمتك!).`;
+            break;
+        case 'noWord':
+            title = 'أنت بلا كلمة!';
+            color = '#6366f1';
+            instructions = `كلمتك: **لا كلمة لك!**. مهمتك هي كشف المحتال وكشف اللاعبين الذين لديهم الكلمة المشتركة دون أن ينكشف أمرك.`;
             break;
         case 'civilian':
         default:
@@ -444,20 +439,11 @@ function displayRoleCard() {
     document.getElementById('role-title').style.color = color;
 }
 
-/**
- * @function hideRoleCard
- * @description لإخفاء البطاقة والبدء بالمناقشة.
- */
 function hideRoleCard() {
     document.getElementById('role-display-card').style.display = 'none';
-    // 🚨 ملاحظة: هنا يمكن إضافة مؤقت المناقشة!
     alert("بدأت المناقشة! ابدأ اللعب."); 
 }
 
-/**
- * @function copyCode
- * @description نسخ رمز الغرفة.
- */
 function copyCode() {
     const code = document.getElementById('room-code-value').innerText;
     navigator.clipboard.writeText(code).then(() => {
@@ -465,6 +451,8 @@ function copyCode() {
         const originalIcon = btn.innerHTML;
         btn.innerHTML = '<i class="fas fa-check"></i>';
         setTimeout(() => { btn.innerHTML = originalIcon; }, 1000);
+    }).catch(err => {
+        console.error('فشل في نسخ النص: ', err);
     });
 }
 </script>
