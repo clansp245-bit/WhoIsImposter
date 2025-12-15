@@ -160,11 +160,9 @@ const wordCategories = {
     ]
 };
 
-// ** المتغيرات العالمية للبيانات **
+// 🚨 تم تعديل هذه المتغيرات لتبدأ فارغة ويتم ملؤها من Firestore
 let players = null; 
 let settings = null;
-let currentUserData = { totalCoins: 0, proExpiryTime: 0, players: [], settings: {} }; 
-window.currentUserData = currentUserData; // ضروري للوصول إليها في isPro() داخل auth.js
 
 const playerDisplay = document.getElementById("player");
 const card = document.getElementById("card");
@@ -182,6 +180,9 @@ const NW = "NO_WORD_ROLE_MARKER";
 let timerInterval;
 let gameCompleted = false; 
 
+// تم وضعها على نطاق window لسهولة الوصول إليها في الدوال المساعدة
+let currentUserData = { totalCoins: 0, proExpiryTime: 0, players: [], settings: {} }; // أضفنا حقول players و settings هنا
+
 
 /**
  * @function loadGameData
@@ -195,23 +196,22 @@ async function loadGameData() {
             return;
         }
         
-        // 1. تحميل البيانات من Firestore
+        // 🚨 1. تحميل البيانات من Firestore
         const data = await loadUserData(); // من auth.js
         if (data) {
-            // تحديث كائن currentUserData العالمي و window.currentUserData
-            Object.assign(currentUserData, data);
-            
+            currentUserData = data;
+            // 🚨 2. تعيين المتغيرات العالمية من البيانات المحملة
             players = currentUserData.players || [];
             settings = currentUserData.settings || {};
         } else {
-            // فشل تحميل البيانات
+             // تهيئة إذا لم يتم تحميل البيانات (قد يحدث خطأ في الاتصال)
             players = [];
             settings = {};
         }
         
         const selectedCategories = settings.selectedCategories || [];
         
-        // 2. التحقق من وجود إعدادات صحيحة وأقسام مختارة
+        // 🚨 3. التحقق من وجود إعدادات صحيحة وأقسام مختارة
         if (players.length < 3 || selectedCategories.length === 0) {
             alert("يرجى إدخال 3 لاعبين على الأقل واختيار قسم واحد على الأقل للكلمات من الإعدادات.");
             // التوجيه الصحيح حسب النقص
@@ -225,7 +225,7 @@ async function loadGameData() {
         
         displayTotalCoins(); 
         
-        // 3. خلط قائمة اللاعبين عشوائياً بعد تحميلها
+        // 4. خلط قائمة اللاعبين عشوائياً بعد تحميلها
         players.sort(() => Math.random() - 0.5); 
         
         setupGameRoles();
@@ -239,8 +239,8 @@ async function loadGameData() {
 // ----------------------------------
 
 function isPro() {
-    // نعتمد على isPro في auth.js للحصول على حالة الـ Pro
-    return window.isPro(); 
+    const proExpiryTime = currentUserData.proExpiryTime || 0; 
+    return proExpiryTime > new Date().getTime();
 }
 
 function getTotalCoins() {
@@ -256,12 +256,6 @@ function displayTotalCoins() {
  * @description احتساب الكوينز المكتسبة (من 5 إلى 15) وإضافتها عبر Firestore.
  */
 async function calculateAndAddCoins() {
-    // تأكد من أن الدالة لا تعمل إلا إذا كان هناك مستخدم مسجل الدخول
-    if (!firebase.auth().currentUser) {
-        alert("يجب تسجيل الدخول لمنح الكوينز!");
-        return 0;
-    }
-
     const proMultiplier = isPro() ? 1.5 : 1; 
     const minCoins = 5;
     const maxCoins = 15; 
@@ -271,12 +265,12 @@ async function calculateAndAddCoins() {
     const currentCoins = getTotalCoins();
     const newTotalCoins = currentCoins + coinsEarned;
     
-    // 🚨 التحديث: تمرير جميع البيانات الحالية المخزنة في currentUserData
+    // 🚨 التحديث: نمرر الحقول الأربعة المطلوبة
     const saveSuccessful = await saveUserData(
         newTotalCoins, 
         currentUserData.proExpiryTime || 0,
-        currentUserData.players || [], // قائمة اللاعبين الحالية
-        currentUserData.settings || {}  // الإعدادات الحالية
+        currentUserData.players || [], // قائمة اللاعبين المحملة
+        currentUserData.settings || {} // الإعدادات المحملة
     );
     
     if (saveSuccessful) {
@@ -286,15 +280,14 @@ async function calculateAndAddCoins() {
         alert(`🎉 تهانينا! لقد ربحت ${coinsEarned} كوينزًا لبدء المناقشة. ${isPro() ? '(مكافأة Pro مطبقة!)' : ''} إجمالي الكوينزات الآن: ${newTotalCoins}`);
     } else {
         console.error("فشل حفظ الكوينزات.");
-        // إظهار رسالة خطأ واضحة
-        alert("⚠️ خطأ في حفظ الكوينزات! يرجى إعادة المحاولة والتأكد من الاتصال بالإنترنت.");
+        alert("حدث خطأ في حفظ الكوينزات. يرجى التأكد من تسجيل الدخول.");
     }
     
     return coinsEarned;
 }
 
 // ----------------------------------
-// 2. إعداد الأدوار (بدون تغيير في منطق الكلمات)
+// 2. إعداد الأدوار (تطبيق منطق الـ Pro على الكلمات)
 // ----------------------------------
 
 function setupGameRoles() {
@@ -309,14 +302,17 @@ function setupGameRoles() {
     
     allCategories.forEach(category => {
         if (selectedIds.includes(category.id)) {
+            // تحقق مما إذا كان القسم هو قسم Pro
             const isProCategory = wordCategories.pro.some(p => p.id === category.id);
             
+            // 🚨 إضافة الكلمات إذا كانت مجانية أو إذا كان المستخدم Pro
             if (!isProCategory || isUserPro) { 
                 allWords.push(...category.words);
             }
         }
     });
 
+    // إزالة التكرارات
     allWords = [...new Set(allWords)];
 
     if (allWords.length === 0) {
@@ -397,7 +393,7 @@ function setupGameRoles() {
 
 
 // ----------------------------------
-// 3. دوال تفاعلية (بدون تغيير)
+// 3. دوال تفاعلية
 // ----------------------------------
 
 function show() {
