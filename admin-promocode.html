@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>إنشاء أكواد</title>
+<title>إنشاء وإدارة الأكواد</title>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -18,20 +18,16 @@ body{
   font-family:'Cairo',sans-serif;
   background:#0f172a;
   color:#f1f5f9;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  min-height:100vh;
+  padding:20px;
 }
+h2{text-align:center;color:#34d399;margin-bottom:20px;}
 .card{
   background:#1e293b;
-  padding:25px;
+  padding:20px;
   border-radius:12px;
-  width:90%;
-  max-width:420px;
+  margin-bottom:15px;
+  position:relative;
 }
-h2{text-align:center;color:#34d399}
-label{margin-top:12px;display:block}
 input{
   width:100%;
   margin-top:6px;
@@ -42,26 +38,28 @@ input{
   color:#fff;
 }
 button{
-  margin-top:20px;
-  width:100%;
-  padding:12px;
+  padding:8px 12px;
   border:none;
-  border-radius:8px;
-  background:#6366f1;
-  color:#fff;
-  font-size:16px;
+  border-radius:6px;
   cursor:pointer;
+  margin:2px;
 }
-button:hover{background:#4f46e5}
-.msg{margin-top:15px;text-align:center}
+button.create{background:#34d399;color:#000;font-weight:700;}
+button.toggle{background:#facc15;color:#000;}
+button.delete{background:#ef4444;color:#fff;}
+button.edit{background:#6366f1;color:#fff;}
+button:hover{opacity:0.85;}
+.cards-container{margin-top:20px;}
+.card-actions{margin-top:10px;text-align:left;}
+.card small{color:#94a3b8;}
+.msg{margin-top:10px;text-align:center;}
 </style>
 </head>
 
 <body>
+<h2>🎟️ إنشاء وإدارة الأكواد</h2>
 
 <div class="card">
-  <h2>🎟️ إنشاء كود</h2>
-
   <label>اسم الكود</label>
   <input id="codeName" placeholder="مثال: FREE100">
 
@@ -71,9 +69,16 @@ button:hover{background:#4f46e5}
   <label>مدة Pro بالأيام (0 = بدون)</label>
   <input type="number" id="proDays" value="0">
 
-  <button onclick="createCode()">إنشاء الكود</button>
+  <label>الحد الأقصى للاستخدام (0 = غير محدود)</label>
+  <input type="number" id="maxUses" value="0">
 
+  <button class="create" onclick="createCode()">إنشاء الكود</button>
   <div id="msg" class="msg"></div>
+</div>
+
+<h3 style="margin-top:30px;">📜 الأكواد الحالية</h3>
+<div class="cards-container" id="codesContainer">
+  <!-- سيتم عرض الأكواد هنا -->
 </div>
 
 <script>
@@ -83,40 +88,90 @@ firebase.auth().onAuthStateChanged(user=>{
   }
 });
 
+const db = firebase.firestore();
+const codesContainer = document.getElementById("codesContainer");
+const msg = document.getElementById("msg");
+
+// إنشاء كود جديد
 async function createCode(){
   const code = document.getElementById("codeName").value.trim().toUpperCase();
   const coins = Number(document.getElementById("coins").value);
   const proDays = Number(document.getElementById("proDays").value);
-  const msg = document.getElementById("msg");
-
-  if(!code){
-    msg.textContent="❌ أدخل اسم الكود";
-    return;
-  }
+  const maxUses = Number(document.getElementById("maxUses").value);
+  if(!code){ msg.textContent="❌ أدخل اسم الكود"; return; }
 
   try{
-    const ref = firebase.firestore().collection("promocodes").doc(code);
+    const ref = db.collection("promocodes").doc(code);
     const snap = await ref.get();
-
-    if(snap.exists){
-      msg.textContent="❌ الكود موجود مسبقًا";
-      return;
-    }
+    if(snap.exists){ msg.textContent="❌ الكود موجود مسبقًا"; return; }
 
     await ref.set({
       coins,
-      proDays,
-      used:false,
+      durationDays: proDays,
+      maxUses: maxUses>0 ? maxUses : Infinity,
+      redeemedBy: [],
+      active:true,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
     msg.textContent="✅ تم إنشاء الكود بنجاح";
+    loadCodes();
+    document.getElementById("codeName").value="";
   }catch(e){
     console.error(e);
     msg.textContent="❌ حدث خطأ";
   }
 }
-</script>
 
+// تحميل الأكواد وعرضها
+async function loadCodes(){
+  codesContainer.innerHTML="";
+  const snapshot = await db.collection("promocodes").orderBy("createdAt","desc").get();
+  snapshot.forEach(doc=>{
+    const data = doc.data();
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <strong>${doc.id}</strong> ${data.active ? '✅ مفعل':'⛔ موقوف'}
+      <div>
+        <small>نوع المكافأة: ${data.coins>0 ? data.coins+" كوينز" : ""} ${data.durationDays>0 ? data.durationDays+" يوم Pro" : ""}</small><br>
+        <small>عدد المستخدمين: ${(data.redeemedBy||[]).length}</small><br>
+        <small>الحد الأقصى للاستخدام: ${data.maxUses===Infinity?'غير محدود':data.maxUses}</small>
+      </div>
+      <div class="card-actions">
+        <button class="toggle" onclick="toggleActive('${doc.id}', ${data.active})">${data.active ? 'تعطيل':'تفعيل'}</button>
+        <button class="delete" onclick="deleteCode('${doc.id}')">حذف</button>
+      </div>
+    `;
+    codesContainer.appendChild(card);
+  });
+}
+
+async function toggleActive(codeId, currentState){
+  try{
+    await db.collection("promocodes").doc(codeId).update({ active: !currentState });
+    msg.textContent=`✅ تم تحديث حالة الكود ${codeId}`;
+    loadCodes();
+  }catch(e){
+    console.error(e);
+    msg.textContent="❌ حدث خطأ أثناء التحديث";
+  }
+}
+
+async function deleteCode(codeId){
+  if(!confirm(`هل أنت متأكد من حذف الكود ${codeId}?`)) return;
+  try{
+    await db.collection("promocodes").doc(codeId).delete();
+    msg.textContent=`✅ تم حذف الكود ${codeId}`;
+    loadCodes();
+  }catch(e){
+    console.error(e);
+    msg.textContent="❌ حدث خطأ أثناء الحذف";
+  }
+}
+
+// تحميل الأكواد عند فتح الصفحة
+loadCodes();
+</script>
 </body>
 </html>
