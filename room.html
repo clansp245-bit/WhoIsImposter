@@ -215,9 +215,10 @@ function initLobby() {
         return;
     }
     
-    // 2. عرض رمز الغرفة في الواجهة فورًا
+    // 2. عرض رمز الغرفة في الواجهة فورًا 🚨 حل مشكلة ظهور '---'
     document.getElementById('room-code-value').innerText = roomCode;
-
+    document.getElementById('room-title').innerText = `غرفة ${roomCode}`; // تحديث العنوان فوراً
+    
     // 3. التحقق من المصادقة وبدء الاستماع
     firebase.auth().onAuthStateChanged(user => {
         if (!user) { 
@@ -233,15 +234,25 @@ function initLobby() {
 }
 
 /**
- * @function startRoomListener 
+ * @function startRoomListener 🚨 تم إضافة فحص للوقت لحل مشكلة فشل التحميل الأولي
  * @description يبدأ الاستماع في الوقت الفعلي لتحديثات الغرفة.
  */
 function startRoomListener(code) {
     if (listenerUnsubscribe) { listenerUnsubscribe(); } 
 
     const roomRef = db.collection('rooms').doc(code);
+    
+    // تعيين مؤقت لفحص فشل التحميل الأولي
+    const timeoutCheck = setTimeout(() => {
+        if (!roomData) {
+            document.getElementById('status-message').innerHTML = '❌ فشل تحميل بيانات الغرفة. تأكد من وجود الرمز في الرابط.';
+            document.getElementById('status-message').style.color = '#ff4f4f';
+        }
+    }, 5000); // 5 ثواني انتظار كحد أقصى
 
     listenerUnsubscribe = roomRef.onSnapshot(doc => {
+        clearTimeout(timeoutCheck); // مسح المؤقت عند النجاح
+
         if (!doc.exists) {
             alert("تم إغلاق الغرفة أو طردك منها.");
             window.location.href = "index.html";
@@ -258,19 +269,16 @@ function startRoomListener(code) {
              return;
         }
 
-
         if (roomData.status === 'playing') {
-            // المشكلة 2: الانتقال للجميع عند بدء اللعب
             displayRoleCard();
             return;
         }
         
-        // تحديث واجهة الانتظار (تشمل عرض القائمة والعدد)
+        // تحديث واجهة الانتظار
         if (roomData.status === 'waiting') {
             updateLobbyUI();
             return;
         }
-
 
         if (roomData.status === 'ended') {
             alert("انتهت اللعبة في هذه الغرفة. العودة.");
@@ -279,6 +287,7 @@ function startRoomListener(code) {
         }
         
     }, error => {
+        clearTimeout(timeoutCheck);
         console.error("خطأ في الاستماع للغرفة:", error);
         alert("حدث خطأ في الاتصال بالشبكة. العودة.");
         window.location.href = "index.html";
@@ -286,7 +295,7 @@ function startRoomListener(code) {
 }
 
 /**
- * @function updateLobbyUI 🚨 (تم التأكد من عرض الكود والقائمة للجميع)
+ * @function updateLobbyUI 
  * @description تحديث قائمة اللاعبين وحالة زر البدء.
  */
 function updateLobbyUI() {
@@ -300,15 +309,15 @@ function updateLobbyUI() {
     const startGameBtn = document.getElementById('start-game-btn');
     const playerCount = roomData.players.length;
 
-    // المشكلة 1: عرض الرمز والقائمة
-    // رمز الغرفة تم عرضه بالفعل في initLobby ويبقى مرئيًا
     document.getElementById('player-count').innerText = playerCount;
-    document.getElementById('room-title').innerText = `غرفة ${roomCode}`;
-
+    
     // 1. عرض ملخص الإعدادات
     const settings = roomData.settings || {};
     const selectedCategoriesNames = getCategoryNamesByIds(settings.selectedCategories);
-    const summaryText = `محتالون: ${settings.impostors || 1} | مجموعات: ${selectedCategoriesNames.join(', ')}`;
+    // 🚨 حل مشكلة ظهور '---' في الإعدادات: إذا لم تُحمل البيانات بعد، أظهر نص الانتظار
+    const summaryText = selectedCategoriesNames.length > 0 ? 
+        `محتالون: ${settings.impostors || 1} | مجموعات: ${selectedCategoriesNames.join(', ')}` : 
+        '---';
     document.getElementById('settings-summary').innerText = summaryText;
     
     // 2. تحديث زر البدء
@@ -466,7 +475,7 @@ function getAllWordsFromSelectedCategories(selectedIds) {
 }
 
 /**
- * @function distributeRoles 🚨 (المحتال يحصل على كلمة 'IMPOSTOR_NO_WORD_TAG' بدلاً من نص '---' لتسهيل التحقق)
+ * @function distributeRoles 
  * @description توزيع الأدوار والكلمات بشكل عشوائي.
  */
 function distributeRoles(players, settings, allWords) {
@@ -479,7 +488,7 @@ function distributeRoles(players, settings, allWords) {
     const randomWordIndex = Math.floor(Math.random() * allWords.length);
     const civilianWord = allWords[randomWordIndex];
     
-    const IMPOSTOR_NO_WORD_TAG = 'IMPOSTOR_NO_WORD_TAG'; // استخدام وسم ثابت في البيانات
+    const IMPOSTOR_NO_WORD_TAG = 'IMPOSTOR_NO_WORD_TAG'; // وسم داخلي لتعيين دور المحتال بلا كلمة
 
     // 2. تحديد الأدوار 
     let availablePlayers = [...players];
@@ -501,7 +510,7 @@ function distributeRoles(players, settings, allWords) {
     // 3. تعيين الأدوار والكلمات لكل لاعب
     players.forEach(uid => {
         if (selectedImpostors.includes(uid)) {
-            // المحتال: نستخدم وسم داخلي لتعيين أنه لا يملك كلمة
+            // المحتال: يستخدم الوسم
             playerRoles[uid] = { role: 'impostor', word: IMPOSTOR_NO_WORD_TAG }; 
         } else if (selectedNoWord.includes(uid)) {
             // اللاعب بلا كلمة
@@ -527,7 +536,7 @@ function distributeRoles(players, settings, allWords) {
 // ----------------------------------------------------
 
 /**
- * @function displayRoleCard 🚨 (تم تعديلها للمشكلة 3: إخفاء كلمة المحتال)
+ * @function displayRoleCard 🚨 (تم حل مشكلة المحتال بلا كلمة)
  * @description عرض بطاقة الدور الخاصة باللاعب الحالي.
  */
 function displayRoleCard() {
@@ -549,7 +558,6 @@ function displayRoleCard() {
     const { role, word } = playerRoleData;
     let title, color, instructions;
 
-    // الوسم المستخدم في دالة توزيع الأدوار
     const IMPOSTOR_NO_WORD_TAG = 'IMPOSTOR_NO_WORD_TAG'; 
     let displayedWord = word;
     
