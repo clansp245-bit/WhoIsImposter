@@ -4,7 +4,7 @@
  */
 
 // ****************************************************
-// 1. إعدادات مشروع Firebase
+// 1. إعدادات مشروع Firebase (كما هي)
 // ****************************************************
 const firebaseConfig = {
     apiKey: "AIzaSyBUJ-cQ-H9Ob6NOC1mARJjS2S4ooa-1z90",
@@ -15,17 +15,15 @@ const firebaseConfig = {
     appId: "1:766002212710:web:02b56401e230faed09e2a7"
 };
 
-// تهيئة Firebase مرة واحدة
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 
-// تعريف الوحدات
 const auth = firebase.auth();
 const db = firebase.firestore();
 
 // ----------------------------------------------------
-// 2. وظائف المصادقة
+// 2. وظائف المصادقة (كما هي)
 // ----------------------------------------------------
 
 async function createFirestoreUserEntry(user) {
@@ -37,6 +35,8 @@ async function createFirestoreUserEntry(user) {
             email: user.email || "",
             totalCoins: 0,
             proExpiryTime: 0,
+            players: [], // لضمان وجودها من البداية
+            settings: {}, // لضمان وجودها من البداية
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         await userRef.set(initialData);
@@ -71,7 +71,7 @@ function signOutUser() {
 }
 
 // ----------------------------------------------------
-// 3. وظائف حفظ وتحميل بيانات المستخدم
+// 3. وظائف حفظ وتحميل بيانات المستخدم (تم تحديثها)
 // ----------------------------------------------------
 
 function getCurrentUserId() {
@@ -80,7 +80,7 @@ function getCurrentUserId() {
 }
 
 /**
- * تحميل بيانات المستخدم: totalCoins و proExpiryTime
+ * تحميل بيانات المستخدم: totalCoins, proExpiryTime, players, settings
  */
 async function loadUserData() {
     const userId = getCurrentUserId();
@@ -88,8 +88,27 @@ async function loadUserData() {
 
     try {
         const doc = await db.collection("users").doc(userId).get();
-        if (doc.exists) return doc.data();
-        if (auth.currentUser) return await createFirestoreUserEntry(auth.currentUser);
+        if (doc.exists) {
+            const data = doc.data();
+            // إرجاع البيانات المحملة مع التأكد من وجود الحقول الافتراضية
+            return {
+                totalCoins: data.totalCoins || 0,
+                proExpiryTime: data.proExpiryTime || 0,
+                players: data.players || [], 
+                settings: data.settings || {} 
+            };
+        }
+        
+        if (auth.currentUser) {
+             // إذا لم يكن هناك مستند، أنشئ مدخل مبدئي للحصول على البيانات الأولية
+             const initialData = await createFirestoreUserEntry(auth.currentUser);
+             return {
+                totalCoins: initialData.totalCoins || 0,
+                proExpiryTime: initialData.proExpiryTime || 0,
+                players: [], 
+                settings: {}
+             };
+        }
         return null;
     } catch (error) {
         console.error("فشل جلب بيانات المستخدم:", error);
@@ -98,17 +117,27 @@ async function loadUserData() {
 }
 
 /**
- * حفظ بيانات المستخدم: totalCoins و proExpiryTime
+ * حفظ بيانات المستخدم: totalCoins, proExpiryTime, players, settings
+ * @param {number} newCoins - العدد الجديد للكوينز.
+ * @param {number} newProTime - وقت انتهاء صلاحية Pro الجديد (Timestamp).
+ * @param {Array<string>} playersData - قائمة اللاعبين.
+ * @param {Object} settingsData - كائن إعدادات اللعبة.
  */
-async function saveUserData(newCoins, newProTime) {
+async function saveUserData(newCoins, newProTime, playersData, settingsData) {
     const userId = getCurrentUserId();
     if (!userId) return false;
 
+    const dataToSave = {
+        totalCoins: newCoins,
+        proExpiryTime: newProTime,
+        players: playersData, 
+        settings: settingsData, 
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    
     try {
-        await db.collection("users").doc(userId).update({
-            totalCoins: newCoins,
-            proExpiryTime: newProTime
-        });
+        // نستخدم set مع merge: true لضمان تحديث كل الحقول الأربعة
+        await db.collection("users").doc(userId).set(dataToSave, { merge: true });
         return true;
     } catch (error) {
         console.error("فشل تحديث بيانات المستخدم:", error);
@@ -120,6 +149,7 @@ async function saveUserData(newCoins, newProTime) {
  * التحقق من عضوية Pro
  */
 function isPro() {
+    // يجب أن تكون بيانات المستخدم قد تم تحميلها أولاً في currentUserData في كل صفحة
     const proExpiryTime = (auth.currentUser && window.currentUserData?.proExpiryTime) || 0;
     return proExpiryTime > new Date().getTime();
 }
