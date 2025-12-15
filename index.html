@@ -62,11 +62,11 @@
             font-weight: 700;
             color: #34d399; 
             margin-top: 50px; 
-            margin-bottom: 5px; /* تم تقليل الهامش لإضافة الـ XP */
+            margin-bottom: 5px;
             display: flex;
             align-items: center;
             justify-content: center;
-            text-decoration: none; /* لإزالة خط الرابط */
+            text-decoration: none;
             cursor: pointer;
         }
         #user-name-display:hover {
@@ -78,7 +78,7 @@
             font-size: 1.2em;
         }
         
-        /* عرض المستوى والخبرة (جديد) */
+        /* عرض المستوى والخبرة */
         #level-xp-display {
             color:#94a3b8; 
             font-size:0.9rem; 
@@ -230,7 +230,7 @@
     </a>
 
     <div id="level-xp-display">
-        المستوى <span id="user-level">1</span> | خبرة <span id="user-xp">0</span> XP
+        المستوى <span id="user-level">...</span> | خبرة <span id="user-xp">...</span> XP
     </div>
 
     <h1>ابدأ لعبة المدني المحتال</h1>
@@ -287,6 +287,7 @@
                     currentUserData = data;
                 }
                 
+                // عرض الاسم: يستخدم displayName ثم الإيميل كحل احتياطي
                 const displayName = user.displayName;
                 if (displayName) {
                     displayUserName(displayName);
@@ -298,7 +299,7 @@
                 }
                 
                 displayTotalCoins(); 
-                displayLevelAndXP(); // 🚨 جديد
+                displayLevelAndXP(); 
                 await loadPlayers(); 
             } else {
                 window.location.href = "auth.html";
@@ -324,7 +325,6 @@
      * @description عرض المستوى والخبرة.
      */
     function displayLevelAndXP() {
-        // نضمن وجود قيمة افتراضية إذا لم يتم تحميلها بعد
         const level = currentUserData.level || 1;
         const xp = currentUserData.xp || 0;
         
@@ -360,14 +360,16 @@
         const user = firebase.auth().currentUser;
         if (!user) return; 
         
-        // يجب إرسال كل البيانات بما في ذلك المستوى والخبرة
+        // يجب إرسال كل البيانات بما في ذلك المستوى والخبرة وحزم المتجر
         await saveUserData(
             currentUserData.totalCoins || 0,
             currentUserData.proExpiryTime || 0,
             players, 
             currentUserData.settings || {},
-            currentUserData.level || 1, // 🚨 مستوى
-            currentUserData.xp || 0      // 🚨 خبرة
+            currentUserData.level || 1, 
+            currentUserData.xp || 0,      
+            currentUserData.ownedPacksPermanent || [],
+            currentUserData.ownedPacksTemporary || {}
         );
         currentUserData.players = players;
     }
