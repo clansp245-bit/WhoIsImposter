@@ -3,124 +3,118 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🛠️ إدارة الأكواد - Admin</title>
+<title>إنشاء أكواد</title>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <script src="auth.js"></script>
 
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
-body { font-family: 'Cairo', sans-serif; background-color: #0f172a; color: #f1f5f9; text-align: center; padding:20px; min-height:100vh; margin:0;}
-h2 { font-size:2rem; font-weight:700; margin-bottom:25px; color:#ffd700;}
-.card { background-color:#1e293b; padding:25px; border-radius:12px; max-width:500px; margin:20px auto; box-shadow:0 4px 6px rgba(0,0,0,0.1); display:none;}
-label { display:block; margin:15px 0 5px 0; font-weight:700; color:#94a3b8;}
-input, select { width:100%; padding:10px; border-radius:6px; border:1px solid #334155; background-color:#334155; color:#f1f5f9; margin-bottom:10px;}
-button { padding:12px; border:none; border-radius:8px; font-weight:700; width:100%; cursor:pointer; background-color:#34d399; color:#fff; transition:0.3s;}
-button:hover { background-color:#10b981;}
-.promocode-list { max-height:300px; overflow-y:auto; margin-top:15px; }
-.promocode-list div { display:flex; justify-content:space-between; align-items:center; padding:5px; border-bottom:1px solid #475569; }
-.promocode-list div button { background-color:#ff4f4f; padding:4px 8px; font-size:12px; border-radius:4px; color:#fff; }
-#error-msg { color:#ff4f4f; margin:10px 0; }
+body{
+  font-family:'Cairo',sans-serif;
+  background:#0f172a;
+  color:#f1f5f9;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+}
+.card{
+  background:#1e293b;
+  padding:25px;
+  border-radius:12px;
+  width:90%;
+  max-width:420px;
+}
+h2{text-align:center;color:#34d399}
+label{margin-top:12px;display:block}
+input{
+  width:100%;
+  margin-top:6px;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #334155;
+  background:#334155;
+  color:#fff;
+}
+button{
+  margin-top:20px;
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:8px;
+  background:#6366f1;
+  color:#fff;
+  font-size:16px;
+  cursor:pointer;
+}
+button:hover{background:#4f46e5}
+.msg{margin-top:15px;text-align:center}
 </style>
 </head>
+
 <body>
 
-<h2>🛠️ إدارة الأكواد - Admin</h2>
+<div class="card">
+  <h2>🎟️ إنشاء كود</h2>
 
-<p id="error-msg"></p>
+  <label>اسم الكود</label>
+  <input id="codeName" placeholder="مثال: FREE100">
 
-<div class="card" id="admin-card">
-    <label for="new-code">الكود الجديد</label>
-    <input type="text" id="new-code" placeholder="ادخل الكود">
+  <label>عدد الكوينز</label>
+  <input type="number" id="coins" value="50">
 
-    <label for="new-code-type">نوع الكود</label>
-    <select id="new-code-type">
-        <option value="coins">كوينز</option>
-        <option value="pro">عضوية Pro</option>
-    </select>
+  <label>مدة Pro بالأيام (0 = بدون)</label>
+  <input type="number" id="proDays" value="0">
 
-    <label for="new-code-amount">عدد الكوينز أو أيام Pro</label>
-    <input type="number" id="new-code-amount" placeholder="العدد">
+  <button onclick="createCode()">إنشاء الكود</button>
 
-    <button onclick="createPromocode()">إنشاء كود جديد</button>
-
-    <div class="promocode-list" id="promocode-list"></div>
+  <div id="msg" class="msg"></div>
 </div>
 
 <script>
-const db = firebase.firestore();
-const adminCard = document.getElementById("admin-card");
-const errorMsg = document.getElementById("error-msg");
-
-firebase.auth().onAuthStateChanged(async (user)=>{
-    if(!user){
-        errorMsg.innerText="يجب تسجيل الدخول أولاً.";
-        return;
-    }
-    if(user.email !== "clansp245@gmail.com"){
-        errorMsg.innerText="لا يحق لك الوصول لهذه الصفحة!";
-        return;
-    }
-
-    // عرض محتوى الادمن بعد التحقق
-    adminCard.style.display="block";
-    errorMsg.innerText="";
-    loadPromocodes();
+firebase.auth().onAuthStateChanged(user=>{
+  if(!user){
+    location.href="auth.html";
+  }
 });
 
-async function loadPromocodes(){
-    const listDiv = document.getElementById("promocode-list");
-    listDiv.innerHTML="";
-    try{
-        const snapshot = await db.collection("promocodes").get();
-        snapshot.forEach(doc=>{
-            const data = doc.data();
-            const div = document.createElement("div");
-            div.innerHTML = `${doc.id} (${data.type} - ${data.amount}) <button onclick="deletePromocode('${doc.id}')">حذف</button>`;
-            listDiv.appendChild(div);
-        });
-    } catch(e){
-        console.error("خطأ أثناء تحميل الأكواد:",e);
-        errorMsg.innerText="حدث خطأ أثناء تحميل الأكواد!";
-    }
-}
+async function createCode(){
+  const code = document.getElementById("codeName").value.trim().toUpperCase();
+  const coins = Number(document.getElementById("coins").value);
+  const proDays = Number(document.getElementById("proDays").value);
+  const msg = document.getElementById("msg");
 
-async function createPromocode(){
-    const code = document.getElementById("new-code").value.trim();
-    const type = document.getElementById("new-code-type").value;
-    const amount = Number(document.getElementById("new-code-amount").value);
+  if(!code){
+    msg.textContent="❌ أدخل اسم الكود";
+    return;
+  }
 
-    if(!code || !type || !amount){
-        errorMsg.innerText="الرجاء تعبئة جميع الحقول بشكل صحيح.";
-        return;
+  try{
+    const ref = firebase.firestore().collection("promocodes").doc(code);
+    const snap = await ref.get();
+
+    if(snap.exists){
+      msg.textContent="❌ الكود موجود مسبقًا";
+      return;
     }
 
-    try{
-        await db.collection("promocodes").doc(code).set({type, amount, redeemedBy:[]});
-        document.getElementById("new-code").value="";
-        document.getElementById("new-code-amount").value="";
-        errorMsg.innerText="";
-        loadPromocodes();
-        alert("تم إنشاء الكود بنجاح!");
-    } catch(e){
-        console.error("خطأ أثناء إنشاء الكود:",e);
-        alert("حدث خطأ أثناء إنشاء الكود!");
-    }
-}
+    await ref.set({
+      coins,
+      proDays,
+      used:false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
 
-async function deletePromocode(code){
-    if(!confirm("هل أنت متأكد من حذف الكود؟")) return;
-    try{
-        await db.collection("promocodes").doc(code).delete();
-        loadPromocodes();
-    } catch(e){
-        console.error("خطأ أثناء حذف الكود:",e);
-        alert("حدث خطأ أثناء حذف الكود!");
-    }
+    msg.textContent="✅ تم إنشاء الكود بنجاح";
+  }catch(e){
+    console.error(e);
+    msg.textContent="❌ حدث خطأ";
+  }
 }
 </script>
 
