@@ -23,7 +23,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 // ----------------------------------------------------
-// 2. وظائف المصادقة
+// 2. وظائف المصادقة والإنشاء
 // ----------------------------------------------------
 
 async function createFirestoreUserEntry(user) {
@@ -31,16 +31,18 @@ async function createFirestoreUserEntry(user) {
     const doc = await userRef.get();
 
     if (!doc.exists) {
+        // تعيين displayName الافتراضي إذا لم يكن موجودًا في Firebase Auth
+        const defaultDisplayName = user.displayName || user.email.split('@')[0];
+        
         const initialData = {
             email: user.email || "",
+            displayName: defaultDisplayName, // حفظ الاسم الافتراضي في Firestore
             totalCoins: 0,
             proExpiryTime: 0,
             players: [], 
             settings: {},
-            // 🚨 حقول المستوى والخبرة الجديدة
             level: 1, 
             xp: 0,
-            // حقول المتجر
             ownedPacksPermanent: [], 
             ownedPacksTemporary: {},
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -53,6 +55,7 @@ async function createFirestoreUserEntry(user) {
 
 async function signUp(email, password) {
     const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+    // يمكن إضافة تحديث Profile هنا باسم افتراضي إذا لزم الأمر
     await createFirestoreUserEntry(userCredential.user);
     return userCredential;
 }
@@ -77,7 +80,7 @@ function signOutUser() {
 }
 
 // ----------------------------------------------------
-// 3. وظائف حفظ وتحميل بيانات المستخدم (محدثة)
+// 3. وظائف حفظ وتحميل بيانات المستخدم (مصححة)
 // ----------------------------------------------------
 
 function getCurrentUserId() {
@@ -86,7 +89,7 @@ function getCurrentUserId() {
 }
 
 /**
- * تحميل بيانات المستخدم: (الآن يتضمن المستوى والخبرة وحزم المتجر)
+ * تحميل بيانات المستخدم (مصححة لضمان القيم الافتراضية)
  */
 async function loadUserData() {
     const userId = getCurrentUserId();
@@ -110,10 +113,8 @@ async function loadUserData() {
             proExpiryTime: data.proExpiryTime || 0,
             players: data.players || [], 
             settings: data.settings || {},
-            // 🚨 حقول المستوى والخبرة المحدثة
             level: data.level || 1, 
             xp: data.xp || 0,
-            // حقول المتجر
             ownedPacksPermanent: data.ownedPacksPermanent || [],
             ownedPacksTemporary: data.ownedPacksTemporary || {}
         };
@@ -125,19 +126,12 @@ async function loadUserData() {
 }
 
 /**
- * حفظ بيانات المستخدم: (الآن يتضمن المستوى والخبرة وحزم المتجر)
- * * @param {number} newCoins - العدد الجديد للكوينز.
- * @param {number} newProTime - وقت انتهاء صلاحية Pro الجديد (Timestamp).
- * @param {Array<string>} playersData - قائمة اللاعبين.
- * @param {Object} settingsData - كائن إعدادات اللعبة.
- * @param {number} newLevel - المستوى الجديد للمستخدم. 🚨 جديد
- * @param {number} newXP - نقاط الخبرة الجديدة للمستخدم. 🚨 جديد
- * @param {Array<string>} permanentPacks - الأقسام الدائمة المشتراة.
- * @param {Object} temporaryPacks - الأقسام المؤقتة المشتراة (مع تاريخ الانتهاء).
+ * حفظ بيانات المستخدم (محدثة للمعلمات)
  */
 async function saveUserData(newCoins, newProTime, playersData, settingsData, newLevel, newXP, permanentPacks, temporaryPacks) {
     const userId = getCurrentUserId();
-    if (!userId) {
+    const user = auth.currentUser;
+    if (!userId || !user) {
         console.error("خطأ: لا يوجد مستخدم مسجل الدخول للحفظ.");
         return false;
     }
@@ -147,12 +141,12 @@ async function saveUserData(newCoins, newProTime, playersData, settingsData, new
         proExpiryTime: newProTime,
         players: playersData || [], 
         settings: settingsData || {},
-        // 🚨 حقول المستوى والخبرة المضافة
         level: newLevel || 1, 
         xp: newXP || 0,
-        // حقول المتجر
         ownedPacksPermanent: permanentPacks || [],
         ownedPacksTemporary: temporaryPacks || {},
+        // نحدث displayName هنا أيضاً لضمان التوافق بين Auth و Firestore
+        displayName: user.displayName || user.email.split('@')[0],
         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
     };
     
@@ -161,7 +155,7 @@ async function saveUserData(newCoins, newProTime, playersData, settingsData, new
         return true;
     } catch (error) {
         console.error("فشل تحديث بيانات المستخدم (saveUserData):", error);
-        throw error; // رمي الخطأ للتعامل معه في profile.html
+        throw error;
     }
 }
 
@@ -172,4 +166,3 @@ function isPro() {
     const proExpiryTime = (auth.currentUser && window.currentUserData?.proExpiryTime) || 0;
     return proExpiryTime > new Date().getTime();
 }
-
