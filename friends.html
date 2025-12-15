@@ -16,7 +16,7 @@
 <style>
 body { font-family: 'Cairo', sans-serif; background:#0f172a; color:#f1f5f9; text-align:center; padding:20px; min-height:100vh; }
 h1 { font-size:2rem; color:#34d399; margin-bottom:20px; }
-.card { background:#1e293b; padding:20px; border-radius:12px; margin:15px auto; max-width:450px; text-align:right; }
+.card { background:#1e293b; padding:20px; border-radius:12px; margin:15px auto; max-width:500px; text-align:right; }
 input, select { width: 100%; padding:10px; border-radius:8px; border:none; margin-bottom:10px; background:#334155; color:white; }
 button { padding:10px; width:100%; border:none; border-radius:8px; font-weight:700; cursor:pointer; margin-top:5px; }
 .send-btn { background:#34d399; color:white; }
@@ -38,12 +38,8 @@ button { padding:10px; width:100%; border:none; border-radius:8px; font-weight:7
 </div>
 
 <div class="card">
-    <label>اختر نوع الهدية:</label>
-    <select id="gift-select">
-        <option value="1" data-xp="10" data-cost="50">هدية عادية (50 Coins, +10 XP)</option>
-        <option value="2" data-xp="25" data-cost="120">هدية نادرة (120 Coins, +25 XP)</option>
-        <option value="3" data-xp="50" data-cost="250">هدية أسطورية (250 Coins, +50 XP)</option>
-    </select>
+    <label>اختر الهدية:</label>
+    <select id="gift-select"></select>
     <button class="send-btn" id="send-gift-btn" disabled>إرسال الهدية</button>
     <p class="alert" id="gift-alert"></p>
 </div>
@@ -57,7 +53,39 @@ button { padding:10px; width:100%; border:none; border-radius:8px; font-weight:7
 let currentUserData = {};
 let selectedPlayerId = null;
 
+// ---------------- قائمة الهدايا ----------------
+const gifts = [
+    {name:"وردة", cost:10, xp:5},
+    {name:"شوكولاتة", cost:20, xp:10},
+    {name:"كتاب", cost:50, xp:15},
+    {name:"ساعة", cost:80, xp:20},
+    {name:"سيارة", cost:200, xp:50},
+    {name:"طائرة", cost:500, xp:120},
+    {name:"قارب", cost:300, xp:70},
+    {name:"كمبيوتر", cost:150, xp:40},
+    {name:"هاتف", cost:100, xp:30},
+    {name:"دراجة", cost:70, xp:20},
+    {name:"حقيبة", cost:40, xp:15},
+    {name:"قبعة", cost:25, xp:10},
+    {name:"نظارة شمسية", cost:35, xp:12},
+    {name:"حلويات", cost:15, xp:8},
+    {name:"زهور", cost:30, xp:15}
+];
+
+// تعبئة قائمة الهدايا في select
+function populateGifts() {
+    const select = document.getElementById("gift-select");
+    gifts.forEach((g, i) => {
+        const option = document.createElement("option");
+        option.value = i;
+        option.text = `${g.name} (${g.cost} Coins, +${g.xp} XP)`;
+        select.add(option);
+    });
+}
+
+// ---------------- INIT ----------------
 async function initPage() {
+    populateGifts();
     firebase.auth().onAuthStateChanged(async user => {
         if (!user) return window.location.href = "auth.html";
         const data = await loadUserData();
@@ -108,42 +136,43 @@ function selectPlayer(uid) {
 // ---------------- SEND GIFT ----------------
 document.getElementById("send-gift-btn").addEventListener("click", async () => {
     if (!selectedPlayerId) return;
-    const giftSelect = document.getElementById("gift-select");
-    const option = giftSelect.selectedOptions[0];
-    const cost = parseInt(option.dataset.cost);
-    const xp = parseInt(option.dataset.xp);
-
-    if ((currentUserData.totalCoins || 0) < cost) {
-        document.getElementById("gift-alert").innerText = "ليس لديك ما يكفي من Coins لإرسال هذه الهدية!";
+    const giftIndex = parseInt(document.getElementById("gift-select").value);
+    const gift = gifts[giftIndex];
+    
+    if ((currentUserData.totalCoins || 0) < gift.cost) {
+        document.getElementById("gift-alert").innerText = "ليس لديك ما يكفي من Coins!";
         return;
     }
 
-    // خصم الكوينز من المرسل
-    currentUserData.totalCoins -= cost;
+    try {
+        // تنفيذ المعاملة
+        const senderRef = firebase.firestore().collection("users").doc(firebase.auth().currentUser.uid);
+        const recipientRef = firebase.firestore().collection("users").doc(selectedPlayerId);
 
-    // تحديث XP للمستلم
-    const recipientRef = firebase.firestore().collection("users").doc(selectedPlayerId);
-    await firebase.firestore().runTransaction(async (tx)=>{
-        const doc = await tx.get(recipientRef);
-        if (!doc.exists) throw "المستخدم غير موجود";
-        const newXP = (doc.data().xp || 0) + xp;
-        tx.update(recipientRef, { xp: newXP });
-    });
+        await firebase.firestore().runTransaction(async (tx) => {
+            const senderDoc = await tx.get(senderRef);
+            const recipientDoc = await tx.get(recipientRef);
 
-    // تحديث بيانات المرسل
-    await saveUserData(
-        currentUserData.totalCoins,
-        currentUserData.proExpiryTime || 0,
-        currentUserData.players || [],
-        currentUserData.settings || {},
-        currentUserData.level || 1,
-        currentUserData.xp || 0,
-        currentUserData.ownedPacksPermanent || [],
-        currentUserData.ownedPacksTemporary || {}
-    );
+            if (!senderDoc.exists || !recipientDoc.exists) throw "خطأ في البيانات";
 
-    updateUserDisplay();
-    document.getElementById("gift-alert").innerText = "تم إرسال الهدية بنجاح!";
+            // خصم Coins من المرسل
+            const newSenderCoins = (senderDoc.data().totalCoins || 0) - gift.cost;
+            tx.update(senderRef, { totalCoins: newSenderCoins });
+
+            // إضافة XP للمستلم
+            const newRecipientXP = (recipientDoc.data().xp || 0) + gift.xp;
+            tx.update(recipientRef, { xp: newRecipientXP });
+        });
+
+        // تحديث عرض المستخدم المحلي
+        currentUserData.totalCoins -= gift.cost;
+        updateUserDisplay();
+
+        document.getElementById("gift-alert").innerText = `تم إرسال ${gift.name} بنجاح! +${gift.xp} XP للمستلم`;
+    } catch(e) {
+        console.error(e);
+        document.getElementById("gift-alert").innerText = "حدث خطأ أثناء إرسال الهدية!";
+    }
 });
 </script>
 
