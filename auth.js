@@ -36,7 +36,10 @@ async function createFirestoreUserEntry(user) {
             totalCoins: 0,
             proExpiryTime: 0,
             players: [], 
-            settings: {}, 
+            settings: {},
+            // 🚨 حقول جديدة تم إضافتها لدعم المتجر
+            ownedPacksPermanent: [], 
+            ownedPacksTemporary: {},
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         await userRef.set(initialData);
@@ -80,8 +83,7 @@ function getCurrentUserId() {
 }
 
 /**
- * تحميل بيانات المستخدم: totalCoins, proExpiryTime, players, settings
- * @returns {Object|null} بيانات المستخدم أو null في حالة الفشل.
+ * تحميل بيانات المستخدم: (الآن يتضمن حزم المتجر)
  */
 async function loadUserData() {
     const userId = getCurrentUserId();
@@ -94,7 +96,6 @@ async function loadUserData() {
         if (doc.exists) {
             data = doc.data();
         } else if (auth.currentUser) {
-             // إذا لم يكن هناك مستند، أنشئ مدخل مبدئي
              data = await createFirestoreUserEntry(auth.currentUser);
         } else {
              return null;
@@ -105,7 +106,10 @@ async function loadUserData() {
             totalCoins: data.totalCoins || 0,
             proExpiryTime: data.proExpiryTime || 0,
             players: data.players || [], 
-            settings: data.settings || {} 
+            settings: data.settings || {},
+            // 🚨 حقول المتجر الجديدة
+            ownedPacksPermanent: data.ownedPacksPermanent || [],
+            ownedPacksTemporary: data.ownedPacksTemporary || {}
         };
         
     } catch (error) {
@@ -115,13 +119,15 @@ async function loadUserData() {
 }
 
 /**
- * حفظ بيانات المستخدم: totalCoins, proExpiryTime, players, settings
+ * حفظ بيانات المستخدم: (الآن يتضمن حزم المتجر)
  * @param {number} newCoins - العدد الجديد للكوينز.
  * @param {number} newProTime - وقت انتهاء صلاحية Pro الجديد (Timestamp).
  * @param {Array<string>} playersData - قائمة اللاعبين.
  * @param {Object} settingsData - كائن إعدادات اللعبة.
+ * @param {Array<string>} permanentPacks - الأقسام الدائمة المشتراة.
+ * @param {Object} temporaryPacks - الأقسام المؤقتة المشتراة (مع تاريخ الانتهاء).
  */
-async function saveUserData(newCoins, newProTime, playersData, settingsData) {
+async function saveUserData(newCoins, newProTime, playersData, settingsData, permanentPacks, temporaryPacks) {
     const userId = getCurrentUserId();
     if (!userId) {
         console.error("خطأ: لا يوجد مستخدم مسجل الدخول للحفظ.");
@@ -129,16 +135,17 @@ async function saveUserData(newCoins, newProTime, playersData, settingsData) {
     }
 
     const dataToSave = {
-        // تأكد من تمرير القيم الصحيحة
         totalCoins: newCoins,
         proExpiryTime: newProTime,
         players: playersData || [], 
-        settings: settingsData || {}, 
+        settings: settingsData || {},
+        // 🚨 حقول المتجر الجديدة
+        ownedPacksPermanent: permanentPacks || [],
+        ownedPacksTemporary: temporaryPacks || {},
         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
     };
     
     try {
-        // نستخدم set مع merge: true لضمان تحديث كل الحقول الأربعة
         await db.collection("users").doc(userId).set(dataToSave, { merge: true });
         return true;
     } catch (error) {
@@ -148,10 +155,9 @@ async function saveUserData(newCoins, newProTime, playersData, settingsData) {
 }
 
 /**
- * التحقق من عضوية Pro
+ * التحقق من عضوية Pro (كما هي)
  */
 function isPro() {
-    // يجب أن تكون بيانات المستخدم قد تم تحميلها أولاً في currentUserData في كل صفحة
     const proExpiryTime = (auth.currentUser && window.currentUserData?.proExpiryTime) || 0;
     return proExpiryTime > new Date().getTime();
 }
