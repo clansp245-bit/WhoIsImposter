@@ -23,7 +23,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 // ----------------------------------------------------
-// 2. وظائف المصادقة (كما هي)
+// 2. وظائف المصادقة
 // ----------------------------------------------------
 
 async function createFirestoreUserEntry(user) {
@@ -37,7 +37,10 @@ async function createFirestoreUserEntry(user) {
             proExpiryTime: 0,
             players: [], 
             settings: {},
-            // 🚨 حقول جديدة تم إضافتها لدعم المتجر
+            // 🚨 حقول المستوى والخبرة الجديدة
+            level: 1, 
+            xp: 0,
+            // حقول المتجر
             ownedPacksPermanent: [], 
             ownedPacksTemporary: {},
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -74,7 +77,7 @@ function signOutUser() {
 }
 
 // ----------------------------------------------------
-// 3. وظائف حفظ وتحميل بيانات المستخدم (تم تحديثها)
+// 3. وظائف حفظ وتحميل بيانات المستخدم (محدثة)
 // ----------------------------------------------------
 
 function getCurrentUserId() {
@@ -83,7 +86,7 @@ function getCurrentUserId() {
 }
 
 /**
- * تحميل بيانات المستخدم: (الآن يتضمن حزم المتجر)
+ * تحميل بيانات المستخدم: (الآن يتضمن المستوى والخبرة وحزم المتجر)
  */
 async function loadUserData() {
     const userId = getCurrentUserId();
@@ -107,7 +110,10 @@ async function loadUserData() {
             proExpiryTime: data.proExpiryTime || 0,
             players: data.players || [], 
             settings: data.settings || {},
-            // 🚨 حقول المتجر الجديدة
+            // 🚨 حقول المستوى والخبرة المحدثة
+            level: data.level || 1, 
+            xp: data.xp || 0,
+            // حقول المتجر
             ownedPacksPermanent: data.ownedPacksPermanent || [],
             ownedPacksTemporary: data.ownedPacksTemporary || {}
         };
@@ -119,15 +125,17 @@ async function loadUserData() {
 }
 
 /**
- * حفظ بيانات المستخدم: (الآن يتضمن حزم المتجر)
- * @param {number} newCoins - العدد الجديد للكوينز.
+ * حفظ بيانات المستخدم: (الآن يتضمن المستوى والخبرة وحزم المتجر)
+ * * @param {number} newCoins - العدد الجديد للكوينز.
  * @param {number} newProTime - وقت انتهاء صلاحية Pro الجديد (Timestamp).
  * @param {Array<string>} playersData - قائمة اللاعبين.
  * @param {Object} settingsData - كائن إعدادات اللعبة.
+ * @param {number} newLevel - المستوى الجديد للمستخدم. 🚨 جديد
+ * @param {number} newXP - نقاط الخبرة الجديدة للمستخدم. 🚨 جديد
  * @param {Array<string>} permanentPacks - الأقسام الدائمة المشتراة.
  * @param {Object} temporaryPacks - الأقسام المؤقتة المشتراة (مع تاريخ الانتهاء).
  */
-async function saveUserData(newCoins, newProTime, playersData, settingsData, permanentPacks, temporaryPacks) {
+async function saveUserData(newCoins, newProTime, playersData, settingsData, newLevel, newXP, permanentPacks, temporaryPacks) {
     const userId = getCurrentUserId();
     if (!userId) {
         console.error("خطأ: لا يوجد مستخدم مسجل الدخول للحفظ.");
@@ -139,7 +147,10 @@ async function saveUserData(newCoins, newProTime, playersData, settingsData, per
         proExpiryTime: newProTime,
         players: playersData || [], 
         settings: settingsData || {},
-        // 🚨 حقول المتجر الجديدة
+        // 🚨 حقول المستوى والخبرة المضافة
+        level: newLevel || 1, 
+        xp: newXP || 0,
+        // حقول المتجر
         ownedPacksPermanent: permanentPacks || [],
         ownedPacksTemporary: temporaryPacks || {},
         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
@@ -150,14 +161,15 @@ async function saveUserData(newCoins, newProTime, playersData, settingsData, per
         return true;
     } catch (error) {
         console.error("فشل تحديث بيانات المستخدم (saveUserData):", error);
-        return false;
+        throw error; // رمي الخطأ للتعامل معه في profile.html
     }
 }
 
 /**
- * التحقق من عضوية Pro (كما هي)
+ * التحقق من عضوية Pro
  */
 function isPro() {
     const proExpiryTime = (auth.currentUser && window.currentUserData?.proExpiryTime) || 0;
     return proExpiryTime > new Date().getTime();
 }
+
