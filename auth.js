@@ -35,8 +35,8 @@ async function createFirestoreUserEntry(user) {
             email: user.email || "",
             totalCoins: 0,
             proExpiryTime: 0,
-            players: [], // لضمان وجودها من البداية
-            settings: {}, // لضمان وجودها من البداية
+            players: [], 
+            settings: {}, 
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         await userRef.set(initialData);
@@ -81,6 +81,7 @@ function getCurrentUserId() {
 
 /**
  * تحميل بيانات المستخدم: totalCoins, proExpiryTime, players, settings
+ * @returns {Object|null} بيانات المستخدم أو null في حالة الفشل.
  */
 async function loadUserData() {
     const userId = getCurrentUserId();
@@ -88,28 +89,25 @@ async function loadUserData() {
 
     try {
         const doc = await db.collection("users").doc(userId).get();
-        if (doc.exists) {
-            const data = doc.data();
-            // إرجاع البيانات المحملة مع التأكد من وجود الحقول الافتراضية
-            return {
-                totalCoins: data.totalCoins || 0,
-                proExpiryTime: data.proExpiryTime || 0,
-                players: data.players || [], 
-                settings: data.settings || {} 
-            };
-        }
         
-        if (auth.currentUser) {
-             // إذا لم يكن هناك مستند، أنشئ مدخل مبدئي للحصول على البيانات الأولية
-             const initialData = await createFirestoreUserEntry(auth.currentUser);
-             return {
-                totalCoins: initialData.totalCoins || 0,
-                proExpiryTime: initialData.proExpiryTime || 0,
-                players: [], 
-                settings: {}
-             };
+        let data = {};
+        if (doc.exists) {
+            data = doc.data();
+        } else if (auth.currentUser) {
+             // إذا لم يكن هناك مستند، أنشئ مدخل مبدئي
+             data = await createFirestoreUserEntry(auth.currentUser);
+        } else {
+             return null;
         }
-        return null;
+
+        // إرجاع البيانات المحملة مع التأكد من وجود الحقول الافتراضية
+        return {
+            totalCoins: data.totalCoins || 0,
+            proExpiryTime: data.proExpiryTime || 0,
+            players: data.players || [], 
+            settings: data.settings || {} 
+        };
+        
     } catch (error) {
         console.error("فشل جلب بيانات المستخدم:", error);
         return null;
@@ -125,13 +123,17 @@ async function loadUserData() {
  */
 async function saveUserData(newCoins, newProTime, playersData, settingsData) {
     const userId = getCurrentUserId();
-    if (!userId) return false;
+    if (!userId) {
+        console.error("خطأ: لا يوجد مستخدم مسجل الدخول للحفظ.");
+        return false;
+    }
 
     const dataToSave = {
+        // تأكد من تمرير القيم الصحيحة
         totalCoins: newCoins,
         proExpiryTime: newProTime,
-        players: playersData, 
-        settings: settingsData, 
+        players: playersData || [], 
+        settings: settingsData || {}, 
         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
     };
     
@@ -140,7 +142,7 @@ async function saveUserData(newCoins, newProTime, playersData, settingsData) {
         await db.collection("users").doc(userId).set(dataToSave, { merge: true });
         return true;
     } catch (error) {
-        console.error("فشل تحديث بيانات المستخدم:", error);
+        console.error("فشل تحديث بيانات المستخدم (saveUserData):", error);
         return false;
     }
 }
