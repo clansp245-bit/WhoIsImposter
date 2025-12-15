@@ -1,9 +1,9 @@
-here<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>👤 الملف الشخصي</title>
+<title>👤 ملفي الشخصي</title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -13,203 +13,205 @@ here<!DOCTYPE html>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
-body {
-    font-family: 'Cairo', sans-serif;
+body{
+    font-family:'Cairo',sans-serif;
     background:#0f172a;
     color:#f1f5f9;
     text-align:center;
-    padding:20px;
+    padding:20px
 }
-h1 { color:#34d399; }
-.card {
+.card{
     background:#1e293b;
     padding:25px;
     border-radius:12px;
     max-width:450px;
     margin:20px auto;
-    text-align:right;
+    text-align:right
 }
-.info-item {
+.info-item{
     display:flex;
     justify-content:space-between;
-    border-bottom:1px solid #334155;
     padding:8px 0;
+    border-bottom:1px solid #334155
 }
-input {
+input,button{
     width:100%;
     padding:12px;
     border-radius:8px;
+    border:none;
+    font-family:'Cairo'
+}
+input{
     background:#334155;
     color:white;
-    border:none;
+    margin-bottom:10px
 }
-button {
-    width:100%;
-    padding:12px;
-    border:none;
-    border-radius:8px;
-    font-weight:bold;
-    cursor:pointer;
+button{
+    background:#34d399;
+    color:white;
+    font-weight:700;
+    cursor:pointer
 }
-button:disabled {
+button:disabled{
     background:#475569;
-    cursor:not-allowed;
+    cursor:not-allowed
 }
-#save-name-btn { background:#34d399; }
-#back-btn { background:#6366f1; margin-top:20px; }
-#error-message { margin-top:10px; font-size:0.9rem; }
+#error{
+    margin-top:10px;
+    font-size:14px
+}
 </style>
 </head>
 
 <body>
 
-<h1>👤 الملف الشخصي</h1>
+<h2>👤 الملف الشخصي</h2>
 
 <div class="card">
-<h3>معلومات الحساب</h3>
-<div class="info-item"><span>المستوى</span><span id="level">...</span></div>
-<div class="info-item"><span>XP</span><span id="xp">...</span></div>
-<div class="info-item"><span>البريد</span><span id="email">...</span></div>
-<div class="info-item"><span>الحالة</span><span id="status">...</span></div>
-<div class="info-item"><span>الكوينز</span><span id="coins">...</span></div>
+    <div class="info-item"><span>البريد</span><span id="email">...</span></div>
+    <div class="info-item"><span>المستوى</span><span id="level">...</span></div>
+    <div class="info-item"><span>XP</span><span id="xp">...</span></div>
+    <div class="info-item"><span>الحالة</span><span id="status">...</span></div>
+    <div class="info-item"><span>الكوينز</span><span id="coins">...</span></div>
 </div>
 
 <div class="card">
-<h3>تغيير اسم العرض</h3>
-<p id="cost-text" style="color:#ffcc00;font-weight:700;"></p>
-<input id="name-input" disabled>
-<p id="error-message"></p>
-<button id="save-name-btn" disabled>حفظ التغيير</button>
+    <h3>تغيير اسم العرض</h3>
+    <p id="costText" style="color:#facc15;font-weight:700"></p>
+    <input id="nameInput" disabled>
+    <button id="saveBtn" disabled>حفظ التغيير</button>
+    <div id="error"></div>
 </div>
-
-<button id="back-btn" onclick="location.href='index.html'">⬅ العودة</button>
 
 <script>
-const NAME_COST = 500;
-let currentUserData = null;
-let isSaving = false;
+let userData=null;
+let isSaving=false;
+const BASE_COST=500;
 
-const nameInput = document.getElementById("name-input");
-const saveBtn = document.getElementById("save-name-btn");
-const errorMsg = document.getElementById("error-message");
-const costText = document.getElementById("cost-text");
+const nameInput=document.getElementById("nameInput");
+const saveBtn=document.getElementById("saveBtn");
+const errorBox=document.getElementById("error");
+const costText=document.getElementById("costText");
 
-firebase.auth().onAuthStateChanged(async user => {
-    if (!user) return location.href = "auth.html";
+firebase.auth().onAuthStateChanged(async user=>{
+    if(!user) return location.href="auth.html";
 
-    currentUserData = await loadUserData();
-    if (!currentUserData) return;
+    userData=await loadUserData();
+    userData.hasChangedNameBefore ??= false;
+    userData.proExpiryTime ??= 0;
 
-    email.innerText = user.email;
-    level.innerText = currentUserData.level;
-    xp.innerText = currentUserData.xp;
-    coins.innerText = currentUserData.totalCoins;
+    document.getElementById("email").innerText=user.email;
+    document.getElementById("level").innerText=userData.level;
+    document.getElementById("xp").innerText=userData.xp;
+    document.getElementById("coins").innerText=userData.totalCoins;
 
-    const isPro = currentUserData.proExpiryTime > Date.now();
-    status.innerText = isPro ? "Pro 👑" : "عادي";
+    const isPro=userData.proExpiryTime>Date.now();
+    document.getElementById("status").innerText=isPro?"Pro 👑":"عادي";
 
-    nameInput.value = user.displayName || user.email.split("@")[0];
-    nameInput.disabled = false;
+    nameInput.value=user.displayName||user.email.split("@")[0];
+    nameInput.disabled=false;
 
-    updateCost(isPro);
-    validateName();
+    await updateCost(isPro);
+    validate();
 });
 
-nameInput.addEventListener("input", validateName);
+nameInput.addEventListener("input",validate);
 
-function validateName() {
-    const user = firebase.auth().currentUser;
-    if (!user) return;
-
-    const newName = nameInput.value.trim();
-    saveBtn.disabled = newName.length < 3 || newName === user.displayName || isSaving;
+function validate(){
+    const current=nameInput.value.trim();
+    const original=firebase.auth().currentUser.displayName;
+    saveBtn.disabled=isSaving||current.length<3||current===original;
 }
 
-async function updateCost(isPro) {
-    if (!currentUserData.hasChangedNameBefore) {
-        costText.innerText = "🎉 أول تغيير اسم مجاني";
+async function isNameAvailable(name){
+    const snap=await firebase.firestore()
+        .collection("users")
+        .where("displayName","==",name)
+        .limit(1).get();
+
+    return snap.empty || snap.docs[0].id===firebase.auth().currentUser.uid;
+}
+
+async function updateCost(isPro){
+    if(!userData.hasChangedNameBefore){
+        costText.innerText="🎉 أول تغيير اسم مجاني";
+        userData.finalCost=0;
         return;
     }
 
-    let cost = NAME_COST;
+    let cost=BASE_COST;
 
-    if (isPro) {
-        const today = new Date().toDateString();
-        if (currentUserData.dailyNameDiscount?.date !== today) {
-            const discount = Math.floor(Math.random() * 46) + 5; // 5-50%
-            await firebase.firestore().collection("users").doc(firebase.auth().currentUser.uid)
-                .set({ dailyNameDiscount: { date: today, percent: discount } }, { merge:true });
-            currentUserData.dailyNameDiscount = { date: today, percent: discount };
+    if(isPro){
+        const today=new Date().toDateString();
+        if(userData.dailyDiscount?.date!==today){
+            const percent=Math.floor(Math.random()*46)+5;
+            await firebase.firestore().collection("users")
+                .doc(firebase.auth().currentUser.uid)
+                .set({dailyDiscount:{date:today,percent}}, {merge:true});
+            userData.dailyDiscount={date:today,percent};
         }
-        cost = Math.floor(NAME_COST * (1 - currentUserData.dailyNameDiscount.percent / 100));
-        costText.innerText = `👑 خصم اليوم: ${currentUserData.dailyNameDiscount.percent}% → ${cost} كوينز`;
-    } else {
-        costText.innerText = `🚨 رسوم تغيير الاسم: ${NAME_COST} كوينز`;
+        cost=Math.floor(BASE_COST*(1-userData.dailyDiscount.percent/100));
+        costText.innerText=`👑 خصم اليوم ${userData.dailyDiscount.percent}% → ${cost} كوينز`;
+    }else{
+        costText.innerText=`💰 تكلفة التغيير: ${BASE_COST} كوينز`;
     }
 
-    currentUserData.finalNameCost = cost;
+    userData.finalCost=cost;
 }
 
-saveBtn.onclick = async () => {
-    if (isSaving) return;
-    isSaving = true;
+saveBtn.onclick=async()=>{
+    if(isSaving) return;
+    isSaving=true;
+    saveBtn.disabled=true;
+    errorBox.innerText="";
 
-    const user = firebase.auth().currentUser;
-    const newName = nameInput.value.trim();
+    const user=firebase.auth().currentUser;
+    const newName=nameInput.value.trim();
 
-    errorMsg.innerText = "";
-
-    const available = await isDisplayNameAvailable(newName);
-    if (!available) {
-        errorMsg.innerText = "❌ الاسم مستخدم بالفعل";
-        errorMsg.style.color = "#ff4f4f";
-        isSaving = false;
-        validateName();
+    if(!(await isNameAvailable(newName))){
+        errorBox.innerText="❌ الاسم مستخدم بالفعل";
+        errorBox.style.color="#ef4444";
+        isSaving=false;
+        validate();
         return;
     }
 
-    const cost = currentUserData.hasChangedNameBefore ? currentUserData.finalNameCost || NAME_COST : 0;
-
-    if (currentUserData.totalCoins < cost) {
-        errorMsg.innerText = "❌ لا توجد كوينز كافية";
-        errorMsg.style.color = "#ff4f4f";
-        isSaving = false;
-        validateName();
+    if(userData.totalCoins<userData.finalCost){
+        errorBox.innerText="❌ كوينز غير كافية";
+        errorBox.style.color="#ef4444";
+        isSaving=false;
+        validate();
         return;
     }
 
-    saveBtn.disabled = true;
+    try{
+        await user.updateProfile({displayName:newName});
+        const newCoins=userData.totalCoins-userData.finalCost;
 
-    try {
-        await user.updateProfile({ displayName: newName });
+        await firebase.firestore().collection("users").doc(user.uid)
+        .set({
+            displayName:newName,
+            totalCoins:newCoins,
+            hasChangedNameBefore:true
+        },{merge:true});
 
-        const newCoins = currentUserData.totalCoins - cost;
+        userData.totalCoins=newCoins;
+        userData.hasChangedNameBefore=true;
+        document.getElementById("coins").innerText=newCoins;
 
-        await firebase.firestore().collection("users").doc(user.uid).set({
-            displayName: newName,
-            totalCoins: newCoins,
-            hasChangedNameBefore: true
-        }, { merge:true });
+        errorBox.innerText=userData.finalCost===0
+            ?"✅ تم التغيير مجانًا"
+            :`✅ تم الخصم ${userData.finalCost} كوينز`;
+        errorBox.style.color="#22c55e";
 
-        currentUserData.totalCoins = newCoins;
-        currentUserData.hasChangedNameBefore = true;
-        coins.innerText = newCoins;
-
-        errorMsg.innerText = cost === 0
-            ? "✅ تم تغيير الاسم مجانًا"
-            : `✅ تم تغيير الاسم وخصم ${cost} كوينز`;
-        errorMsg.style.color = "#34d399";
-
-        validateName();
-        updateCost(currentUserData.proExpiryTime > Date.now());
-
-    } catch (e) {
-        errorMsg.innerText = "❌ فشل التغيير";
-        errorMsg.style.color = "#ff4f4f";
-        console.error(e);
+        await updateCost(userData.proExpiryTime>Date.now());
+        validate();
+    }catch(e){
+        errorBox.innerText="❌ حدث خطأ";
+        errorBox.style.color="#ef4444";
     }
 
-    isSaving = false;
+    isSaving=false;
 };
 </script>
 
