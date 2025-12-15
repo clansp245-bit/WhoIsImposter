@@ -25,10 +25,7 @@
             flex-direction: column;
             align-items: center;
         }
-        h1 {
-            color: #34d399;
-            margin-bottom: 30px;
-        }
+        h1 { color: #34d399; margin-bottom: 30px; }
         .card {
             background-color: #1e293b; 
             padding: 30px;
@@ -36,294 +33,160 @@
             max-width: 450px;
             width: 90%;
             margin: 20px auto;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 10px 15px rgba(0, 0, 0, 0.2);
             text-align: right;
         }
-        input[type="text"] {
-            font-family: 'Cairo', sans-serif;
-            width: calc(100% - 24px); 
+        input {
+            width: 100%;
             padding: 12px;
             border-radius: 8px;
-            border: 1px solid #334155;
-            font-size: 16px;
-            background-color: #334155; 
-            color: #f1f5f9;
-            margin-bottom: 20px;
+            background: #334155;
+            color: white;
+            border: none;
+            margin-bottom: 15px;
         }
         button {
-            padding: 10px 20px;
-            font-size: 16px;
-            font-weight: 700;
-            border: none;
-            border-radius: 8px; 
-            cursor: pointer;
-            transition: background-color 0.3s;
             width: 100%;
-            margin-top: 10px;
+            padding: 12px;
+            font-weight: bold;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
         }
-        #save-name-btn {
-            background-color: #34d399;
-            color: white;
-        }
-        #save-name-btn:hover:enabled {
-            background-color: #10b981;
-        }
-        #save-name-btn:disabled {
-            background-color: #475569;
-            cursor: not-allowed;
-        }
-        #back-btn {
-            background-color: #6366f1;
-            color: white;
-        }
-        #back-btn:hover {
-            background-color: #4f46e5;
-        }
+        #save-name-btn { background: #34d399; color: white; }
+        #save-name-btn:disabled { background: #475569; }
+        #back-btn { background: #6366f1; color: white; margin-top: 20px; }
         .info-item {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
+            padding: 8px 0;
             border-bottom: 1px solid #334155;
         }
-        .info-item:last-child {
-            border-bottom: none;
-        }
-        .label {
-            color: #94a3b8;
-        }
-        .value {
-            font-weight: 700;
-        }
-        #error-message {
-            margin-top: 10px;
-            font-size: 0.9rem;
-        }
+        .label { color: #94a3b8; }
+        .value { font-weight: bold; }
+        #error-message { margin-top: 10px; font-size: 0.9rem; }
     </style>
 </head>
-<body onload="checkAuthState()">
 
-    <h1>👤 الملف الشخصي</h1>
+<body>
 
-    <div class="card">
-        <h3>معلومات الحساب</h3>
-        <div class="info-item">
-            <span class="label">المستوى الحالي:</span>
-            <span class="value" id="user-level-profile">جاري التحميل...</span>
-        </div>
-        <div class="info-item">
-            <span class="label">إجمالي نقاط الخبرة (XP):</span>
-            <span class="value" id="user-xp-profile">جاري التحميل...</span>
-        </div>
-        <div class="info-item">
-            <span class="label">البريد الإلكتروني:</span>
-            <span class="value" id="user-email">جاري التحميل...</span>
-        </div>
-        <div class="info-item">
-            <span class="label">حالة العضوية:</span>
-            <span class="value" id="pro-status">جاري التحميل...</span>
-        </div>
-        <div class="info-item">
-            <span class="label">الكوينز المتبقية:</span>
-            <span class="value" id="user-coins">جاري التحميل...</span>
-        </div>
-    </div>
+<h1>👤 الملف الشخصي</h1>
 
-    <div class="card">
-        <h3>تغيير اسم العرض</h3>
-        <p style="color:#ffcc00; font-weight:700;">🚨 رسوم تغيير الاسم: <span id="name-change-cost">500</span> كوينز</p>
-        <label for="display-name-input" style="font-weight: 700; color: #f1f5f9;">اسم العرض الحالي:</label>
-        <input type="text" id="display-name-input" placeholder="أدخل اسم العرض الجديد" disabled>
-        <p id="error-message"></p>
-        <button id="save-name-btn" onclick="saveNewDisplayName()" disabled>حفظ التغيير</button>
-    </div>
+<div class="card">
+    <h3>معلومات الحساب</h3>
+    <div class="info-item"><span class="label">المستوى:</span><span id="user-level-profile">...</span></div>
+    <div class="info-item"><span class="label">XP:</span><span id="user-xp-profile">...</span></div>
+    <div class="info-item"><span class="label">البريد:</span><span id="user-email">...</span></div>
+    <div class="info-item"><span class="label">الحالة:</span><span id="pro-status">...</span></div>
+    <div class="info-item"><span class="label">الكوينز:</span><span id="user-coins">...</span></div>
+</div>
 
-    <button id="back-btn" onclick="location.href='index.html'">
-        <i class="fas fa-arrow-right"></i> العودة للعبة
-    </button>
-    
+<div class="card">
+    <h3>تغيير اسم العرض</h3>
+    <p id="name-cost-text" style="color:#ffcc00;font-weight:700;"></p>
+    <input id="display-name-input" disabled>
+    <p id="error-message"></p>
+    <button id="save-name-btn" disabled>حفظ التغيير</button>
+</div>
+
+<button id="back-btn" onclick="location.href='index.html'">
+    <i class="fas fa-arrow-right"></i> العودة للعبة
+</button>
+
 <script>
-    let currentUserData = null; 
-    const db = firebase.firestore();
-    const NAME_CHANGE_COST = 500; 
+let currentUserData = null;
+const NAME_CHANGE_COST = 500;
 
-    const nameInput = document.getElementById('display-name-input');
-    const saveBtn = document.getElementById('save-name-btn');
-    const errorMsg = document.getElementById('error-message');
+const nameInput = document.getElementById("display-name-input");
+const saveBtn = document.getElementById("save-name-btn");
+const errorMsg = document.getElementById("error-message");
+const costText = document.getElementById("name-cost-text");
 
-    // ----------------------------------
-    // دوال المساعدة 
-    // ----------------------------------
-    function isProUser() {
-        const expiryTime = currentUserData?.proExpiryTime || 0;
-        return expiryTime > Date.now();
+document.addEventListener("DOMContentLoaded", () => {
+    firebase.auth().onAuthStateChanged(async (user) => {
+        if (!user) return location.href = "auth.html";
+
+        currentUserData = await loadUserData();
+        if (!currentUserData) return;
+
+        document.getElementById("user-email").innerText = user.email;
+        document.getElementById("user-level-profile").innerText = currentUserData.level;
+        document.getElementById("user-xp-profile").innerText = currentUserData.xp;
+        document.getElementById("user-coins").innerText = currentUserData.totalCoins;
+
+        document.getElementById("pro-status").innerText =
+            currentUserData.proExpiryTime > Date.now() ? "Pro 👑" : "عادي";
+
+        nameInput.value = user.displayName || user.email.split("@")[0];
+        nameInput.disabled = false;
+        saveBtn.disabled = false;
+
+        updateCostText();
+    });
+});
+
+function updateCostText() {
+    if (!currentUserData.hasChangedNameBefore) {
+        costText.innerText = "🎉 أول تغيير اسم مجاني!";
+    } else {
+        costText.innerText = `🚨 رسوم تغيير الاسم: ${NAME_CHANGE_COST} كوينز`;
     }
-    
-    /**
-     * @function isNameTaken (مبسطة لتقليل أخطاء الأمان)
-     */
-    async function isNameTaken(name) {
-        const usersRef = db.collection('users');
-        const user = firebase.auth().currentUser;
-        if (!user) return false;
-        
-        try {
-            const snapshot = await usersRef.where('displayName', '==', name).limit(1).get();
-            if (!snapshot.empty) {
-                // إذا وجدنا وثيقة، نتحقق من أنها ليست وثيقة المستخدم الحالي نفسه
-                return snapshot.docs[0].id !== user.uid;
-            }
-            return false;
-        } catch(error) {
-            console.error("Firebase Rule/Query Error in isNameTaken:", error);
-            // إذا فشلت القراءة، نعتبر الاسم غير مأخوذ لتجنب تعليق التطبيق
-            return false; 
-        }
-    }
+}
 
-    // ----------------------------------
-    // منطق البروفايل 
-    // ----------------------------------
+saveBtn.onclick = async () => {
+    const user = firebase.auth().currentUser;
+    const newName = nameInput.value.trim();
+    errorMsg.innerText = "";
 
-    async function checkAuthState() {
-         firebase.auth().onAuthStateChanged(async (user) => {
-            if (user) {
-                try {
-                    // تحميل البيانات عبر الدالة في auth.js
-                    currentUserData = await loadUserData(); 
-                } catch(err) {
-                    console.error("Critical error during loadUserData:", err);
-                    displayLoadingError('⚠️ فشل الاتصال بقاعدة البيانات. حاول مرة أخرى.');
-                    return; 
-                }
-                
-                if (currentUserData) {
-                    displayProfileInfo(user);
-                    
-                    // تمكين الحقول والأزرار عند نجاح التحميل
-                    nameInput.value = user.displayName || user.email.split('@')[0];
-                    nameInput.disabled = false;
-                    saveBtn.disabled = false;
-
-                } else {
-                    displayLoadingError('فشل في تحميل بيانات المستخدم.');
-                }
-                
-            } else {
-                window.location.href = "auth.html";
-            }
-        });
+    if (newName.length < 3) {
+        errorMsg.innerText = "الاسم قصير جدًا";
+        errorMsg.style.color = "#ff4f4f";
+        return;
     }
 
-    function displayLoadingError(message) {
-        const errorText = '❌ فشل التحميل';
-        document.getElementById('user-email').innerText = errorText;
-        document.getElementById('user-coins').innerText = errorText;
-        document.getElementById('user-level-profile').innerText = errorText;
-        document.getElementById('user-xp-profile').innerText = errorText;
-        document.getElementById('pro-status').innerText = errorText;
-        errorMsg.style.color = '#ff4f4f';
-        errorMsg.innerText = message || 'فشل في تحميل بيانات المستخدم.';
+    const isFree = !currentUserData.hasChangedNameBefore;
+    const cost = isFree ? 0 : NAME_CHANGE_COST;
+
+    if (currentUserData.totalCoins < cost) {
+        errorMsg.innerText = "لا توجد كوينز كافية";
+        errorMsg.style.color = "#ff4f4f";
+        return;
     }
 
+    saveBtn.disabled = true;
 
-    function displayProfileInfo(user) {
-        document.getElementById('user-email').innerText = user.email || 'غير متوفر';
-        document.getElementById('user-coins').innerText = currentUserData.totalCoins || 0;
-        
-        document.getElementById('user-level-profile').innerText = currentUserData.level || 1;
-        document.getElementById('user-xp-profile').innerText = currentUserData.xp || 0;
-        document.getElementById('name-change-cost').innerText = NAME_CHANGE_COST; 
-        
-        const statusElement = document.getElementById('pro-status');
-        if (isProUser()) {
-            statusElement.innerHTML = 'عضو متميز (Pro) <i class="fas fa-crown" style="color:#ffd700;"></i>';
-        } else {
-            statusElement.innerText = 'عضو عادي';
-        }
+    try {
+        await user.updateProfile({ displayName: newName });
+
+        const newCoins = currentUserData.totalCoins - cost;
+
+        await firebase.firestore()
+            .collection("users")
+            .doc(user.uid)
+            .set({
+                totalCoins: newCoins,
+                hasChangedNameBefore: true,
+                displayName: newName
+            }, { merge: true });
+
+        currentUserData.totalCoins = newCoins;
+        currentUserData.hasChangedNameBefore = true;
+
+        document.getElementById("user-coins").innerText = newCoins;
+        updateCostText();
+
+        errorMsg.innerText = cost === 0
+            ? "✅ تم تغيير الاسم مجانًا!"
+            : `✅ تم تغيير الاسم وخصم ${cost} كوينز`;
+        errorMsg.style.color = "#34d399";
+
+    } catch (e) {
+        console.error(e);
+        errorMsg.innerText = "❌ فشل التغيير";
+        errorMsg.style.color = "#ff4f4f";
     }
 
-    async function saveNewDisplayName() {
-        const newName = nameInput.value.trim();
-        const user = firebase.auth().currentUser;
-        errorMsg.innerText = '';
-        
-        if (!currentUserData || !user) {
-            errorMsg.innerText = '⚠️ تعذر حفظ الاسم. بيانات المستخدم غير محملة.';
-            errorMsg.style.color = '#ff4f4f';
-            return;
-        }
-
-        if (newName.length < 3) {
-            errorMsg.innerText = 'يجب أن يكون الاسم 3 أحرف على الأقل.';
-            errorMsg.style.color = '#ff4f4f';
-            return;
-        }
-        
-        if (newName === user.displayName) {
-             errorMsg.innerText = 'الاسم الحالي هو نفسه الاسم الجديد.';
-             errorMsg.style.color = '#ffcc00';
-             return;
-        }
-
-        saveBtn.disabled = true;
-        saveBtn.innerText = 'جاري الحفظ والتحقق...';
-
-        // 🚨 1. التحقق من الكوينز قبل التغيير
-        const currentCoins = currentUserData.totalCoins || 0;
-        if (currentCoins < NAME_CHANGE_COST) {
-            errorMsg.innerText = `❌ لا توجد كوينز كافية! الرسوم المطلوبة: ${NAME_CHANGE_COST} كوينز. رصيدك الحالي: ${currentCoins}.`;
-            errorMsg.style.color = '#ff4f4f';
-            saveBtn.disabled = false;
-            saveBtn.innerText = 'حفظ التغيير';
-            return;
-        }
-
-        try {
-            // 2. التحقق من التكرار
-            if (await isNameTaken(newName)) {
-                errorMsg.innerText = '❌ هذا الاسم مستخدم بالفعل. اختر اسماً آخر.';
-                errorMsg.style.color = '#ff4f4f';
-                return;
-            }
-            
-            saveBtn.innerText = 'جاري تحديث الاسم...';
-
-            // 3. تحديث اسم العرض في Firebase Auth (يتم تحديثه في الخلفية لضمان عدم التعليق)
-            user.updateProfile({ displayName: newName })
-                .catch(err => console.error("Firebase Auth Profile Update Failed:", err));
-            
-            // 4. خصم الكوينز وتحديث Firestore 
-            const newCoins = currentCoins - NAME_CHANGE_COST;
-            
-            await saveUserData(
-                newCoins,
-                currentUserData.proExpiryTime || 0,
-                currentUserData.players || [],
-                currentUserData.settings || {},
-                currentUserData.level || 1,
-                currentUserData.xp || 0,
-                currentUserData.ownedPacksPermanent || [],
-                currentUserData.ownedPacksTemporary || {}
-            );
-            
-            // 5. تحديث البيانات المحلية بعد الحفظ
-            currentUserData.totalCoins = newCoins;
-            
-            errorMsg.style.color = '#34d399';
-            errorMsg.innerText = `✅ تم حفظ الاسم بنجاح! تم خصم ${NAME_CHANGE_COST} كوينز.`;
-            
-            displayProfileInfo(user);
-            
-        } catch (error) {
-            console.error("خطأ حاسم في حفظ الاسم:", error);
-            errorMsg.style.color = '#ff4f4f';
-            errorMsg.innerText = 'فشل في حفظ الاسم: ' + (error.message || 'حدث خطأ غير معروف.');
-        } finally {
-            saveBtn.disabled = false;
-            saveBtn.innerText = 'حفظ التغيير';
-        }
-    }
+    saveBtn.disabled = false;
+};
 </script>
 
 </body>
