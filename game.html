@@ -160,8 +160,9 @@ const wordCategories = {
     ]
 };
 
-let players = JSON.parse(localStorage.getItem("players") || "[]");
-let settings = JSON.parse(localStorage.getItem("settings") || "{}");
+// 🚨 تم تعديل هذه المتغيرات لتبدأ فارغة ويتم ملؤها من Firestore
+let players = null; 
+let settings = null;
 
 const playerDisplay = document.getElementById("player");
 const card = document.getElementById("card");
@@ -179,11 +180,12 @@ const NW = "NO_WORD_ROLE_MARKER";
 let timerInterval;
 let gameCompleted = false; 
 
+// تم وضعها على نطاق window لسهولة الوصول إليها في الدوال المساعدة
 let currentUserData = { totalCoins: 0, proExpiryTime: 0 }; 
 
 /**
  * @function loadGameData
- * @description تحميل بيانات المستخدم قبل بدء اللعبة وضبط الترتيب العشوائي.
+ * @description تحميل بيانات المستخدم والإعدادات من Firestore قبل بدء اللعبة.
  */
 async function loadGameData() {
      firebase.auth().onAuthStateChanged(async (user) => {
@@ -193,22 +195,32 @@ async function loadGameData() {
             return;
         }
         
-        // التحقق من وجود إعدادات صحيحة وأقسام مختارة
-        if (players.length < 3 || !settings || !settings.selectedCategories || settings.selectedCategories.length === 0) {
-            alert("يرجى إدخال 3 لاعبين على الأقل واختيار قسم واحد على الأقل للكلمات من الإعدادات.");
-            location.href = "settings.html"; 
-            return;
-        }
-        
+        // 🚨 1. تحميل البيانات من Firestore
         const data = await loadUserData(); // من auth.js
         if (data) {
             currentUserData = data;
+            // 🚨 2. تعيين المتغيرات العالمية من البيانات المحملة
+            players = currentUserData.players || [];
+            settings = currentUserData.settings || {};
+        }
+        
+        const selectedCategories = settings.selectedCategories || [];
+        
+        // 🚨 3. التحقق من وجود إعدادات صحيحة وأقسام مختارة
+        if (players.length < 3 || selectedCategories.length === 0) {
+            alert("يرجى إدخال 3 لاعبين على الأقل واختيار قسم واحد على الأقل للكلمات من الإعدادات.");
+            // التوجيه الصحيح حسب النقص
+            if (players.length < 3) {
+                 location.href = "index.html"; 
+            } else {
+                 location.href = "settings.html"; 
+            }
+            return;
         }
         
         displayTotalCoins(); 
         
-        // 🚨 التصحيح الرئيسي: خلط قائمة اللاعبين عشوائياً
-        // هذا يضمن أن أول شخص يكشف دوره هو شخص عشوائي.
+        // 4. خلط قائمة اللاعبين عشوائياً بعد تحميلها
         players.sort(() => Math.random() - 0.5); 
         
         setupGameRoles();
@@ -248,7 +260,13 @@ async function calculateAndAddCoins() {
     const currentCoins = getTotalCoins();
     const newTotalCoins = currentCoins + coinsEarned;
     
-    const saveSuccessful = await saveUserData(newTotalCoins, currentUserData.proExpiryTime || 0);
+    // 🚨 الآن نمرر جميع الحقول الأربعة (Coins, ProTime, Players, Settings)
+    const saveSuccessful = await saveUserData(
+        newTotalCoins, 
+        currentUserData.proExpiryTime || 0,
+        currentUserData.players || [], // الحفاظ على قائمة اللاعبين
+        currentUserData.settings || {} // الحفاظ على الإعدادات
+    );
     
     if (saveSuccessful) {
         currentUserData.totalCoins = newTotalCoins; 
@@ -268,6 +286,9 @@ async function calculateAndAddCoins() {
 // ----------------------------------
 
 function setupGameRoles() {
+    // يجب أن تكون players و settings قد تم تحميلهما هنا بنجاح
+    if (!players || players.length < 3) return; 
+
     const isUserPro = isPro(); 
     let allWords = [];
     const selectedIds = settings.selectedCategories || [];
@@ -320,11 +341,11 @@ function setupGameRoles() {
         // تعيين الأدوار اليدوية
         players.forEach((name, playerIndex) => {
              // تعيين المحتالين يدوياً
-            if (settings.manualImpostors.includes(name)) {
+            if (settings.manualImpostors && settings.manualImpostors.includes(name)) {
                 roles[playerIndex] = IMP;
             }
             // تعيين "بلا كلمة" يدوياً
-            if (settings.manualNoWord.includes(name) && roles[playerIndex] !== IMP) {
+            if (settings.manualNoWord && settings.manualNoWord.includes(name) && roles[playerIndex] !== IMP) {
                 roles[playerIndex] = NW;
             }
         });
@@ -375,7 +396,7 @@ function setupGameRoles() {
 
 
 // ----------------------------------
-// 3. دوال تفاعلية (بدون تغيير)
+// 3. دوال تفاعلية (بدون تغيير في المنطق)
 // ----------------------------------
 
 function show() {
