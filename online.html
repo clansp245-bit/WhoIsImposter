@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🚪 الدخول/إنشاء الغرفة</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="auth.js"></script> 
+
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<style>
+/* ---------------------------------- */
+/* زر العودة للصفحة الرئيسية */
+#home-icon {
+    position: absolute;
+    top: 20px;
+    left: 20px; 
+    font-size: 24px;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+#home-icon:hover { color: #34d399; }
+/* ---------------------------------- */
+body { font-family: 'Cairo', sans-serif; background-color: #0f172a; color: #f1f5f9; text-align: center; padding: 20px; min-height: 100vh; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.card { background-color: #1e293b; padding: 40px; border-radius: 12px; max-width: 400px; width: 90%; margin: 20px auto; box-shadow: 0 8px 15px rgba(0,0,0,0.3); text-align: right; }
+h2 { font-size: 2rem; font-weight: 700; margin-bottom: 30px; color: #34d399; }
+input[type="text"] { font-family: 'Cairo', sans-serif; width: 100%; padding: 15px; margin: 10px 0 20px 0; border-radius: 8px; border: 1px solid #334155; font-size: 18px; background-color: #334155; color: #f1f5f9; box-sizing: border-box; text-align: center; }
+button { margin-top: 15px; padding: 14px 30px; font-size: 18px; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.3s, transform 0.2s; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
+#create-btn { background-color: #6366f1; color: #ffffff; }
+#create-btn:hover { background-color: #4f46e5; transform: translateY(-2px); }
+#join-btn { background-color: #34d399; color: #0f172a; }
+#join-btn:hover { background-color: #10b981; transform: translateY(-2px); }
+.separator { text-align: center; margin: 25px 0; color: #94a3b8; font-weight: 700; }
+#error-msg { color: #ff4f4f; margin-top: 15px; text-align: center; font-weight: 700; }
+</style>
+</head>
+
+<body>
+
+<a href="index.html" id="home-icon" title="العودة للصفحة الرئيسية">
+    <i class="fas fa-arrow-right"></i>
+</a>
+
+<div class="card">
+    <h2>انضمام أو إنشاء غرفة</h2>
+
+    <button id="create-btn" onclick="createRoom()">
+        <i class="fas fa-plus-circle"></i> إنشاء غرفة جديدة
+    </button>
+    
+    <div class="separator">أو</div>
+
+    <label for="room-code" style="color:#f1f5f9; margin-bottom: 10px;">أدخل رمز الغرفة:</label>
+    <input type="text" id="room-code" maxlength="6" placeholder="مثلاً: XYZ123">
+    
+    <button id="join-btn" onclick="joinRoom()">
+        <i class="fas fa-sign-in-alt"></i> الانضمام للغرفة
+    </button>
+    
+    <div id="error-msg"></div>
+</div>
+
+<script>
+let currentUserData = {};
+let currentUID;
+const db = firebase.firestore();
+
+// 🚨 ملاحظة: يجب أن يحتوي ملف auth.js على دالة loadUserData 
+firebase.auth().onAuthStateChanged(async (user) => {
+    if (!user) {
+        window.location.href = "auth.html";
+        return;
+    }
+    currentUID = user.uid;
+    const data = await loadUserData(); 
+    if(data) {
+        currentUserData = data;
+    } else {
+        // إذا لم يكن هناك بيانات، قم بتحميل الإعدادات الافتراضية
+        currentUserData.settings = { impostors: 1, selectedCategories: ['objects'] }; 
+    }
+});
+
+/**
+ * @function generateRoomCode
+ * @description توليد رمز فريد للغرفة مكون من 6 أحرف كبيرة.
+ */
+function generateRoomCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
+
+/**
+ * @function createRoom
+ * @description إنشاء مستند جديد للغرفة في Firestore ويكون المستخدم هو المضيف.
+ */
+async function createRoom() {
+    document.getElementById('error-msg').innerText = '';
+    
+    // يجب أن تكون الإعدادات قد حُملت
+    if (!currentUserData.settings || currentUserData.settings.selectedCategories?.length === 0) {
+        document.getElementById('error-msg').innerText = '⚠️ الرجاء ضبط الإعدادات واختيار أقسام الكلمات أولاً.';
+        setTimeout(() => window.location.href = "settings.html", 2000); 
+        return;
+    }
+    
+    let roomCode;
+    let roomRef;
+    let attempts = 0;
+    
+    // محاولة توليد رمز فريد
+    while (attempts < 5) {
+        roomCode = generateRoomCode();
+        roomRef = db.collection('rooms').doc(roomCode);
+        const doc = await roomRef.get();
+        if (!doc.exists) {
+            break; 
+        }
+        attempts++;
+    }
+
+    if (attempts === 5) {
+        document.getElementById('error-msg').innerText = 'فشل في توليد رمز غرفة فريد. حاول مرة أخرى.';
+        return;
+    }
+
+    const initialSettings = currentUserData.settings || {}; 
+
+    const roomData = {
+        hostUID: currentUID,
+        hostName: currentUserData.playerName || `لاعب#${currentUID.substring(0, 4)}`,
+        status: 'waiting', // الحالة الأولية
+        players: [currentUID], // المضيف هو أول لاعب
+        playerNames: { [currentUID]: currentUserData.playerName || `لاعب#${currentUID.substring(0, 4)}` }, // أسماء اللاعبين
+        settings: initialSettings,
+        currentGameData: null, 
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    try {
+        await roomRef.set(roomData);
+        // التوجيه إلى صفحة اللوبي
+        window.location.href = `lobby.html?id=${roomCode}`;
+    } catch (error) {
+        console.error("خطأ في إنشاء الغرفة:", error);
+        document.getElementById('error-msg').innerText = `خطأ: ${error.message}`;
+    }
+}
+
+
+/**
+ * @function joinRoom
+ * @description الانضمام إلى غرفة موجودة عبر الرمز.
+ */
+async function joinRoom() {
+    const codeInput = document.getElementById('room-code');
+    const roomCode = codeInput.value.trim().toUpperCase();
+    document.getElementById('error-msg').innerText = '';
+
+    if (roomCode.length !== 6) {
+        document.getElementById('error-msg').innerText = '❌ رمز الغرفة يجب أن يكون 6 أحرف/أرقام.';
+        return;
+    }
+
+    const roomRef = db.collection('rooms').doc(roomCode);
+    
+    try {
+        await db.runTransaction(async t => {
+            const doc = await t.get(roomRef);
+
+            if (!doc.exists) {
+                throw new Error("رمز الغرفة غير موجود.");
+            }
+            
+            let roomData = doc.data();
+            
+            if (roomData.status !== 'waiting') {
+                throw new Error("اللعبة في هذه الغرفة بدأت بالفعل أو انتهت.");
+            }
+            
+            // تحقق من أن اللاعب ليس موجودًا بالفعل (مهمة Transaction)
+            if (!roomData.players.includes(currentUID)) {
+                
+                if (roomData.players.length >= 10) { 
+                    throw new Error("الغرفة ممتلئة (10 لاعبين كحد أقصى).");
+                }
+                roomData.players.push(currentUID);
+                roomData.playerNames[currentUID] = currentUserData.playerName || `لاعب#${currentUID.substring(0, 4)}`;
+                
+                // تحديث البيانات في Firestore
+                t.update(roomRef, { 
+                    players: roomData.players, 
+                    playerNames: roomData.playerNames 
+                });
+            }
+
+            // التوجيه
+            window.location.href = `lobby.html?id=${roomCode}`;
+        });
+    } catch (error) {
+        console.error("خطأ في الانضمام:", error);
+        document.getElementById('error-msg').innerText = `❌ ${error.message || "حدث خطأ أثناء الانضمام."}`;
+    }
+}
+</script>
+</body>
+</html>
+
