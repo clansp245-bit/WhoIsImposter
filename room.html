@@ -13,27 +13,120 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
-/* CSS Styles */
-#home-icon { position: absolute; top: 20px; left: 20px; font-size: 24px; color: #94a3b8; cursor: pointer; transition: color 0.3s; }
-#home-icon:hover { color: #ff4f4f; }
+/* ---------------------------------- */
+/* زر العودة والأساسيات */
+#home-icon {
+    position: absolute;
+    top: 20px;
+    left: 20px; 
+    font-size: 24px;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+#home-icon:hover { color: #ff4f4f; } /* أحمر للتحذير من مغادرة الغرفة */
 body { font-family: 'Cairo', sans-serif; background-color: #0f172a; color: #f1f5f9; text-align: center; padding: 20px; min-height: 100vh; margin: 0; display: flex; flex-direction: column; align-items: center; }
 .card { background-color: #1e293b; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; margin: 15px auto; box-shadow: 0 8px 15px rgba(0,0,0,0.3); text-align: right; }
 h2 { font-size: 2rem; font-weight: 700; margin-bottom: 10px; color: #34d399; }
-#room-code-display { background-color: #334155; padding: 15px; border-radius: 8px; margin-bottom: 25px; display: flex; justify-content: center; align-items: center; gap: 15px; font-size: 1.2rem; color: #ffd700; }
-#room-code-value { font-size: 1.8rem; font-weight: 700; letter-spacing: 3px; text-shadow: 0 0 5px rgba(255, 215, 0, 0.5); }
-#copy-btn { background: none; border: none; color: #34d399; font-size: 1.2rem; cursor: pointer; transition: color 0.2s; }
-.players-list { margin-top: 20px; }
-.player-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; margin-bottom: 8px; background-color: #334155; border-radius: 8px; font-weight: 700; border-left: 5px solid transparent; }
-.player-item.host { border-left-color: #6366f1; }
-.kick-btn { background-color: #ff4f4f; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: background-color 0.2s; }
+/* ---------------------------------- */
+
+/* تصميم عرض الرمز */
+#room-code-display {
+    background-color: #334155;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    font-size: 1.2rem;
+    color: #ffd700;
+}
+#room-code-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+}
+#copy-btn {
+    background: none;
+    border: none;
+    color: #34d399;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+/* قائمة اللاعبين */
+.players-list {
+    margin-top: 20px;
+}
+.player-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    background-color: #334155;
+    border-radius: 8px;
+    font-weight: 700;
+    border-left: 5px solid transparent;
+}
+.player-item.host {
+    border-left-color: #6366f1;
+}
+.kick-btn {
+    background-color: #ff4f4f;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
 .kick-btn:hover { background-color: #e53e3e; }
-#start-game-btn { margin-top: 25px; padding: 15px 30px; font-size: 20px; font-weight: 700; background-color: #34d399; color: #0f172a; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.3s; width: 100%; }
-#start-game-btn:disabled { background-color: #4b5563; cursor: not-allowed; color: #94a3b8; }
-#role-card { background-color: #1e293b; padding: 40px; border-radius: 15px; box-shadow: 0 0 20px rgba(52, 211, 153, 0.4); margin-top: 30px; text-align: center; border: 3px solid #34d399; }
+
+/* زر البدء */
+#start-game-btn {
+    margin-top: 25px;
+    padding: 15px 30px;
+    font-size: 20px;
+    font-weight: 700;
+    background-color: #34d399;
+    color: #0f172a;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    width: 100%;
+}
+#start-game-btn:disabled {
+    background-color: #4b5563;
+    cursor: not-allowed;
+    color: #94a3b8;
+}
+
+/* بطاقة الدور */
+#role-card {
+    background-color: #1e293b;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(52, 211, 153, 0.4);
+    margin-top: 30px;
+    text-align: center;
+    border: 3px solid #34d399;
+}
 #role-title { font-size: 2.5rem; color: #ffd700; margin-bottom: 10px; }
 #role-word { font-size: 1.8rem; color: #f1f5f9; font-weight: 700; margin-bottom: 20px; }
 #role-instructions { color: #94a3b8; font-size: 1rem; }
-#status-message { margin-top: 20px; color: #ffcc00; font-weight: 700; }
+
+#status-message {
+    margin-top: 20px;
+    color: #ffcc00;
+    font-weight: 700;
+}
 </style>
 </head>
 
@@ -85,9 +178,11 @@ let roomCode;
 let roomData = null;
 let isHost = false;
 let listenerUnsubscribe = null;
-// ملاحظة: db تم تعريفه في auth.js
+const db = firebase.firestore();
 
-// 🚨 قائمة الكلمات والأقسام 
+// ----------------------------------------------------
+// بيانات الأقسام (مكررة هنا للوصول إلى الكلمات عند توزيع الأدوار)
+// ----------------------------------------------------
 const wordCategories = {
     free: [
         { id: 'objects', name: 'أشياء وأدوات', words: ["قلم", "كوب", "كرسي", "مفتاح", "هاتف", "كتاب", "ساعة", "مصباح", "ملعقة", "حذاء", "حقيبة", "طاولة", "مرآة", "دفتر", "ممحاة", "جدار", "شباك", "باب", "سرير", "وسادة", "غطاء", "جرس", "مظلة", "لوحة", "مروحة", "صندوق", "فرشاة", "مشط", "ممحاة", "مطرقة", "مسمار", "خيط", "إبرة", "خزانة", "حبل", "شريط", "كاميرا", "ماوس", "بطارية", "لمبة", "مقص", "منشفة", "صنبور", "قفل", "سلة", "سلك", "شاحن", "أريكة", "رف"] },
@@ -106,7 +201,7 @@ const wordCategories = {
 // ----------------------------------------------------
 
 /**
- * @function initLobby 🚨 تم التعديل
+ * @function initLobby 🚨 تم تعديلها لتظهر الرمز فوراً
  * @description تهيئة اللوبي وبدء الاستماع لحالة الغرفة.
  */
 function initLobby() {
@@ -142,7 +237,7 @@ function initLobby() {
  * @description يبدأ الاستماع في الوقت الفعلي لتحديثات الغرفة.
  */
 function startRoomListener(code) {
-    if (listenerUnsubscribe) { listenerUnsubscribe(); } 
+    if (listenerUnsubscribe) { listenerUnsubscribe(); } // إيقاف أي استماع سابق
 
     const roomRef = db.collection('rooms').doc(code);
 
@@ -167,6 +262,7 @@ function startRoomListener(code) {
             return;
         }
         
+        // تحديث واجهة الانتظار
         updateLobbyUI();
     }, error => {
         console.error("خطأ في الاستماع للغرفة:", error);
@@ -226,6 +322,7 @@ function updateLobbyUI() {
         
         let kickButtonHTML = '';
         if (isHost && !isCurrentPlayer) {
+            // زر الطرد يظهر فقط للمضيف ولا يظهر على نفسه
             kickButtonHTML = `<button class="kick-btn" onclick="kickPlayer('${uid}')"><i class="fas fa-user-times"></i> طرد</button>`;
         }
         
@@ -240,6 +337,10 @@ function updateLobbyUI() {
     });
 }
 
+/**
+ * @function getCategoryNamesByIds
+ * @description تحويل IDs الأقسام إلى أسماء قابلة للقراءة.
+ */
 function getCategoryNamesByIds(ids) {
     if (!ids) return [];
     let names = [];
@@ -251,6 +352,10 @@ function getCategoryNamesByIds(ids) {
     return names;
 }
 
+/**
+ * @function kickPlayer
+ * @description دالة لطرد لاعب من الغرفة (للمضيف فقط).
+ */
 async function kickPlayer(playerUID) {
     if (!isHost || !roomData) return;
     
@@ -260,6 +365,7 @@ async function kickPlayer(playerUID) {
         try {
             await roomRef.update({
                 players: firebase.firestore.FieldValue.arrayRemove(playerUID),
+                // لا نحذف اسمه من playerNames فوراً بل فقط من players
             });
             alert(`تم طرد اللاعب ${roomData.playerNames[playerUID]}.`);
         } catch (error) {
@@ -269,21 +375,28 @@ async function kickPlayer(playerUID) {
     }
 }
 
+/**
+ * @function leaveRoom
+ * @description مغادرة اللاعب للغرفة.
+ */
 async function leaveRoom(event) {
-    event.preventDefault(); 
+    event.preventDefault(); // منع الإنتقال الفوري للصفحة الرئيسية
     if (!roomData || !currentUID) { window.location.href = "index.html"; return; }
 
     if (!confirm("هل أنت متأكد من مغادرة الغرفة؟")) return;
 
     const roomRef = db.collection('rooms').doc(roomCode);
     
+    // إذا كنت المضيف، يجب عليك تعيين مضيف جديد أو إنهاء الغرفة
     if (isHost) {
         if (roomData.players.length === 1) {
+            // إذا لم يتبق أحد، قم بحذف الغرفة
             if (listenerUnsubscribe) listenerUnsubscribe();
             await roomRef.delete();
             window.location.href = "index.html";
             return;
         } else {
+            // تعيين مضيف جديد
             const remainingPlayers = roomData.players.filter(uid => uid !== currentUID);
             const newHostUID = remainingPlayers[0];
             if(newHostUID) {
@@ -294,6 +407,7 @@ async function leaveRoom(event) {
             }
         }
     } else {
+        // لست المضيف، فقط قم بإزالة نفسك
         await roomRef.update({
             players: firebase.firestore.FieldValue.arrayRemove(currentUID)
         });
@@ -303,30 +417,37 @@ async function leaveRoom(event) {
     window.location.href = "index.html";
 }
 
+
+/**
+ * @function startGame
+ * @description توزيع الأدوار وبدء اللعبة عن طريق تحديث حالة الغرفة في Firestore.
+ */
 async function startGame() {
     if (!isHost || !roomData || roomData.players.length < 3) return;
 
     document.getElementById('start-game-btn').disabled = true;
     document.getElementById('start-game-btn').innerText = 'جاري التوزيع...';
     
+    // 1. تجميع الكلمات المتاحة
     const allWords = getAllWordsFromSelectedCategories(roomData.settings.selectedCategories);
     if (allWords.length === 0) {
-        alert("لا توجد كلمات متاحة. عد إلى الإعدادات.");
+        alert("لا توجد كلمات متاحة في الأقسام المختارة. عد إلى الإعدادات.");
         document.getElementById('start-game-btn').disabled = false;
         document.getElementById('start-game-btn').innerText = 'بدء اللعب';
         return;
     }
     
-    //  
-    // رسم تخطيطي لخطوات توزيع الأدوار
+    // 2. تطبيق منطق توزيع الأدوار (سريعة وعشوائية)
     const gameResult = distributeRoles(roomData.players, roomData.settings, allWords);
 
+    // 3. حفظ بيانات اللعبة في Firestore
     const roomRef = db.collection('rooms').doc(roomCode);
     try {
         await roomRef.update({
             status: 'playing',
             currentGameData: gameResult
         });
+        // onSnapshot سيتولى الآن مهمة عرض البطاقة لكل لاعب
     } catch (error) {
         console.error("فشل في بدء اللعبة:", error);
         alert("حدث خطأ في حفظ بيانات اللعبة.");
@@ -339,6 +460,10 @@ async function startGame() {
 // دوال مساعدة في اللعبة (توزيع الأدوار)
 // ----------------------------------------------------
 
+/**
+ * @function getAllWordsFromSelectedCategories
+ * @description تجميع جميع الكلمات من الأقسام المختارة.
+ */
 function getAllWordsFromSelectedCategories(selectedIds) {
     if (!selectedIds) return [];
     let combinedWords = [];
@@ -347,40 +472,50 @@ function getAllWordsFromSelectedCategories(selectedIds) {
             combinedWords.push(...cat.words);
         }
     });
-    return [...new Set(combinedWords)];
+    return [...new Set(combinedWords)]; // إزالة التكرارات
 }
 
+/**
+ * @function distributeRoles 🚨 تم تعديلها للمحتال بلا كلمة
+ * @description توزيع الأدوار والكلمات بشكل عشوائي.
+ */
 function distributeRoles(players, settings, allWords) {
     const numImpostors = settings.impostors || 1;
-    let playerRoles = {}; 
+    const noWordRole = settings.noWordRole || false; // هل يوجد لاعب "بلا كلمة"؟
     
-    // 1. اختيار الكلمات
+    let playerRoles = {}; // { UID: { role: 'impostor/civilian/noWord', word: 'الكلمة' } }
+
+    // 1. اختيار كلمة المدنيين
     const randomWordIndex = Math.floor(Math.random() * allWords.length);
     const civilianWord = allWords[randomWordIndex];
-    let impostorWord = settings.multiWordMode ? allWords[(randomWordIndex + 1) % allWords.length] : civilianWord;
     
-    // 2. تحديد المحتالين
+    // 2. تحديد الأدوار (Impostor, No Word, Civilian)
     let availablePlayers = [...players];
     let selectedImpostors = [];
     let selectedNoWord = [];
 
+    // اختيار المحتالين
     for (let i = 0; i < numImpostors && availablePlayers.length > 0; i++) {
         const randomIndex = Math.floor(Math.random() * availablePlayers.length);
         selectedImpostors.push(availablePlayers.splice(randomIndex, 1)[0]);
     }
-    
-    if (settings.noWordRole && availablePlayers.length > 0) {
+
+    // اختيار لاعب بلا كلمة
+    if (noWordRole && availablePlayers.length > 0) {
         const randomIndex = Math.floor(Math.random() * availablePlayers.length);
         selectedNoWord.push(availablePlayers.splice(randomIndex, 1)[0]);
     }
-
-    // 3. تعيين الأدوار لكل لاعب
+    
+    // 3. تعيين الأدوار والكلمات لكل لاعب
     players.forEach(uid => {
         if (selectedImpostors.includes(uid)) {
-            playerRoles[uid] = { role: 'impostor', word: impostorWord };
+            // المحتال: ليس لديه كلمة (كلمة سرية)
+            playerRoles[uid] = { role: 'impostor', word: 'كلمة سرية' }; 
         } else if (selectedNoWord.includes(uid)) {
+            // اللاعب بلا كلمة
             playerRoles[uid] = { role: 'noWord', word: 'لا كلمة لك!' };
         } else {
+            // المدني
             playerRoles[uid] = { role: 'civilian', word: civilianWord };
         }
     });
@@ -388,8 +523,8 @@ function distributeRoles(players, settings, allWords) {
     return {
         roles: playerRoles,
         civilianWord: civilianWord,
-        impostorWord: impostorWord,
-        players: players, 
+        impostorWord: 'كلمة سرية (لا يوجد)', 
+        players: players,
         settingsUsed: settings
     };
 }
@@ -399,6 +534,10 @@ function distributeRoles(players, settings, allWords) {
 // دوال عرض الدور (بعد بدء اللعبة)
 // ----------------------------------------------------
 
+/**
+ * @function displayRoleCard
+ * @description عرض بطاقة الدور الخاصة باللاعب الحالي.
+ */
 function displayRoleCard() {
     document.getElementById('waiting-lobby').style.display = 'none';
     document.getElementById('role-display-card').style.display = 'block';
@@ -407,8 +546,13 @@ function displayRoleCard() {
 
     const gameData = roomData.currentGameData;
     const playerRoleData = gameData.roles[currentUID];
-    
-    if (!playerRoleData) return;
+
+    if (!playerRoleData) {
+        document.getElementById('role-title').innerText = '❌ خارج اللعبة';
+        document.getElementById('role-word').innerText = 'لم يتم توزيع دور لك في هذه الجولة.';
+        document.getElementById('role-instructions').innerText = 'ربما انضممت متأخراً أو تم طردك.';
+        return;
+    }
 
     const { role, word } = playerRoleData;
     let title, color, instructions;
@@ -417,7 +561,8 @@ function displayRoleCard() {
         case 'impostor':
             title = 'أنت المحتال!';
             color = '#ff4f4f';
-            instructions = `كلمتك المزيفة هي: **${word}**. مهمتك هي التظاهر بأن لديك كلمة المدنيين (دون كشف كلمتك!).`;
+            // 🚨 التعليمات المعدلة للمحتال بلا كلمة
+            instructions = `كلمتك: **لا كلمة لديك**. مهمتك هي معرفة كلمة المدنيين من خلال إجاباتهم وإخفاء هويتك كمحتال.`;
             break;
         case 'noWord':
             title = 'أنت بلا كلمة!';
@@ -433,17 +578,28 @@ function displayRoleCard() {
     }
 
     document.getElementById('role-title').innerText = title;
-    document.getElementById('role-word').innerText = word;
+    // عرض النص المناسب للمحتال واللاعب بلا كلمة
+    document.getElementById('role-word').innerText = (role === 'impostor' || role === 'noWord') ? word : word;
     document.getElementById('role-instructions').innerHTML = instructions;
     document.getElementById('role-card').style.borderColor = color;
     document.getElementById('role-title').style.color = color;
 }
 
+/**
+ * @function hideRoleCard
+ * @description لإخفاء البطاقة والبدء بالمناقشة.
+ */
 function hideRoleCard() {
     document.getElementById('role-display-card').style.display = 'none';
+    
+    // 🚨 ملاحظة: هنا يجب أن تبدأ اللعبة الفعلية ومؤقت المناقشة.
     alert("بدأت المناقشة! ابدأ اللعب."); 
 }
 
+/**
+ * @function copyCode
+ * @description نسخ رمز الغرفة.
+ */
 function copyCode() {
     const code = document.getElementById('room-code-value').innerText;
     navigator.clipboard.writeText(code).then(() => {
@@ -458,4 +614,3 @@ function copyCode() {
 </script>
 </body>
 </html>
-
