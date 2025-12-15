@@ -79,6 +79,7 @@
             cursor: pointer;
             font-weight: 700;
             transition: background-color 0.3s;
+            margin-right: 5px; /* مسافة بين الأزرار */
         }
         .send-btn { background-color: #34d399; color: white; }
         .send-btn:hover { background-color: #10b981; }
@@ -127,6 +128,7 @@
     </div>
 
 <script>
+    const db = firebase.firestore();
     let currentUserId = null;
     let currentUserFriends = [];
     let allRequests = []; // لتخزين الطلبات (المرسلة والمستقبلة)
@@ -143,13 +145,47 @@
     });
 
     // ----------------------------------------------------
+    // الدوال المساعدة: جلب أسماء العرض (مُحسَّن)
+    // ----------------------------------------------------
+
+    /**
+     * جلب أسماء العرض لعدة UIDs
+     * @param {Array<string>} uids - قائمة بمعرفات المستخدمين (UIDs).
+     * @returns {Object} كائن {uid: displayName}.
+     */
+    async function getDisplayNames(uids) {
+        if (uids.length === 0) return {};
+        const names = {};
+        
+        // تصفية UIDs المكررة وغير الصالحة
+        const uniqueUids = [...new Set(uids)].filter(id => id && id.trim() !== '');
+
+        if (uniqueUids.length === 0) return {};
+
+        try {
+             // Firestore 'in' يدعم حتى 10 قيم.
+            const snapshot = await db.collection('users').where(firebase.firestore.FieldPath.documentId(), 'in', uniqueUids.slice(0, 10)).get();
+            
+            snapshot.forEach(doc => {
+                // حفظ الاسم بمعرف المستخدم كـ key
+                names[doc.id] = doc.data().displayName || `مستخدم مجهول (${doc.id.substring(0, 4)}...)`;
+            });
+            return names;
+
+        } catch(error) {
+            console.error("خطأ في جلب أسماء العرض:", error);
+            return {};
+        }
+    }
+
+
+    // ----------------------------------------------------
     // 1. الاستماع لبيانات المستخدم (لجلب قائمة الأصدقاء)
     // ----------------------------------------------------
 
     function listenToUserData() {
         if (!currentUserId) return;
 
-        // الاستماع لوثيقة المستخدم لتحديث قائمة الأصدقاء (players)
         db.collection('users').doc(currentUserId)
             .onSnapshot(doc => {
                 const data = doc.data();
@@ -162,7 +198,7 @@
 
 
     // ----------------------------------------------------
-    // 2. الاستماع لطلبات الصداقة
+    // 2. الاستماع لطلبات الصداقة ومعالجتها
     // ----------------------------------------------------
 
     function listenToFriendRequests() {
@@ -172,55 +208,51 @@
         const incomingRef = requestsRef.where('receiverId', '==', currentUserId).where('status', '==', 'pending');
         const outgoingRef = requestsRef.where('senderId', '==', currentUserId).where('status', '==', 'pending');
 
-        // نستخدم Promise.all للاستماع لكلا الاتجاهين
-        Promise.all([
-            incomingRef.onSnapshot(snapshot => {
-                processRequests(snapshot.docs, 'incoming');
-            }),
-            outgoingRef.onSnapshot(snapshot => {
-                processRequests(snapshot.docs, 'outgoing');
-            })
-        ]).catch(error => {
-            console.error("خطأ في الاستماع لطلبات الصداقة:", error);
+        // نستخدم onSnapshot للاستماع للتغيرات في كلا الاتجاهين
+        incomingRef.onSnapshot(snapshot => {
+            processRequests(snapshot.docs, 'incoming');
+        });
+        
+        outgoingRef.onSnapshot(snapshot => {
+            processRequests(snapshot.docs, 'outgoing');
         });
     }
 
-    // دمج الطلبات وتحديد حالة كل مستخدم للبحث
+    // معالجة البيانات من Snapshot
     async function processRequests(docs, type) {
         const friendIds = docs.map(doc => {
             const data = doc.data();
+            // تحديد الـ UID الذي نحتاج اسمه
             return type === 'incoming' ? data.senderId : data.receiverId;
         });
 
-        // جلب أسماء العرض للـ UIDs
+        // جلب أسماء العرض للـ UIDs دفعة واحدة
         const friendNames = await getDisplayNames(friendIds);
 
-        // تجميع الطلبات في كائن واحد
-        const requestsData = docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            displayName: friendNames[type === 'incoming' ? doc.data().senderId : doc.data().receiverId] || 'مستخدم مجهول',
-            type: type // incoming أو outgoing
-        }));
+        const requestsData = docs.map(doc => {
+            const data = doc.data();
+            const targetId = type === 'incoming' ? data.senderId : data.receiverId;
+            return {
+                id: doc.id,
+                ...data,
+                // استخدام الاسم الذي تم جلبه
+                displayName: friendNames[targetId] || 'مستخدم غير معروف',
+                targetId: targetId, // إضافة حقل المستهدف
+                type: type 
+            };
+        });
         
-        // دمج الطلبات الجديدة مع القائمة العامة
+        // تحديث القائمة العامة
         allRequests = allRequests.filter(req => req.type !== type).concat(requestsData);
         renderIncomingRequests();
+        
+        // إعادة عرض نتائج البحث لتحديث الأزرار
+        const searchTerm = document.getElementById('search-input').value.trim();
+        if (searchTerm.length >= 3) {
+             handleSearch(true); // إعادة البحث دون انتظار الضغط على الزر
+        }
     }
     
-    // دالة مساعدة لجلب أسماء العرض لعدة UIDs
-    async function getDisplayNames(uids) {
-        if (uids.length === 0) return {};
-        const names = {};
-        
-        // Firestore لا يدعم 'in' لأكثر من 10 عناصر، لكن سنفترض أن 10 تكفي في البداية
-        const snapshot = await db.collection('users').where(firebase.firestore.FieldPath.documentId(), 'in', uids.slice(0, 10)).get();
-        snapshot.forEach(doc => {
-            names[doc.id] = doc.data().displayName;
-        });
-        return names;
-    }
-
     // ----------------------------------------------------
     // 3. عرض الواجهات
     // ----------------------------------------------------
@@ -232,7 +264,10 @@
         
         incomingList.innerHTML = '';
         count.innerText = `(${incoming.length})`;
-        document.getElementById('requests-loading').style.display = 'none';
+        
+        const loadingEl = document.getElementById('requests-loading');
+        if(loadingEl) loadingEl.style.display = 'none';
+
 
         if (incoming.length === 0) {
             incomingList.innerHTML = '<p class="loading-message">لا توجد طلبات صداقة واردة حالياً.</p>';
@@ -245,8 +280,8 @@
             item.innerHTML = `
                 <span>${req.displayName}</span>
                 <div>
-                    <button class="action-btn accept-btn" onclick="handleAccept('${req.id}', '${req.senderId}')">قبول</button>
-                    <button class="action-btn reject-btn" onclick="handleReject('${req.id}')">رفض</button>
+                    <button class="action-btn accept-btn" onclick="handleAccept('${req.id}', '${req.senderId}')"><i class="fas fa-check"></i> قبول</button>
+                    <button class="action-btn reject-btn" onclick="handleReject('${req.id}')"><i class="fas fa-times"></i> رفض</button>
                 </div>
             `;
             incomingList.appendChild(item);
@@ -258,7 +293,9 @@
         const count = document.getElementById('friends-count');
         friendsListEl.innerHTML = '';
         count.innerText = `(${currentUserFriends.length})`;
-        document.getElementById('friends-loading').style.display = 'none';
+        
+        const loadingEl = document.getElementById('friends-loading');
+        if(loadingEl) loadingEl.style.display = 'none';
 
         if (currentUserFriends.length === 0) {
             friendsListEl.innerHTML = '<p class="loading-message">لا يوجد لديك أصدقاء حالياً.</p>';
@@ -268,12 +305,12 @@
         const friendNames = await getDisplayNames(currentUserFriends);
 
         currentUserFriends.forEach(friendId => {
-            const displayName = friendNames[friendId] || `مستخدم (ID: ${friendId})`;
+            const displayName = friendNames[friendId] || `مستخدم (ID: ${friendId.substring(0, 4)}...)`;
             const item = document.createElement('div');
             item.className = 'user-item';
             item.innerHTML = `
-                <span>${displayName}</span>
-                <button class="action-btn remove-btn" onclick="handleRemoveFriend('${friendId}')">حذف</button>
+                <span><i class="fas fa-user-friends"></i> ${displayName}</span>
+                <button class="action-btn remove-btn" onclick="handleRemoveFriend('${friendId}')"><i class="fas fa-trash"></i> حذف</button>
             `;
             friendsListEl.appendChild(item);
         });
@@ -283,10 +320,14 @@
     // 4. منطق البحث
     // ----------------------------------------------------
 
-    async function handleSearch() {
+    // إضافة معلمة 'silent' لتجنب إعادة ضبط حالة التحميل عند التحديث التلقائي
+    async function handleSearch(silent = false) {
         const searchTerm = document.getElementById('search-input').value.trim();
         const resultsEl = document.getElementById('search-results');
-        resultsEl.innerHTML = '<p class="loading-message">جاري البحث...</p>';
+        
+        if (!silent) {
+            resultsEl.innerHTML = '<p class="loading-message">جاري البحث...</p>';
+        }
 
         if (searchTerm.length < 3) {
             resultsEl.innerHTML = '<p class="loading-message" style="color:#facc15;">الرجاء إدخال 3 أحرف على الأقل للبحث.</p>';
@@ -305,7 +346,7 @@
             const item = document.createElement('div');
             item.className = 'user-item';
             item.innerHTML = `
-                <span>${user.displayName}</span>
+                <span><i class="fas fa-search"></i> ${user.displayName}</span>
                 ${renderSearchActionButton(user.uid)}
             `;
             resultsEl.appendChild(item);
@@ -314,25 +355,25 @@
 
     function renderSearchActionButton(targetId) {
         if (currentUserFriends.includes(targetId)) {
-            return '<span style="color:#34d399; font-weight:700;">صديق</span>';
+            return '<span style="color:#34d399; font-weight:700;"><i class="fas fa-check-circle"></i> صديق</span>';
         }
 
         const incomingRequest = allRequests.find(req => req.type === 'incoming' && req.senderId === targetId);
         if (incomingRequest) {
             return `
                 <div>
-                    <button class="action-btn accept-btn" onclick="handleAccept('${incomingRequest.id}', '${targetId}')">قبول</button>
-                    <button class="action-btn reject-btn" onclick="handleReject('${incomingRequest.id}')">رفض</button>
+                    <button class="action-btn accept-btn" onclick="handleAccept('${incomingRequest.id}', '${targetId}')"><i class="fas fa-check"></i> قبول</button>
+                    <button class="action-btn reject-btn" onclick="handleReject('${incomingRequest.id}')"><i class="fas fa-times"></i> رفض</button>
                 </div>
             `;
         }
         
         const outgoingRequest = allRequests.find(req => req.type === 'outgoing' && req.receiverId === targetId);
         if (outgoingRequest) {
-            return `<button class="action-btn cancel-btn" onclick="handleReject('${outgoingRequest.id}')">إلغاء الطلب</button>`;
+            return `<button class="action-btn cancel-btn" onclick="handleReject('${outgoingRequest.id}')"><i class="fas fa-ban"></i> إلغاء الطلب</button>`;
         }
 
-        return `<button class="action-btn send-btn" onclick="handleSendRequest('${targetId}')">إضافة</button>`;
+        return `<button class="action-btn send-btn" onclick="handleSendRequest('${targetId}')"><i class="fas fa-user-plus"></i> إضافة</button>`;
     }
 
 
@@ -382,3 +423,4 @@
 
 </body>
 </html>
+
