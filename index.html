@@ -14,7 +14,43 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
     <style>
-        /* (تنسيقات CSS سابقة) */
+        /* -------------------------------------------------- */
+        /* تنسيقات جديدة للمعلومات الشخصية والأزرار العلوية */
+        /* -------------------------------------------------- */
+        #user-info-bar {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px; /* المسافة بين العناصر */
+        }
+
+        #user-name-display {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #f1f5f9; /* لون الاسم */
+            display: flex;
+            align-items: center;
+        }
+
+        #coin-display {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #94a3b8;
+            margin-right: 15px; /* لإبعادها قليلاً عن الأزرار */
+        }
+        
+        #pro-plans-btn {
+            font-size: 24px;
+            color: #ffd700; 
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        
+        /* -------------------------------------------------- */
+        /* التنسيقات العامة والقديمة (مع تحديثات بسيطة) */
+        /* -------------------------------------------------- */
         body {
             font-family: 'Cairo', sans-serif;
             background-color: #0f172a; 
@@ -31,6 +67,7 @@
         h1 {
             font-size: 2.5rem;
             font-weight: 700;
+            margin-top: 50px; /* لترك مساحة للشريط العلوي الجديد */
             margin-bottom: 30px;
             color: #34d399; 
         }
@@ -133,30 +170,11 @@
             background-color: #475569;
             cursor: not-allowed;
         }
-
-        #pro-plans-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            font-size: 24px;
-            color: #ffd700; 
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-        
-        #coin-display {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #94a3b8;
-        }
         
         #sign-out-btn {
             position: absolute;
             bottom: 20px;
-            left: 20px;
+            right: 20px; /* تم تغيير موضعه لليمين */
             background: none;
             border: none;
             color: #ff4f4f;
@@ -176,12 +194,18 @@
 
 <body onload="checkAuthState()">
 
-    <a href="plans.html" id="pro-plans-btn" title="خطط العضوية المتميزة (Pro)">
-        <i class="fas fa-crown"></i>
-    </a>
-    
-    <div id="coin-display">
-        <i class="fas fa-coins"></i> الإجمالي: <span id="total-coins-value">0</span>
+    <div id="user-info-bar">
+        <div id="user-name-display">
+            جاري التحميل...
+        </div>
+        
+        <div id="coin-display">
+            <i class="fas fa-coins"></i> الإجمالي: <span id="total-coins-value">0</span>
+        </div>
+        
+        <a href="plans.html" id="pro-plans-btn" title="خطط العضوية المتميزة (Pro)">
+            <i class="fas fa-crown"></i>
+        </a>
     </div>
 
     <h1>ابدأ لعبة المدني المحتال</h1>
@@ -214,35 +238,63 @@
 
 <script>
     let players = []; 
-    let currentUserData = {}; // لحفظ بيانات المستخدم بما في ذلك الكوينز
+    let currentUserData = {}; 
     const playerList = document.getElementById("player-list");
     const playerInput = document.getElementById("player-input");
     const startGameBtn = document.getElementById("start-game-btn"); 
     const playerCountAlert = document.getElementById("player-count-alert");
+    const userNameDisplay = document.getElementById("user-name-display"); // العنصر الجديد
 
     // ----------------------------------
     // دوال المصادقة والكوينزات وعرضها
     // ----------------------------------
     
     /**
+     * @function isProUser
+     * @description التحقق مما إذا كان المستخدم عضواً متميزاً (Pro).
+     */
+    function isProUser() {
+        const expiryTime = currentUserData.proExpiryTime || 0;
+        // نعتبر المستخدم Pro إذا كان وقت الانتهاء أكبر من الوقت الحالي (بالمللي ثانية)
+        return expiryTime > Date.now();
+    }
+
+    /**
      * @function checkAuthState
-     * @description التحقق من حالة المصادقة (Auth) وعرض الكوينزات.
+     * @description التحقق من حالة المصادقة (Auth) وعرض بيانات المستخدم.
      */
     async function checkAuthState() {
          firebase.auth().onAuthStateChanged(async (user) => {
             if (user) {
                 // إذا كان المستخدم مسجلاً، نُحمّل بياناته
-                const data = await loadUserData(); // من auth.js
+                const data = await loadUserData(); 
                 if (data) {
                     currentUserData = data;
                 }
+                
+                // 🚨 التعديل هنا: عرض اسم المستخدم وحالة Pro
+                displayUserName(user.displayName || user.email);
+                
                 displayTotalCoins(); 
-                await loadPlayers(); // الانتظار لتحميل قائمة اللاعبين من Firestore
+                await loadPlayers(); 
             } else {
-                // إذا لم يكن مسجلاً، نُرسله لصفحة تسجيل الدخول
                 window.location.href = "auth.html";
             }
         });
+    }
+
+    /**
+     * @function displayUserName
+     * @description عرض اسم المستخدم وإضافة أيقونة التاج إذا كان Pro.
+     */
+    function displayUserName(name) {
+        const isPro = isProUser();
+        const proTag = isPro 
+            ? '<i class="fas fa-crown" style="color:#ffd700; margin-right: 5px;" title="عضو متميز (Pro)"></i>'
+            : '';
+            
+        // عرض الاسم وبجانبه التاج إن وجد
+        userNameDisplay.innerHTML = `${proTag} ${name}`;
     }
 
     /**
@@ -250,7 +302,6 @@
      * @description تحميل إجمالي الكوينزات من Firestore وعرضها.
      */
     function displayTotalCoins() {
-        // نستخدم currentUserData المحملة في checkAuthState
         document.getElementById("total-coins-value").innerText = currentUserData.totalCoins || 0;
     }
     
@@ -278,19 +329,17 @@
         }
     }
 
-    /**
-     * @function savePlayersToFirestore
-     * @description يحفظ مصفوفة اللاعبين الحالية في Firestore.
-     */
     async function savePlayersToFirestore() {
-        // 🚨 نحتاج إلى التأكد من أن دالة saveUserData في auth.js تقبل playersData
+        const user = firebase.auth().currentUser;
+        if (!user) return; // توقف إذا لم يكن هناك مستخدم مسجل الدخول
+        
+        // يجب أن نرسل الكوينز والإعدادات أيضاً للحفاظ عليها
         await saveUserData(
             currentUserData.totalCoins || 0,
             currentUserData.proExpiryTime || 0,
-            players, // مصفوفة اللاعبين الجديدة
-            currentUserData.settings || {} // الحفاظ على الإعدادات الحالية
+            players, 
+            currentUserData.settings || {} 
         );
-        // تحديث البيانات المحلية بعد الحفظ (للتأكد من أنها متزامنة)
         currentUserData.players = players;
     }
 
@@ -300,7 +349,7 @@
             players.push(playerName);
             playerInput.value = '';
             renderPlayers();
-            await savePlayersToFirestore(); // حفظ التغيير في Firestore
+            await savePlayersToFirestore(); 
         } else if (players.includes(playerName)) {
             alert("هذا الاسم موجود بالفعل!");
         } else if (playerName.length === 0) {
@@ -311,11 +360,10 @@
     async function removePlayer(index) {
         players.splice(index, 1);
         renderPlayers();
-        await savePlayersToFirestore(); // حفظ التغيير في Firestore
+        await savePlayersToFirestore(); 
     }
     
     async function loadPlayers() {
-        // نستخدم currentUserData المحملة في checkAuthState
         const savedPlayers = currentUserData.players;
         if (Array.isArray(savedPlayers)) {
             players = savedPlayers;
@@ -331,13 +379,8 @@
             return;
         }
         
-        // 🚨 نضمن حفظ قائمة اللاعبين النهائية في Firestore قبل التوجيه
         await savePlayersToFirestore(); 
         
-        // **ملاحظة:** لم نعد نحفظ اللاعبين في localStorage.
-        // يجب أن نرسل اللاعبين إلى game.html عبر localStorage مؤقتاً 
-        // أو نقوم بتحميلها من Firestore في game.html.
-        // بما أنك تستخدم localStorage حالياً في game.html، سنستمر في تخزينه هنا مؤقتاً:
         localStorage.setItem("players", JSON.stringify(players)); 
         
         location.href = "game.html"; 
@@ -349,6 +392,22 @@
             addPlayer();
         }
     });
+    
+    /**
+     * @function signOutUser
+     * @description تسجيل خروج المستخدم من Firebase.
+     */
+    function signOutUser() {
+        if (confirm("هل أنت متأكد من تسجيل الخروج؟")) {
+            firebase.auth().signOut().then(() => {
+                // مسح البيانات المحلية والتوجيه
+                localStorage.clear();
+                window.location.href = "auth.html";
+            }).catch((error) => {
+                alert("حدث خطأ أثناء تسجيل الخروج: " + error.message);
+            });
+        }
+    }
 
 </script>
 
