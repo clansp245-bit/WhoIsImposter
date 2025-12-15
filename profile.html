@@ -8,7 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="auth.js"></script>
+    <script src="auth.js"></script> 
     
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -109,15 +109,15 @@
         <h3>معلومات الحساب</h3>
         <div class="info-item">
             <span class="label">المستوى الحالي:</span>
-            <span class="value" id="user-level-profile">...</span>
+            <span class="value" id="user-level-profile">جاري التحميل...</span>
         </div>
         <div class="info-item">
             <span class="label">إجمالي نقاط الخبرة (XP):</span>
-            <span class="value" id="user-xp-profile">...</span>
+            <span class="value" id="user-xp-profile">جاري التحميل...</span>
         </div>
         <div class="info-item">
             <span class="label">البريد الإلكتروني:</span>
-            <span class="value" id="user-email">...</span>
+            <span class="value" id="user-email">جاري التحميل...</span>
         </div>
         <div class="info-item">
             <span class="label">حالة العضوية:</span>
@@ -125,7 +125,7 @@
         </div>
         <div class="info-item">
             <span class="label">الكوينز المتبقية:</span>
-            <span class="value" id="user-coins">0</span>
+            <span class="value" id="user-coins">جاري التحميل...</span>
         </div>
     </div>
 
@@ -133,9 +133,9 @@
         <h3>تغيير اسم العرض</h3>
         <p style="color:#ffcc00; font-weight:700;">🚨 رسوم تغيير الاسم: <span id="name-change-cost">500</span> كوينز</p>
         <label for="display-name-input" style="font-weight: 700; color: #f1f5f9;">اسم العرض الحالي:</label>
-        <input type="text" id="display-name-input" placeholder="أدخل اسم العرض الجديد">
+        <input type="text" id="display-name-input" placeholder="أدخل اسم العرض الجديد" disabled>
         <p id="error-message"></p>
-        <button id="save-name-btn" onclick="saveNewDisplayName()">حفظ التغيير</button>
+        <button id="save-name-btn" onclick="saveNewDisplayName()" disabled>حفظ التغيير</button>
     </div>
 
     <button id="back-btn" onclick="location.href='index.html'">
@@ -143,22 +143,24 @@
     </button>
     
 <script>
-    let currentUserData = {};
+    let currentUserData = null; // 🚨 البدء بقيمة null للتحقق
     const db = firebase.firestore();
-    const NAME_CHANGE_COST = 500; // تكلفة تغيير الاسم الثابتة
+    const NAME_CHANGE_COST = 500; 
+    
+    // العناصر التي يتم تعطيلها عند فشل التحميل
+    const nameInput = document.getElementById('display-name-input');
+    const saveBtn = document.getElementById('save-name-btn');
+    const errorMsg = document.getElementById('error-message');
 
     // ----------------------------------
     // دوال المساعدة (مفترض توفرها في auth.js)
     // ----------------------------------
+
     function isProUser() {
-        const expiryTime = currentUserData.proExpiryTime || 0;
+        const expiryTime = currentUserData?.proExpiryTime || 0;
         return expiryTime > Date.now();
     }
     
-    /**
-     * @function isNameTaken
-     * @description التحقق مما إذا كان اسم العرض الجديد مستخدمًا بالفعل من قبل مستخدم آخر.
-     */
     async function isNameTaken(name) {
         const usersRef = db.collection('users');
         const user = firebase.auth().currentUser;
@@ -173,18 +175,39 @@
     }
 
     // ----------------------------------
-    // منطق البروفايل
+    // منطق البروفايل (مصحح)
     // ----------------------------------
 
+    /**
+     * @function checkAuthState
+     * @description التحقق من حالة المصادقة وتحميل وعرض بيانات البروفايل.
+     */
     async function checkAuthState() {
          firebase.auth().onAuthStateChanged(async (user) => {
             if (user) {
-                currentUserData = await loadUserData(); 
+                // 🚨 خطوة التحميل الحرجة
+                try {
+                    currentUserData = await loadUserData(); 
+                } catch(err) {
+                    console.error("Critical error during loadUserData:", err);
+                    errorMsg.style.color = '#ff4f4f';
+                    errorMsg.innerText = '⚠️ فشل الاتصال بقاعدة البيانات. حاول مرة أخرى.';
+                    return; // التوقف إذا فشل التحميل
+                }
                 
-                displayProfileInfo(user);
-                
-                // تعبئة حقل الإدخال بالاسم الحالي
-                document.getElementById('display-name-input').value = user.displayName || user.email.split('@')[0];
+                // 🚨 التحقق من نجاح تحميل البيانات
+                if (currentUserData) {
+                    displayProfileInfo(user);
+                    
+                    // تمكين الإدخال والزر عند النجاح
+                    nameInput.value = user.displayName || user.email.split('@')[0];
+                    nameInput.disabled = false;
+                    saveBtn.disabled = false;
+
+                } else {
+                    // إذا كان currentUserData هو null، يتم عرض رسالة خطأ صريحة
+                    displayLoadingError(); 
+                }
                 
             } else {
                 window.location.href = "auth.html";
@@ -192,6 +215,26 @@
         });
     }
 
+    /**
+     * @function displayLoadingError
+     * @description عرض رسالة خطأ صريحة في حال فشل تحميل البيانات
+     */
+    function displayLoadingError() {
+        const errorText = '❌ فشل تحميل البيانات';
+        document.getElementById('user-email').innerText = errorText;
+        document.getElementById('user-coins').innerText = errorText;
+        document.getElementById('user-level-profile').innerText = errorText;
+        document.getElementById('user-xp-profile').innerText = errorText;
+        document.getElementById('pro-status').innerText = errorText;
+        errorMsg.style.color = '#ff4f4f';
+        errorMsg.innerText = 'فشل في تحميل بيانات المستخدم. تحقق من اتصالك بالإنترنت.';
+    }
+
+
+    /**
+     * @function displayProfileInfo
+     * @description عرض بيانات المستخدم في البطاقات.
+     */
     function displayProfileInfo(user) {
         document.getElementById('user-email').innerText = user.email || 'غير متوفر';
         document.getElementById('user-coins').innerText = currentUserData.totalCoins || 0;
@@ -209,15 +252,18 @@
         }
     }
 
+    /**
+     * @function saveNewDisplayName
+     * @description حفظ اسم العرض الجديد، مع التحقق من الكوينز والتكرار.
+     */
     async function saveNewDisplayName() {
-        const nameInput = document.getElementById('display-name-input');
         const newName = nameInput.value.trim();
-        const errorMsg = document.getElementById('error-message');
         const user = firebase.auth().currentUser;
         errorMsg.innerText = '';
         
-        if (!user) {
-            errorMsg.innerText = 'الرجاء تسجيل الدخول أولاً.';
+        // 🚨 التأكد من أن البيانات محملة قبل المتابعة
+        if (!currentUserData) {
+            errorMsg.innerText = '⚠️ تعذر حفظ الاسم. بيانات المستخدم غير محملة.';
             errorMsg.style.color = '#ff4f4f';
             return;
         }
@@ -234,7 +280,6 @@
              return;
         }
 
-        const saveBtn = document.getElementById('save-name-btn');
         saveBtn.disabled = true;
         saveBtn.innerText = 'جاري الحفظ والتحقق...';
 
@@ -252,8 +297,6 @@
             if (await isNameTaken(newName)) {
                 errorMsg.innerText = '❌ هذا الاسم مستخدم بالفعل. اختر اسماً آخر.';
                 errorMsg.style.color = '#ff4f4f';
-                saveBtn.disabled = false;
-                saveBtn.innerText = 'حفظ التغيير';
                 return;
             }
             
@@ -276,7 +319,7 @@
                 currentUserData.ownedPacksTemporary
             );
             
-            // تحديث البيانات المحلية بعد الحفظ (للعرض الفوري)
+            // تحديث البيانات المحلية بعد الحفظ
             currentUserData.totalCoins = newCoins;
             
             errorMsg.style.color = '#34d399';
