@@ -2,8 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>🤝 الأصدقاء وطلبات الصداقة</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎁 إرسال هدايا - لعبة المدني المحتال</title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -14,208 +14,137 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
-body { font-family: 'Cairo', sans-serif; background:#0f172a; color:#f1f5f9; padding:20px; }
-h2 { color:#34d399; text-align:center; }
-.container { max-width:600px; margin:auto; }
-.card { background:#1e293b; padding:20px; border-radius:12px; margin-bottom:20px; text-align:right; }
-input { width: calc(100% - 90px); padding:10px; border-radius:8px; border:none; background:#334155; color:white; }
-button { padding:10px; border:none; border-radius:8px; font-weight:700; cursor:pointer; }
-.search-btn { background:#6366f1; color:white; width:80px; }
-.user-item { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #334155; }
-.action-btn { padding:5px 10px; border-radius:6px; font-weight:700; margin-right:5px; }
-.send { background:#34d399; color:white; }
-.accept { background:#6366f1; color:white; }
-.reject, .remove { background:#ef4444; color:white; }
+body { font-family: 'Cairo', sans-serif; background:#0f172a; color:#f1f5f9; text-align:center; padding:20px; min-height:100vh; }
+h1 { font-size:2rem; color:#34d399; margin-bottom:20px; }
+.card { background:#1e293b; padding:20px; border-radius:12px; margin:15px auto; max-width:450px; text-align:right; }
+input, select { width: 100%; padding:10px; border-radius:8px; border:none; margin-bottom:10px; background:#334155; color:white; }
+button { padding:10px; width:100%; border:none; border-radius:8px; font-weight:700; cursor:pointer; margin-top:5px; }
+.send-btn { background:#34d399; color:white; }
+.send-btn:hover { background:#10b981; }
 .loading { color:#94a3b8; padding:10px; }
+.player-item { display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid #334155; }
+.alert { color:#ffcc00; font-size:0.9rem; margin-top:10px; }
 </style>
 </head>
 
-<body>
+<body onload="initPage()">
 
-<h2>🤝 الأصدقاء وطلبات الصداقة</h2>
+<h1>🎁 إرسال هدايا للاعبين</h1>
 
-<div class="container">
+<div class="card">
+    <label>ابحث عن لاعب:</label>
+    <input type="text" id="player-search" placeholder="اسم العرض">
+    <div id="search-results"><p class="loading">أدخل 3 أحرف على الأقل للبحث</p></div>
+</div>
 
-    <!-- البحث -->
-    <div class="card">
-        <h3>البحث عن لاعب</h3>
-        <div style="display:flex; gap:10px;">
-            <input id="search-input" placeholder="اسم العرض">
-            <button class="search-btn" onclick="handleSearch()">بحث</button>
-        </div>
-        <div id="search-results"></div>
-    </div>
+<div class="card">
+    <label>اختر نوع الهدية:</label>
+    <select id="gift-select">
+        <option value="1" data-xp="10" data-cost="50">هدية عادية (50 Coins, +10 XP)</option>
+        <option value="2" data-xp="25" data-cost="120">هدية نادرة (120 Coins, +25 XP)</option>
+        <option value="3" data-xp="50" data-cost="250">هدية أسطورية (250 Coins, +50 XP)</option>
+    </select>
+    <button class="send-btn" id="send-gift-btn" disabled>إرسال الهدية</button>
+    <p class="alert" id="gift-alert"></p>
+</div>
 
-    <!-- الطلبات -->
-    <div class="card">
-        <h3>طلبات الصداقة <span id="incoming-count">(0)</span></h3>
-        <div id="incoming-requests">
-            <p class="loading" id="requests-loading">جاري التحميل...</p>
-        </div>
-    </div>
-
-    <!-- الأصدقاء -->
-    <div class="card">
-        <h3>الأصدقاء <span id="friends-count">(0)</span></h3>
-        <div id="friends-list">
-            <p class="loading" id="friends-loading">جاري التحميل...</p>
-        </div>
-    </div>
-
+<div class="card">
+    <h3>رصيدك الحالي:</h3>
+    <p>Coins: <span id="user-coins">0</span> | XP: <span id="user-xp">0</span> | المستوى: <span id="user-level">1</span></p>
 </div>
 
 <script>
-const db = firebase.firestore();
-let currentUserId = null;
-let friends = [];
-let requests = [];
+let currentUserData = {};
+let selectedPlayerId = null;
 
-firebase.auth().onAuthStateChanged(user => {
-    if (!user) return location.href = "auth.html";
-    currentUserId = user.uid;
-    listenUser();
-    listenRequests();
-});
-
-// ---------------- USER DATA ----------------
-function listenUser() {
-    db.collection("users").doc(currentUserId).onSnapshot(doc => {
-        friends = doc.data()?.players || [];
-        renderFriends();
+async function initPage() {
+    firebase.auth().onAuthStateChanged(async user => {
+        if (!user) return window.location.href = "auth.html";
+        const data = await loadUserData();
+        if (data) currentUserData = data;
+        updateUserDisplay();
+        setupSearch();
     });
 }
 
-// ---------------- REQUESTS ----------------
-function listenRequests() {
-    const incomingRef = db.collection("friendRequests")
-        .where("receiverId","==",currentUserId)
-        .where("status","==","pending");
-
-    incomingRef.onSnapshot(async snap => {
-        document.getElementById("requests-loading").style.display="none";
-        requests = [];
-
-        const ids = snap.docs.map(d=>d.data().senderId);
-        const names = await getNames(ids);
-
-        snap.forEach(doc=>{
-            requests.push({
-                id:doc.id,
-                senderId:doc.data().senderId,
-                name:names[doc.data().senderId] || "مستخدم"
-            });
-        });
-
-        renderRequests();
-    });
-}
-
-// ---------------- HELPERS ----------------
-async function getNames(ids){
-    if(!ids.length) return {};
-    const map={};
-    const chunks=[];
-    const copy = [...ids];
-    while(copy.length) chunks.push(copy.splice(0,10));
-    for(const c of chunks){
-        const s=await db.collection("users")
-            .where(firebase.firestore.FieldPath.documentId(),"in",c).get();
-        s.forEach(d=>map[d.id]=d.data().displayName);
-    }
-    return map;
-}
-
-// ---------------- RENDER ----------------
-function renderRequests(){
-    const el=document.getElementById("incoming-requests");
-    el.innerHTML="";
-    document.getElementById("incoming-count").innerText=`(${requests.length})`;
-
-    if(!requests.length){
-        el.innerHTML="<p class='loading'>لا توجد طلبات</p>";
-        return;
-    }
-
-    requests.forEach(r=>{
-        el.innerHTML+=`
-        <div class="user-item">
-            <span>${r.name}</span>
-            <div>
-                <button class="action-btn accept" onclick="accept('${r.id}','${r.senderId}')">قبول</button>
-                <button class="action-btn reject" onclick="reject('${r.id}')">رفض</button>
-            </div>
-        </div>`;
-    });
-}
-
-async function renderFriends(){
-    const el=document.getElementById("friends-list");
-    document.getElementById("friends-loading").style.display="none";
-    document.getElementById("friends-count").innerText=`(${friends.length})`;
-    el.innerHTML="";
-
-    if(!friends.length){
-        el.innerHTML="<p class='loading'>لا يوجد أصدقاء</p>";
-        return;
-    }
-
-    const names=await getNames([...friends]);
-    friends.forEach(id=>{
-        el.innerHTML+=`
-        <div class="user-item">
-            <span>${names[id]}</span>
-            <button class="action-btn remove" onclick="removeFriend('${id}')">حذف</button>
-        </div>`;
-    });
+function updateUserDisplay() {
+    document.getElementById("user-coins").innerText = currentUserData.totalCoins || 0;
+    document.getElementById("user-xp").innerText = currentUserData.xp || 0;
+    document.getElementById("user-level").innerText = currentUserData.level || 1;
 }
 
 // ---------------- SEARCH ----------------
-async function handleSearch(){
-    const q=document.getElementById("search-input").value.trim();
-    const el=document.getElementById("search-results");
-    el.innerHTML="<p class='loading'>جاري البحث...</p>";
-
-    if(q.length<3){
-        el.innerHTML="<p class='loading'>أدخل 3 أحرف على الأقل</p>";
-        return;
-    }
-
-    const res=await searchUsersByDisplayName(q);
-    el.innerHTML="";
-
-    if(!res.length){
-        el.innerHTML="<p class='loading'>لا نتائج</p>";
-        return;
-    }
-
-    res.forEach(u=>{
-        let btnHtml = `<button class="action-btn send" onclick="send('${u.uid}')">إضافة</button>`;
-        if(friends.includes(u.uid)) btnHtml = `<span style="color:#34d399; font-weight:700;">صديق</span>`;
-
-        const incoming = requests.find(r=>r.senderId===u.uid);
-        if(incoming) btnHtml = `<button class="action-btn accept" onclick="accept('${incoming.id}','${incoming.senderId}')">قبول</button>`;
-
-        el.innerHTML+=`
-        <div class="user-item">
-            <span>${u.displayName}</span>
-            ${btnHtml}
-        </div>`;
+function setupSearch() {
+    const input = document.getElementById("player-search");
+    input.addEventListener("input", async () => {
+        const q = input.value.trim();
+        const resultsDiv = document.getElementById("search-results");
+        resultsDiv.innerHTML = '<p class="loading">جاري البحث...</p>';
+        if (q.length < 3) {
+            resultsDiv.innerHTML = '<p class="loading">أدخل 3 أحرف على الأقل للبحث</p>';
+            return;
+        }
+        const res = await searchUsersByDisplayName(q);
+        resultsDiv.innerHTML = "";
+        if (!res.length) {
+            resultsDiv.innerHTML = "<p class='loading'>لا توجد نتائج</p>";
+            return;
+        }
+        res.forEach(u=>{
+            const div = document.createElement("div");
+            div.className = "player-item";
+            div.innerHTML = `<span>${u.displayName}</span><button onclick="selectPlayer('${u.uid}')">اختيار</button>`;
+            resultsDiv.appendChild(div);
+        });
     });
 }
 
-// ---------------- ACTIONS ----------------
-async function send(id){
-    if(await sendFriendRequest(id)) alert("تم إرسال الطلب");
+function selectPlayer(uid) {
+    selectedPlayerId = uid;
+    document.getElementById("send-gift-btn").disabled = false;
+    document.getElementById("gift-alert").innerText = "تم اختيار اللاعب!";
 }
-async function accept(id,uid){
-    if(await acceptFriendRequest(id,uid)) alert("تم القبول");
-}
-async function reject(id){
-    if(await rejectFriendRequest(id)) alert("تم الرفض");
-}
-async function removeFriend(id){
-    if(await removeFriend(id)) alert("تم الحذف");
-}
+
+// ---------------- SEND GIFT ----------------
+document.getElementById("send-gift-btn").addEventListener("click", async () => {
+    if (!selectedPlayerId) return;
+    const giftSelect = document.getElementById("gift-select");
+    const option = giftSelect.selectedOptions[0];
+    const cost = parseInt(option.dataset.cost);
+    const xp = parseInt(option.dataset.xp);
+
+    if ((currentUserData.totalCoins || 0) < cost) {
+        document.getElementById("gift-alert").innerText = "ليس لديك ما يكفي من Coins لإرسال هذه الهدية!";
+        return;
+    }
+
+    // خصم الكوينز من المرسل
+    currentUserData.totalCoins -= cost;
+
+    // تحديث XP للمستلم
+    const recipientRef = firebase.firestore().collection("users").doc(selectedPlayerId);
+    await firebase.firestore().runTransaction(async (tx)=>{
+        const doc = await tx.get(recipientRef);
+        if (!doc.exists) throw "المستخدم غير موجود";
+        const newXP = (doc.data().xp || 0) + xp;
+        tx.update(recipientRef, { xp: newXP });
+    });
+
+    // تحديث بيانات المرسل
+    await saveUserData(
+        currentUserData.totalCoins,
+        currentUserData.proExpiryTime || 0,
+        currentUserData.players || [],
+        currentUserData.settings || {},
+        currentUserData.level || 1,
+        currentUserData.xp || 0,
+        currentUserData.ownedPacksPermanent || [],
+        currentUserData.ownedPacksTemporary || {}
+    );
+
+    updateUserDisplay();
+    document.getElementById("gift-alert").innerText = "تم إرسال الهدية بنجاح!";
+});
 </script>
 
 </body>
