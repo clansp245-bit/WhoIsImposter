@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> لعبة المدني المحتال</title>
+    <title>🕵️ لعبة المدني المحتال</title>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -28,11 +28,11 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            position: relative; /* لتحديد مواضع العناصر العلوية */
+            position: relative; 
         }
 
         /* -------------------------------------------------- */
-        /* تنسيقات الشريط العلوي الجديد */
+        /* تنسيقات الشريط العلوي */
         /* -------------------------------------------------- */
 
         /* التاج (أعلى اليسار) */
@@ -56,28 +56,41 @@
             color: #94a3b8;
         }
         
-        /* عرض اسم المستخدم وحالة Pro في المنتصف العلوي */
+        /* عرض اسم المستخدم (رابط لصفحة البروفايل) */
         #user-name-display {
             font-size: 1.5rem;
             font-weight: 700;
             color: #34d399; 
-            margin-top: 50px; /* لترك مساحة للكوينز والتاج */
-            margin-bottom: 10px;
+            margin-top: 50px; 
+            margin-bottom: 5px; /* تم تقليل الهامش لإضافة الـ XP */
             display: flex;
             align-items: center;
             justify-content: center;
+            text-decoration: none; /* لإزالة خط الرابط */
+            cursor: pointer;
+        }
+        #user-name-display:hover {
+            color: #10b981;
         }
         #user-name-display .pro-tag {
             color: #ffd700;
             margin-right: 8px;
             font-size: 1.2em;
         }
+        
+        /* عرض المستوى والخبرة (جديد) */
+        #level-xp-display {
+            color:#94a3b8; 
+            font-size:0.9rem; 
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
 
 
         h1 {
             font-size: 2.5rem;
             font-weight: 700;
-            margin-top: 20px; /* تم تقليل الهامش بعد الاسم */
+            margin-top: 20px;
             margin-bottom: 30px;
             color: #f1f5f9; 
         }
@@ -212,8 +225,12 @@
         <i class="fas fa-coins"></i> الإجمالي: <span id="total-coins-value">0</span>
     </div>
 
-    <div id="user-name-display">
+    <a href="profile.html" id="user-name-display">
         جاري التحميل...
+    </a>
+
+    <div id="level-xp-display">
+        المستوى <span id="user-level">1</span> | خبرة <span id="user-xp">0</span> XP
     </div>
 
     <h1>ابدأ لعبة المدني المحتال</h1>
@@ -257,19 +274,11 @@
     // دوال المصادقة والكوينزات وعرضها
     // ----------------------------------
     
-    /**
-     * @function isProUser
-     * @description التحقق مما إذا كان المستخدم عضواً متميزاً (Pro).
-     */
     function isProUser() {
         const expiryTime = currentUserData.proExpiryTime || 0;
         return expiryTime > Date.now();
     }
 
-    /**
-     * @function checkAuthState
-     * @description التحقق من حالة المصادقة (Auth) وعرض بيانات المستخدم.
-     */
     async function checkAuthState() {
          firebase.auth().onAuthStateChanged(async (user) => {
             if (user) {
@@ -278,12 +287,10 @@
                     currentUserData = data;
                 }
                 
-                // 🚨 التعديل هنا: استخدام displayName وإذا لم يكن موجوداً، نستخدم جزءاً من الإيميل.
                 const displayName = user.displayName;
                 if (displayName) {
                     displayUserName(displayName);
                 } else if (user.email) {
-                    // إذا لم يكن هناك اسم عرض، نأخذ الجزء الأول من الإيميل
                     const tempName = user.email.split('@')[0];
                     displayUserName(tempName);
                 } else {
@@ -291,6 +298,7 @@
                 }
                 
                 displayTotalCoins(); 
+                displayLevelAndXP(); // 🚨 جديد
                 await loadPlayers(); 
             } else {
                 window.location.href = "auth.html";
@@ -298,26 +306,30 @@
         });
     }
 
-    /**
-     * @function displayUserName
-     * @description عرض اسم المستخدم وإضافة أيقونة التاج إذا كان Pro.
-     */
     function displayUserName(name) {
         const isPro = isProUser();
         const proTag = isPro 
             ? '<i class="fas fa-crown pro-tag" title="عضو متميز (Pro)"></i>'
             : '';
             
-        // عرض الاسم وبجانبه التاج إن وجد
         userNameDisplay.innerHTML = `${proTag} ${name}`;
     }
 
-    /**
-     * @function displayTotalCoins
-     * @description تحميل إجمالي الكوينزات من Firestore وعرضها.
-     */
     function displayTotalCoins() {
         document.getElementById("total-coins-value").innerText = currentUserData.totalCoins || 0;
+    }
+
+    /**
+     * @function displayLevelAndXP
+     * @description عرض المستوى والخبرة.
+     */
+    function displayLevelAndXP() {
+        // نضمن وجود قيمة افتراضية إذا لم يتم تحميلها بعد
+        const level = currentUserData.level || 1;
+        const xp = currentUserData.xp || 0;
+        
+        document.getElementById("user-level").innerText = level;
+        document.getElementById("user-xp").innerText = xp;
     }
     
     // ----------------------------------
@@ -348,12 +360,14 @@
         const user = firebase.auth().currentUser;
         if (!user) return; 
         
-        // يجب أن نرسل الكوينز والإعدادات أيضاً للحفاظ عليها
+        // يجب إرسال كل البيانات بما في ذلك المستوى والخبرة
         await saveUserData(
             currentUserData.totalCoins || 0,
             currentUserData.proExpiryTime || 0,
             players, 
-            currentUserData.settings || {} 
+            currentUserData.settings || {},
+            currentUserData.level || 1, // 🚨 مستوى
+            currentUserData.xp || 0      // 🚨 خبرة
         );
         currentUserData.players = players;
     }
@@ -408,10 +422,6 @@
         }
     });
     
-    /**
-     * @function signOutUser
-     * @description تسجيل خروج المستخدم من Firebase.
-     */
     function signOutUser() {
         if (confirm("هل أنت متأكد من تسجيل الخروج؟")) {
             firebase.auth().signOut().then(() => {
