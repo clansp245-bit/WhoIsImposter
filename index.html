@@ -8,14 +8,14 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="auth.js"></script> 
+    <script src="auth.js"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
     <style>
         /* -------------------------------------------------- */
-        /* تنسيقات الشريط العلوي الجديد (التاج والكوينز) */
+        /* التنسيقات العامة والقديمة */
         /* -------------------------------------------------- */
         body {
             font-family: 'Cairo', sans-serif;
@@ -28,7 +28,22 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            position: relative; /* لتمكين وضع العناصر المطلقة */
+            position: relative; /* لتحديد مواضع العناصر العلوية */
+        }
+
+        /* -------------------------------------------------- */
+        /* تنسيقات الشريط العلوي الجديد */
+        /* -------------------------------------------------- */
+
+        /* التاج (أعلى اليسار) */
+        #pro-plans-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            color: #ffd700; 
+            cursor: pointer;
+            transition: color 0.3s;
         }
 
         /* الكوينز (أعلى اليمين) */
@@ -41,44 +56,28 @@
             color: #94a3b8;
         }
         
-        /* التاج (أعلى اليسار) */
-        #pro-plans-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            font-size: 24px;
-            color: #ffd700; 
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-
         /* عرض اسم المستخدم وحالة Pro في المنتصف العلوي */
         #user-name-display {
             font-size: 1.5rem;
             font-weight: 700;
             color: #34d399; 
-            margin-top: 50px; 
+            margin-top: 50px; /* لترك مساحة للكوينز والتاج */
             margin-bottom: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer; /* للإشارة إلى أنه يمكن النقر للتعديل */
-        }
-        #user-name-display:hover {
-            color: #10b981;
         }
         #user-name-display .pro-tag {
             color: #ffd700;
             margin-right: 8px;
             font-size: 1.2em;
         }
-        
-        /* -------------------------------------------------- */
-        /* التنسيقات العامة والبطاقات */
-        /* -------------------------------------------------- */
+
+
         h1 {
             font-size: 2.5rem;
             font-weight: 700;
+            margin-top: 20px; /* تم تقليل الهامش بعد الاسم */
             margin-bottom: 30px;
             color: #f1f5f9; 
         }
@@ -94,7 +93,7 @@
             text-align: right;
         }
 
-        #player-input, #new-display-name-input {
+        #player-input {
             font-family: 'Cairo', sans-serif;
             width: calc(100% - 24px); 
             padding: 12px;
@@ -185,7 +184,7 @@
         #sign-out-btn {
             position: absolute;
             bottom: 20px;
-            right: 20px;
+            right: 20px; 
             background: none;
             border: none;
             color: #ff4f4f;
@@ -199,29 +198,6 @@
             margin-top: 15px;
             font-size: 0.9rem;
         }
-        
-        /* تنسيق بطاقة تعديل الاسم (جديد) */
-        #name-setup-card {
-            background-color: #1e293b;
-            padding: 25px;
-            border-radius: 12px;
-            max-width: 400px;
-            width: 90%;
-            margin: 20px auto;
-            box-shadow: 0 8px 15px rgba(0,0,0,0.3);
-            display: none; 
-            text-align: center;
-        }
-        #save-name-btn {
-            margin-top: 10px;
-            background-color: #34d399;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-        }
 
     </style>
 </head>
@@ -231,26 +207,18 @@
     <a href="plans.html" id="pro-plans-btn" title="خطط العضوية المتميزة (Pro)">
         <i class="fas fa-crown"></i>
     </a>
-
+    
     <div id="coin-display">
         <i class="fas fa-coins"></i> الإجمالي: <span id="total-coins-value">0</span>
     </div>
 
-    <div id="user-name-display" onclick="showNameSetup(false)">
+    <div id="user-name-display">
         جاري التحميل...
     </div>
 
     <h1>ابدأ لعبة المدني المحتال</h1>
 
-    <div id="name-setup-card">
-        <h3>تحديد اسم العرض</h3>
-        <p style="color:#94a3b8; font-size: 0.9rem;">الرجاء اختيار اسم عرض فريد لاستخدامه في اللعب.</p>
-        <input type="text" id="new-display-name-input" placeholder="اسم العرض الجديد">
-        <button id="save-name-btn" onclick="saveNewDisplayName()">حفظ الاسم</button>
-        <p id="name-error-message" style="color:#ff4f4f; margin-top: 10px;"></p>
-    </div>
-
-    <div class="card" id="main-lobby-card" style="display:none;">
+    <div class="card">
         
         <button id="settings-btn-card" onclick="location.href = 'settings.html'">
             <i class="fas fa-cog"></i> الإعدادات
@@ -263,7 +231,8 @@
 
         <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 15px;">يجب أن يكون لديك 3 لاعبين على الأقل.</p>
         
-        <ul id="player-list"></ul>
+        <ul id="player-list">
+            </ul>
         
         <div id="player-count-alert" class="alert-message" style="display: none;">
             الحد الأدنى للعب هو 3 لاعبين.
@@ -278,169 +247,81 @@
 <script>
     let players = []; 
     let currentUserData = {}; 
-    const db = firebase.firestore(); 
-    
-    // العناصر الرئيسية
     const playerList = document.getElementById("player-list");
     const playerInput = document.getElementById("player-input");
     const startGameBtn = document.getElementById("start-game-btn"); 
     const playerCountAlert = document.getElementById("player-count-alert");
     const userNameDisplay = document.getElementById("user-name-display"); 
-    const nameSetupCard = document.getElementById("name-setup-card");
-    const mainLobbyCard = document.getElementById("main-lobby-card");
 
     // ----------------------------------
     // دوال المصادقة والكوينزات وعرضها
     // ----------------------------------
     
+    /**
+     * @function isProUser
+     * @description التحقق مما إذا كان المستخدم عضواً متميزاً (Pro).
+     */
     function isProUser() {
         const expiryTime = currentUserData.proExpiryTime || 0;
         return expiryTime > Date.now();
     }
 
+    /**
+     * @function checkAuthState
+     * @description التحقق من حالة المصادقة (Auth) وعرض بيانات المستخدم.
+     */
     async function checkAuthState() {
          firebase.auth().onAuthStateChanged(async (user) => {
             if (user) {
-                // عرض حالة تحميل مبدئية
-                userNameDisplay.innerHTML = 'جاري التحميل...'; 
-                
                 const data = await loadUserData(); 
                 if (data) {
                     currentUserData = data;
                 }
                 
+                // 🚨 التعديل هنا: استخدام displayName وإذا لم يكن موجوداً، نستخدم جزءاً من الإيميل.
                 const displayName = user.displayName;
-                
-                // 🚨 المنطق الجديد: الإجبار على إعداد الاسم إذا لم يكن موجوداً
-                if (!displayName || displayName.length < 2) {
-                    // إظهار بطاقة إعداد الاسم ومنع ظهور اللوبي
-                    showNameSetup(true); 
-                    
-                    // استخدام الايميل كاسم مؤقت للعرض العلوي
-                    const tempName = user.email ? user.email.split('@')[0] : 'ضيف';
-                    displayUserName(tempName);
-                    
-                } else {
-                    // إذا كان الاسم موجوداً: إظهار اللوبي وإخفاء إعداد الاسم
-                    hideNameSetup(); 
+                if (displayName) {
                     displayUserName(displayName);
-                    displayTotalCoins(); 
-                    await loadPlayers(); 
+                } else if (user.email) {
+                    // إذا لم يكن هناك اسم عرض، نأخذ الجزء الأول من الإيميل
+                    const tempName = user.email.split('@')[0];
+                    displayUserName(tempName);
+                } else {
+                    displayUserName("مستخدم جديد");
                 }
+                
+                displayTotalCoins(); 
+                await loadPlayers(); 
             } else {
                 window.location.href = "auth.html";
             }
         });
     }
 
+    /**
+     * @function displayUserName
+     * @description عرض اسم المستخدم وإضافة أيقونة التاج إذا كان Pro.
+     */
     function displayUserName(name) {
         const isPro = isProUser();
         const proTag = isPro 
             ? '<i class="fas fa-crown pro-tag" title="عضو متميز (Pro)"></i>'
             : '';
             
+        // عرض الاسم وبجانبه التاج إن وجد
         userNameDisplay.innerHTML = `${proTag} ${name}`;
     }
 
+    /**
+     * @function displayTotalCoins
+     * @description تحميل إجمالي الكوينزات من Firestore وعرضها.
+     */
     function displayTotalCoins() {
         document.getElementById("total-coins-value").innerText = currentUserData.totalCoins || 0;
     }
     
     // ----------------------------------
-    // منطق إعداد وتعديل الاسم 
-    // ----------------------------------
-
-    /**
-     * @function showNameSetup
-     * @param {boolean} blockLobby - إذا كان صحيحاً، يتم إخفاء اللوبي الرئيسي.
-     */
-    function showNameSetup(blockLobby = false) {
-        if (blockLobby) {
-            mainLobbyCard.style.display = 'none';
-        } else {
-            // إذا كان المستخدم يعدل اسمه يدوياً، نعرض اللوبي بعد الانتهاء
-            mainLobbyCard.style.display = 'block'; 
-        }
-        
-        nameSetupCard.style.display = 'block';
-        document.getElementById('new-display-name-input').value = firebase.auth().currentUser?.displayName || '';
-    }
-
-    function hideNameSetup() {
-        nameSetupCard.style.display = 'none';
-        mainLobbyCard.style.display = 'block'; // إظهار اللوبي
-    }
-
-    // 🚨 دالة التحقق من التكرار 
-    async function isNameTaken(name) {
-        const usersRef = db.collection('users');
-        const user = firebase.auth().currentUser;
-        
-        const snapshot = await usersRef.where('displayName', '==', name).limit(1).get();
-        
-        // إذا كان هناك نتائج وكان UID مختلفاً عن المستخدم الحالي، فالاسم مستخدم
-        if (!snapshot.empty) {
-             return snapshot.docs[0].id !== user.uid;
-        }
-        return false;
-    }
-
-    async function saveNewDisplayName() {
-        const nameInput = document.getElementById('new-display-name-input');
-        const newName = nameInput.value.trim();
-        const errorMsg = document.getElementById('name-error-message');
-        errorMsg.innerText = '';
-        
-        if (newName.length < 3) {
-            errorMsg.innerText = 'يجب أن يكون الاسم 3 أحرف على الأقل.';
-            return;
-        }
-
-        const saveBtn = document.getElementById('save-name-btn');
-        saveBtn.disabled = true;
-        saveBtn.innerText = 'جاري التحقق...';
-
-        // 1. التحقق من التكرار
-        if (await isNameTaken(newName)) {
-            errorMsg.innerText = '❌ هذا الاسم مستخدم بالفعل. اختر اسماً آخر.';
-            saveBtn.disabled = false;
-            saveBtn.innerText = 'حفظ الاسم';
-            return;
-        }
-
-        const user = firebase.auth().currentUser;
-        if (!user) return;
-        
-        saveBtn.innerText = 'جاري الحفظ...';
-
-        try {
-            // 2. تحديث اسم العرض في Firebase Auth
-            await user.updateProfile({ displayName: newName });
-            // 3. تحديث اسم العرض في وثيقة المستخدم في Firestore
-            await db.collection('users').doc(user.uid).update({ displayName: newName });
-            
-            // 4. تحديث الواجهة والتخزين المؤقت
-            displayUserName(newName);
-            hideNameSetup(); // 🚨 سيتم إخفاء بطاقة الإعداد وإظهار اللوبي
-            alert('✅ تم حفظ اسم العرض بنجاح!');
-            
-            // إعادة تفعيل الزر
-            saveBtn.disabled = false;
-            saveBtn.innerText = 'حفظ الاسم';
-            
-            // أعد تحميل بيانات اللوبي بالاسم الجديد (لتحديث الحالة بالكامل)
-            checkAuthState(); 
-            
-        } catch (error) {
-            console.error("خطأ في حفظ الاسم:", error);
-            errorMsg.innerText = 'فشل في حفظ الاسم: ' + error.message;
-            saveBtn.disabled = false;
-            saveBtn.innerText = 'حفظ الاسم';
-        }
-    }
-    
-    // ----------------------------------
-    // منطق اللاعبين
+    // منطق اللاعبين (يستخدم Firestore)
     // ----------------------------------
     
     function renderPlayers() {
@@ -465,9 +346,9 @@
 
     async function savePlayersToFirestore() {
         const user = firebase.auth().currentUser;
-        if (!user) return;
+        if (!user) return; 
         
-        // يفترض أن دالة saveUserData في auth.js تقوم بحفظ البيانات
+        // يجب أن نرسل الكوينز والإعدادات أيضاً للحفاظ عليها
         await saveUserData(
             currentUserData.totalCoins || 0,
             currentUserData.proExpiryTime || 0,
@@ -485,7 +366,7 @@
             renderPlayers();
             await savePlayersToFirestore(); 
         } else if (players.includes(playerName)) {
-            alert("هذا الاسم موجود بالفعل في القائمة!");
+            alert("هذا الاسم موجود بالفعل!");
         } else if (playerName.length === 0) {
              alert("الرجاء إدخال اسم اللاعب.");
         }
@@ -515,7 +396,6 @@
         
         await savePlayersToFirestore(); 
         
-        // لا تزال تستخدم localStorage لنقل البيانات إلى game.html
         localStorage.setItem("players", JSON.stringify(players)); 
         
         location.href = "game.html"; 
@@ -528,6 +408,10 @@
         }
     });
     
+    /**
+     * @function signOutUser
+     * @description تسجيل خروج المستخدم من Firebase.
+     */
     function signOutUser() {
         if (confirm("هل أنت متأكد من تسجيل الخروج؟")) {
             firebase.auth().signOut().then(() => {
