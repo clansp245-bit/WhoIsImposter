@@ -11,11 +11,10 @@
 
 <script src="auth.js"></script> 
 
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght:400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
-/* ... التنسيقات (تم الاحتفاظ بها كما هي) ... */
 body{
   font-family:'Cairo',sans-serif;
   background:#0f172a;
@@ -91,7 +90,7 @@ button:hover{background:#4f46e5;}
       <p>اسم اللاعب: <strong id="currentName">---</strong></p>
       <p>المعرّف الحالي: <strong id="currentPublicUid">---</strong></p>
       <label>المعرّف الجديد (Public UID)</label>
-      <input id="newPublicUidInput" placeholder="أدخل المعرّف العام الجديد (IMP-XXXX-XXXX)" maxlength="14">
+      <input id="newPublicUidInput" placeholder="أدخل المعرّف العام الجديد">
       <button id="updateUidBtn"><i class="fas fa-sync-alt"></i> تحديث المعرّف العام</button>
   </div>
 
@@ -231,12 +230,12 @@ firebase.auth().onAuthStateChanged(user => {
     }
 
     try {
-      // الوصول إلى مسار المستخدمين باستخدام db المُعرف في auth.js
       targetUserRef = db.collection("users").doc(targetUid);
       const doc = await targetUserRef.get();
 
       if (!doc.exists) {
-        uidMsg.textContent = `❌ المستخدم ذو الـ UID: ${targetUid} غير موجود.`;
+        // إذا فشل العثور على المستند، فغالباً إما أنه غير موجود أو لا يوجد صلاحية للقراءة
+        uidMsg.textContent = `❌ المستخدم ذو الـ UID: ${targetUid} غير موجود (أو لا تملك صلاحية القراءة).`;
         return;
       }
 
@@ -248,7 +247,11 @@ firebase.auth().onAuthStateChanged(user => {
       uidMsg.textContent = "✅ تم العثور على المستخدم.";
     } catch (e) {
       console.error("خطأ في البحث:", e);
-      uidMsg.textContent = "❌ حدث خطأ أثناء البحث عن المستخدم. تأكد من إدخال Firebase UID صحيح.";
+      if (e.code === 'permission-denied') {
+          uidMsg.textContent = "❌ خطأ في الصلاحيات. راجع قواعد أمان Firestore لـ /users.";
+      } else {
+          uidMsg.textContent = "❌ حدث خطأ أثناء البحث عن المستخدم. تأكد من إدخال Firebase UID صحيح.";
+      }
     }
   };
 
@@ -258,18 +261,19 @@ firebase.auth().onAuthStateChanged(user => {
       return;
     }
 
-    const newPublicUid = document.getElementById("newPublicUidInput").value.trim().toUpperCase();
+    const newPublicUid = document.getElementById("newPublicUidInput").value.trim();
 
-    // التحقق من التنسيق (14 حرفًا وتبدأ بـ IMP-)
-    if (newPublicUid.length !== 14 || !newPublicUid.startsWith('IMP-')) {
-        uidMsg.textContent = "❌ المعرّف الجديد يجب أن يكون 14 حرفاً ويبدأ بـ 'IMP-'.";
+    if (!newPublicUid) {
+        uidMsg.textContent = "❌ لا يمكن أن يكون المعرّف الجديد فارغاً.";
         return;
     }
+    
+    // تم إزالة فحص الطول و IMP-
 
     if (!confirm(`هل أنت متأكد من تغيير المعرّف العام للمستخدم إلى ${newPublicUid}؟`)) return;
 
     try {
-      // 1. التحقق من عدم تكرار الـ UID الجديد
+      // 1. التحقق من عدم تكرار الـ UID الجديد (باستثناء المستخدم الحالي المستهدف)
       const existingUser = await db.collection('users').where('publicUid', '==', newPublicUid).limit(1).get();
       if (!existingUser.empty && existingUser.docs[0].id !== targetUserRef.id) {
           uidMsg.textContent = "❌ هذا المعرّف العام (Public UID) مستخدم بالفعل من قبل شخص آخر!";
@@ -288,7 +292,11 @@ firebase.auth().onAuthStateChanged(user => {
       
     } catch (e) {
       console.error("خطأ في التحديث:", e);
-      uidMsg.textContent = "❌ حدث خطأ أثناء تحديث المعرّف.";
+      if (e.code === 'permission-denied') {
+          uidMsg.textContent = "❌ فشل التحديث: راجع قواعد أمان Firestore لـ /users (عملية update).";
+      } else {
+          uidMsg.textContent = "❌ حدث خطأ أثناء تحديث المعرّف.";
+      }
     }
   };
 
