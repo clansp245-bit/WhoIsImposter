@@ -1,6 +1,6 @@
 /**
  * @file: auth.js
- * @description: سكربت موحد لإدارة Firebase، المصادقة، وحفظ/تحميل بيانات المستخدم، ومنطق XP والمستويات.
+ * @description: سكربت موحد لإدارة Firebase، المصادقة، وحفظ/تحميل بيانات المستخدم، ومنطق XP والمستويات، وتضمين Public UID.
  */
 
 // ****************************************************
@@ -25,12 +25,33 @@ const db = firebase.firestore();
 // ****************************************************
 // 2. إنشاء حساب المستخدم في Firestore
 // ****************************************************
+
+/**
+ * @function generatePublicUid
+ * @description تولد UID عام فريد للتطبيق.
+ */
+function generatePublicUid() {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const part = () => Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+    return `IMP-${part()}-${part()}`; // مثال: IMP-A3B4-D5F6
+}
+
 async function createFirestoreUserEntry(user) {
     const userRef = db.collection("users").doc(user.uid);
     const doc = await userRef.get();
 
+    // 1. إذا لم يكن السجل موجوداً (مستخدم جديد)
     if (!doc.exists) {
         const defaultDisplayName = user.displayName || user.email.split("@")[0];
+        
+        // 🚨 توليد Public UID جديد والتأكد من عدم تكراره
+        let newPublicUid;
+        while (true) {
+            newPublicUid = generatePublicUid();
+            const snap = await db.collection("users").where("publicUid", "==", newPublicUid).limit(1).get();
+            if (snap.empty) break;
+        }
+
         const initialData = {
             email: user.email || "",
             displayName: defaultDisplayName,
@@ -39,29 +60,43 @@ async function createFirestoreUserEntry(user) {
             proExpiryTime: 0,
             players: [],
             settings: {},
-            // 🚨 إضافة حقل الهدايا (مهم لظهور الهدايا)
-            receivedGifts: [], 
+            receivedGifts: {}, // 🚨 استخدام كائن بدلاً من مصفوفة لتخزين الهدايا (أفضل للأداء)
             level: 1,
             xp: 0,
             ownedPacksPermanent: [],
             ownedPacksTemporary: {},
             dailyDiscount: { date: null, percent: 0 }, 
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            publicUid: newPublicUid // 🚨 إضافة Public UID
         };
         await userRef.set(initialData);
         return initialData;
     }
 
-    // تأكد من وجود خصم يومي إذا كان مفقوداً
+    // 2. إذا كان السجل موجوداً (للتأكد من أن المستخدمين القدامى لديهم جميع الحقول)
     const data = doc.data();
+    const updatePayload = {};
+
     if (!data.dailyDiscount || typeof data.dailyDiscount !== 'object' || data.dailyDiscount === null) {
-        await userRef.update({ dailyDiscount: { date: null, percent: 0 } });
-        data.dailyDiscount = { date: null, percent: 0 };
+        updatePayload.dailyDiscount = { date: null, percent: 0 };
     }
-    // ضمان وجود حقل الهدايا
     if (!data.receivedGifts) {
-        await userRef.update({ receivedGifts: [] });
-        data.receivedGifts = [];
+        updatePayload.receivedGifts = {};
+    }
+    // 🚨 التأكد من وجود Public UID للمستخدمين القدامى
+    if (!data.publicUid) {
+        let newPublicUid;
+        while (true) {
+            newPublicUid = generatePublicUid();
+            const snap = await db.collection("users").where("publicUid", "==", newPublicUid).limit(1).get();
+            if (snap.empty) break;
+        }
+        updatePayload.publicUid = newPublicUid;
+    }
+    
+    if (Object.keys(updatePayload).length > 0) {
+        await userRef.update(updatePayload);
+        Object.assign(data, updatePayload); // تحديث الكائن المرتجع
     }
     
     return data;
@@ -106,20 +141,27 @@ function getCurrentUserId() {
 async function isDisplayNameAvailable(name) {
     const user = auth.currentUser;
     if (!user) return false;
+    
+    // 🚨 حظر الأسماء المشابهة للـ UID العام
+    if (name.toUpperCase().startsWith("IMP-")) return false;
 
     const snapshot = await db.collection("users").where("displayName", "==", name).limit(1).get();
     if (snapshot.empty) return true;
     return snapshot.docs[0].id === user.uid;
 }
 
-// 🚨 دالة مساعدة للحصول على أسماء العرض (مفترض وجودها لظهور الهدايا)
+/**
+ * @function getDisplayNamesByUids
+ * @description دالة مساعدة للحصول على أسماء العرض.
+ */
 async function getDisplayNamesByUids(uids) {
     if (!uids || uids.length === 0) return {};
     const namesMap = {};
-    const batchSize = 10; // حد Firestore لـ 'in'
+    const batchSize = 10; 
     
     for (let i = 0; i < uids.length; i += batchSize) {
         const batchUids = uids.slice(i, i + batchSize);
+        // استخدام FieldPath.documentId() للبحث عن IDs
         const snapshot = await db.collection("users").where(firebase.firestore.FieldPath.documentId(), 'in', batchUids).get();
         snapshot.forEach(doc => {
             namesMap[doc.id] = doc.data().displayName || "مستخدم غير معروف";
@@ -143,6 +185,7 @@ async function loadUserData() {
         if (doc.exists) {
             data = doc.data();
         } else if (auth.currentUser) {
+            // إذا كان المستخدم مسجل دخوله ولكن السجل غير موجود، نقوم بإنشائه (للتأكد)
             data = await createFirestoreUserEntry(auth.currentUser);
         } else {
             return null;
@@ -157,9 +200,10 @@ async function loadUserData() {
             proExpiryTime: data.proExpiryTime || 0,
             players: data.players || [],
             settings: data.settings || {},
-            receivedGifts: data.receivedGifts || [], // ضمان تحميل حقل الهدايا
+            receivedGifts: data.receivedGifts || {}, // 🚨 تحميل الهدايا ككائن
             level: data.level || 1,
             xp: data.xp || 0,
+            publicUid: data.publicUid || null, // 🚨 تحميل Public UID
             ownedPacksPermanent: data.ownedPacksPermanent || [],
             ownedPacksTemporary: data.ownedPacksTemporary || {},
             dailyDiscount: data.dailyDiscount && typeof data.dailyDiscount === 'object' ? data.dailyDiscount : { date: null, percent: 0 }
@@ -171,12 +215,12 @@ async function loadUserData() {
 }
 
 // ****************************************************
-// 6. حفظ بيانات المستخدم (تم تعديلها لاستقبال كائن التحديث)
+// 6. حفظ بيانات المستخدم
 // ****************************************************
 /**
  * @function saveUserData
  * @description يحفظ بيانات المستخدم في Firestore. يمكنه قبول تحديثات جزئية.
- * @param {Object} updatedFields - كائن يحتوي على الحقول المراد تحديثها (مثل { totalCoins: 100, settings: {...}, displayName: 'NewName' }).
+ * @param {Object} updatedFields - كائن يحتوي على الحقول المراد تحديثها (مثل { totalCoins: 100, receivedGifts: {...} }).
  * @returns {Promise<boolean>} True عند النجاح.
  */
 async function saveUserData(updatedFields = {}) {
@@ -188,12 +232,14 @@ async function saveUserData(updatedFields = {}) {
         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
     };
     
-    // إذا كان التحديث يتضمن تغيير اسم العرض، يجب تحديثه في Auth أيضاً
+    // 🚨 إذا كان التحديث يتضمن تغيير اسم العرض، يجب تحديثه في Auth أيضاً
     if (dataToSave.displayName && user.displayName !== dataToSave.displayName) {
         await user.updateProfile({ displayName: dataToSave.displayName });
     }
-    // التأكد من أن اسم العرض يتم حفظه حتى لو لم يتم تمريره في التحديث الجزئي
-    dataToSave.displayName = user.displayName || user.email.split("@")[0];
+    // التأكد من أن اسم العرض يتم حفظه في Firestore أيضاً إذا تم تحديثه عبر Auth
+    if (user.displayName) {
+        dataToSave.displayName = user.displayName;
+    }
 
     await db.collection("users").doc(user.uid).set(dataToSave, { merge: true });
     return true;
@@ -208,17 +254,32 @@ function isPro(userData) {
 }
 
 // ****************************************************
-// 8. إدارة الأصدقاء والطلبات (بقية الدوال تبقى كما هي)
+// 8. إدارة الأصدقاء والطلبات (البحث الآن يشمل Public UID)
 // ****************************************************
 async function searchUsersByDisplayName(searchTerm) {
     const user = auth.currentUser;
     if (!user) return [];
-    const lowerCaseSearch = searchTerm.toLowerCase();
+    const q = searchTerm.trim();
+
+    // 1. 🚨 محاولة البحث بالـ Public UID أولاً
+    if (q.toUpperCase().startsWith("IMP-") && q.length > 5) {
+        const snap = await db.collection("users")
+            .where("publicUid", "==", q.toUpperCase())
+            .limit(1).get();
+            
+        if (!snap.empty && snap.docs[0].id !== user.uid) {
+            const data = snap.docs[0].data();
+            return [{ uid: snap.docs[0].id, displayName: data.displayName, publicUid: data.publicUid }];
+        }
+    }
+    
+    // 2. البحث باسم العرض
+    if (q.length < 3) return [];
 
     try {
         const snapshot = await db.collection("users")
-            .where('displayName', '>=', lowerCaseSearch)
-            .where('displayName', '<=', lowerCaseSearch + '\uf8ff')
+            .where('displayName', '>=', q)
+            .where('displayName', '<=', q + '\uf8ff')
             .limit(20)
             .get();
 
@@ -226,7 +287,7 @@ async function searchUsersByDisplayName(searchTerm) {
         snapshot.forEach(doc => {
             const data = doc.data();
             if (doc.id !== user.uid && data.displayName) {
-                results.push({ uid: doc.id, displayName: data.displayName });
+                results.push({ uid: doc.id, displayName: data.displayName, publicUid: data.publicUid });
             }
         });
         return results;
@@ -307,7 +368,7 @@ async function removeFriend(friendId) {
 }
 
 // ****************************************************
-// 9. توليد خصم يومي عشوائي لكل مستخدم برو (تبقى كما هي)
+// 9. توليد خصم يومي عشوائي لكل مستخدم برو
 // ****************************************************
 async function generateDailyProDiscount() {
     const user = auth.currentUser;
@@ -333,64 +394,76 @@ async function generateDailyProDiscount() {
 /**
  * @function getRequiredXPForLevel
  * @description دالة تحسب إجمالي الخبرة المطلوبة للوصول إلى المستوى التالي.
- * @param {number} level - المستوى الحالي.
- * @returns {number} الخبرة المطلوبة للمستوى التالي (XP).
  */
 function getRequiredXPForLevel(level) {
-    return 20 + (level * 20);
+    // مثال: المستوى 1 يحتاج 20+20=40 XP، المستوى 2 يحتاج 20+40=60 XP، وهكذا
+    return 20 + (level * 20); 
 }
 
 /**
  * @function getLevelUpCoinReward
  * @description تحدد مكافأة الكوينز لكل مستوى جديد.
- * @param {number} newLevel - المستوى الذي تم الوصول إليه.
- * @returns {number} عدد الكوينز كمكافأة.
  */
 function getLevelUpCoinReward(newLevel) {
     return newLevel * 50;
 }
 
 /**
+ * @function calculateTotalXPRequired
+ * @description يحسب إجمالي XP المطلوب للوصول إلى المستوى الحالي.
+ */
+function calculateTotalXPRequired(targetLevel) {
+    let totalXp = 0;
+    for (let i = 1; i <= targetLevel - 1; i++) {
+        totalXp += getRequiredXPForLevel(i);
+    }
+    return totalXp;
+}
+
+/**
  * @function checkAndLevelUp
  * @description يتحقق مما إذا كان المستخدم مؤهلاً لرفع المستوى، ويرفع مستواه ويمنحه مكافأة.
- * @param {Object} userData - بيانات المستخدم الحالية (يتم تمريرها كمرجع).
- * @returns {boolean} True إذا تم رفع المستوى.
  */
 async function checkAndLevelUp(userData) {
-    let leveledUp = false;
     let currentLevel = userData.level || 1;
     let currentXP = userData.xp || 0;
+    let leveledUp = false;
     
-    let totalXpRequired = 0;
-    for (let i = 1; i <= currentLevel; i++) {
-        totalXpRequired += getRequiredXPForLevel(i);
-    }
+    // نبدأ من المستوى الحالي ونحسب XP المطلوب للمستوى الذي يليه
+    let xpRequiredForNextLevel = calculateTotalXPRequired(currentLevel + 1);
     
     // عملية رفع المستوى المتكرر إذا تجاوز XP مستويات متعددة
-    if (currentXP >= totalXpRequired) {
-        while (currentXP >= totalXpRequired) {
-            currentLevel++; 
-            const reward = getLevelUpCoinReward(currentLevel);
-            userData.totalCoins += reward; 
+    if (currentXP >= xpRequiredForNextLevel) {
+        while (true) {
+            const xpNeeded = getRequiredXPForLevel(currentLevel);
             
-            // إعادة حساب إجمالي XP المطلوب للمستوى الجديد
-            totalXpRequired += getRequiredXPForLevel(currentLevel); 
-            
-            console.log(`🎉 رفع المستوى إلى ${currentLevel}! تمت إضافة ${reward} كوينز.`);
-            leveledUp = true;
+            // إذا كان XP أكبر من أو يساوي XP المطلوب للمستوى الحالي، ارفع المستوى
+            if (currentXP >= calculateTotalXPRequired(currentLevel + 1)) {
+                currentLevel++; 
+                const reward = getLevelUpCoinReward(currentLevel);
+                userData.totalCoins += reward; 
+                leveledUp = true;
+                
+                console.log(`🎉 رفع المستوى إلى ${currentLevel}! تمت إضافة ${reward} كوينز.`);
+                
+            } else {
+                break; // توقف إذا لم يكن مؤهلاً للمستوى التالي
+            }
         }
         
-        // حفظ البيانات بعد رفع المستوى (باستخدام الدالة الجديدة)
+        // حفظ البيانات بعد رفع المستوى (باستخدام الدالة الموحدة)
         await saveUserData({
             totalCoins: userData.totalCoins,
+            level: currentLevel,
+            xp: currentXP,
+            // تمرير جميع الحقول الأخرى لضمان عدم حذفها
             proExpiryTime: userData.proExpiryTime || 0,
             players: userData.players || [],
             settings: userData.settings || {},
-            level: currentLevel,
-            xp: currentXP,
             ownedPacksPermanent: userData.ownedPacksPermanent || [],
             ownedPacksTemporary: userData.ownedPacksTemporary || {},
-            receivedGifts: userData.receivedGifts || []
+            receivedGifts: userData.receivedGifts || {},
+            dailyDiscount: userData.dailyDiscount || { date: null, percent: 0 }
         });
         
         userData.level = currentLevel;
@@ -403,10 +476,6 @@ async function checkAndLevelUp(userData) {
 /**
  * @function addXPAndCoins
  * @description يمنح المستخدم الكوينز والخبرة (XP) مع بونص للـ Pro، ثم يتحقق من رفع المستوى.
- * @param {Object} userData - بيانات المستخدم الحالية (يجب أن تكون مرجعاً لـ currentUserData).
- * @param {number} baseCoins - عدد الكوينز الأساسي قبل البونص.
- * @param {number} baseXp - عدد الخبرة الأساسي قبل البونص.
- * @returns {Object} يحتوي على amountAdded (XP و Coins).
  */
 async function addXPAndCoins(userData, baseCoins, baseXp) {
     const isUserPro = isPro(userData);
@@ -423,18 +492,20 @@ async function addXPAndCoins(userData, baseCoins, baseXp) {
     // 3. التحقق من رفع المستوى (سيتم حفظ البيانات داخل هذه الدالة إذا تم رفع المستوى)
     const leveledUp = await checkAndLevelUp(userData);
 
-    // 4. حفظ البيانات إذا لم يتم رفع المستوى (باستخدام الدالة الجديدة)
+    // 4. حفظ البيانات إذا لم يتم رفع المستوى (باستخدام الدالة الموحدة)
     if (!leveledUp) {
         await saveUserData({
             totalCoins: userData.totalCoins,
+            xp: userData.xp,
+            // تمرير جميع الحقول الأخرى لضمان عدم حذفها
             proExpiryTime: userData.proExpiryTime || 0,
             players: userData.players || [],
             settings: userData.settings || {},
             level: userData.level || 1,
-            xp: userData.xp || 0,
             ownedPacksPermanent: userData.ownedPacksPermanent || [],
             ownedPacksTemporary: userData.ownedPacksTemporary || {},
-            receivedGifts: userData.receivedGifts || []
+            receivedGifts: userData.receivedGifts || {},
+            dailyDiscount: userData.dailyDiscount || { date: null, percent: 0 }
         });
     }
 
@@ -446,16 +517,12 @@ async function addXPAndCoins(userData, baseCoins, baseXp) {
 }
 
 // ****************************************************
-// 11. تحديث الكوينز وعضوية Pro بشكل آمن (جديد)
+// 11. تحديث الكوينز وعضوية Pro بشكل آمن
 // ****************************************************
 
 /**
  * @function updateCoinsAndProTime
  * @description تحديث الكوينز ومدة Pro في Firestore وAuth.js
- * @param {Object} userData - بيانات المستخدم الحالية التي تم تحميلها (مرجع).
- * @param {number} coinChange - التغير في الكوينز (+ أو -).
- * @param {number} daysToAdd - عدد الأيام لإضافتها لمدة Pro.
- * @returns {Promise<boolean>}
  */
 async function updateCoinsAndProTime(userData, coinChange, daysToAdd) {
     const newCoins = (userData.totalCoins || 0) + coinChange;
@@ -472,6 +539,7 @@ async function updateCoinsAndProTime(userData, coinChange, daysToAdd) {
         await saveUserData({
             totalCoins: newCoins,
             proExpiryTime: newProTime,
+            // تمرير جميع الحقول الأخرى لضمان عدم حذفها
             players: userData.players,
             settings: userData.settings,
             level: userData.level,
@@ -479,7 +547,7 @@ async function updateCoinsAndProTime(userData, coinChange, daysToAdd) {
             ownedPacksPermanent: userData.ownedPacksPermanent,
             ownedPacksTemporary: userData.ownedPacksTemporary,
             dailyDiscount: userData.dailyDiscount,
-            receivedGifts: userData.receivedGifts || []
+            receivedGifts: userData.receivedGifts || {}
         });
         
         // تحديث البيانات المحلية للمستخدم
