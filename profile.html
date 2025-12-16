@@ -8,7 +8,9 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="auth.js"></script> <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<script src="auth.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
@@ -19,9 +21,7 @@ body{
     text-align:center;
     padding:20px
 }
-h2 {
-    color: #34d399;
-}
+h2 { color:#34d399; }
 .card{
     background:#1e293b;
     padding:25px;
@@ -29,48 +29,34 @@ h2 {
     max-width:450px;
     margin:20px auto;
     text-align:right;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 10px 15px rgba(0, 0, 0, 0.2);
 }
 .info-item{
     display:flex;
     justify-content:space-between;
     padding:8px 0;
     border-bottom:1px solid #334155;
-    font-weight: 700;
+    font-weight:700;
 }
 input,button{
     width:100%;
     padding:12px;
     border-radius:8px;
     border:none;
-    font-family:'Cairo';
-    box-sizing: border-box;
+    font-family:'Cairo'
 }
 input{
     background:#334155;
     color:white;
-    margin-bottom:10px;
-    font-size: 16px;
+    margin-bottom:10px
 }
 button{
     background:#34d399;
     color:white;
     font-weight:700;
-    cursor:pointer;
-    transition: background-color 0.3s;
+    cursor:pointer
 }
-button:hover:enabled {
-    background: #10b981;
-}
-button:disabled{
-    background:#475569;
-    cursor:not-allowed
-}
-#error{
-    margin-top:10px;
-    font-size:14px;
-    min-height: 20px;
-}
+button:disabled{background:#475569}
+#error{margin-top:10px;min-height:20px}
 </style>
 </head>
 
@@ -80,6 +66,7 @@ button:disabled{
 
 <div class="card">
     <div class="info-item"><span>البريد</span><span id="email">...</span></div>
+    <div class="info-item"><span>Public UID</span><span id="publicUid">...</span></div>
     <div class="info-item"><span>المستوى</span><span id="level">...</span></div>
     <div class="info-item"><span>XP</span><span id="xp">...</span></div>
     <div class="info-item"><span>الحالة</span><span id="status">...</span></div>
@@ -94,8 +81,8 @@ button:disabled{
     <div id="error"></div>
 </div>
 
-<button id="back-btn" onclick="location.href='index.html'" style="background: #6366f1; width: 450px; max-width: 90%; margin-top: 20px;">
-    العودة للعبة <i class="fas fa-arrow-right"></i>
+<button onclick="location.href='index.html'" style="background:#6366f1;max-width:450px;width:100%">
+    العودة <i class="fas fa-arrow-right"></i>
 </button>
 
 <script>
@@ -108,56 +95,65 @@ const saveBtn=document.getElementById("saveBtn");
 const errorBox=document.getElementById("error");
 const costText=document.getElementById("costText");
 
-// ------------------------------------------------------------------
-// 1. منطق التحميل والتحقق من المصادقة 
-// ------------------------------------------------------------------
+/* ---------------- PUBLIC UID ---------------- */
+
+function generatePublicUid(){
+    const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const part=()=>Array.from({length:4},()=>chars[Math.floor(Math.random()*chars.length)]).join("");
+    return `IMP-${part()}-${part()}`;
+}
+
+async function generateUniquePublicUid(){
+    while(true){
+        const uid=generatePublicUid();
+        const snap=await firebase.firestore()
+            .collection("users")
+            .where("publicUid","==",uid)
+            .limit(1).get();
+        if(snap.empty) return uid;
+    }
+}
+
+/* ---------------- AUTH LOAD ---------------- */
 
 firebase.auth().onAuthStateChanged(async user=>{
     if(!user) return location.href="auth.html";
-    
-    userData = await loadUserData(); 
-    
-    if (!userData) {
-        document.getElementById("status").innerText="فشل تحميل البيانات";
-        errorBox.innerText = "❌ فشل تحميل بيانات Firestore.";
-        return;
+
+    userData=await loadUserData();
+    if(!userData){ errorBox.innerText="فشل تحميل البيانات"; return; }
+
+    // إنشاء Public UID إذا غير موجود
+    if(!userData.publicUid){
+        const newUid=await generateUniquePublicUid();
+        await firebase.firestore().collection("users").doc(user.uid)
+            .set({publicUid:newUid},{merge:true});
+        userData.publicUid=newUid;
     }
 
-    userData.hasChangedNameBefore = userData.hasChangedNameBefore ?? false;
-    userData.proExpiryTime = userData.proExpiryTime ?? 0;
-    // التأكد من أن dailyDiscount كائن صالح
-    userData.dailyDiscount = userData.dailyDiscount && typeof userData.dailyDiscount === 'object' 
-                             ? userData.dailyDiscount 
-                             : {date: null, percent: 0};
-
-
-    // عرض البيانات الأساسية
     document.getElementById("email").innerText=user.email;
-    document.getElementById("level").innerText=userData.level || 1;
-    document.getElementById("xp").innerText=userData.xp || 0;
-    document.getElementById("coins").innerText=userData.totalCoins || 0;
+    document.getElementById("publicUid").innerText=userData.publicUid;
+    document.getElementById("level").innerText=userData.level||1;
+    document.getElementById("xp").innerText=userData.xp||0;
+    document.getElementById("coins").innerText=userData.totalCoins||0;
 
-    const isPro = userData.proExpiryTime > Date.now();
-    document.getElementById("status").innerHTML=isPro ? "Pro 👑" : "عادي";
+    const isPro=userData.proExpiryTime>Date.now();
+    document.getElementById("status").innerText=isPro?"Pro 👑":"عادي";
 
-    nameInput.value = user.displayName || user.email.split("@")[0];
-    nameInput.disabled = false;
+    nameInput.value=user.displayName||user.email.split("@")[0];
+    nameInput.disabled=false;
 
     await updateCost(isPro);
     validate();
 });
 
-// ------------------------------------------------------------------
-// 2. منطق تغيير الاسم والتحقق من التكرار
-// ------------------------------------------------------------------
+/* ---------------- NAME CHANGE ---------------- */
 
 nameInput.addEventListener("input",validate);
 
 function validate(){
     const current=nameInput.value.trim();
-    const original=firebase.auth().currentUser?.displayName || firebase.auth().currentUser?.email.split("@")[0];
-    
-    saveBtn.disabled = isSaving || current.length < 3 || current === original;
+    const original=firebase.auth().currentUser.displayName||firebase.auth().currentUser.email.split("@")[0];
+    saveBtn.disabled=isSaving||current.length<3||current===original;
 }
 
 async function isNameAvailable(name){
@@ -165,133 +161,57 @@ async function isNameAvailable(name){
         .collection("users")
         .where("displayName","==",name)
         .limit(1).get();
-
-    return snap.empty || snap.docs[0].id === firebase.auth().currentUser.uid;
+    return snap.empty||snap.docs[0].id===firebase.auth().currentUser.uid;
 }
 
-// ------------------------------------------------------------------
-// 3. منطق الخصومات وتحديث التكلفة (التصحيح النهائي لثبات 24 ساعة)
-// ------------------------------------------------------------------
-
 async function updateCost(isPro){
-    // إذا كان أول تغيير اسم، فالتكلفة صفر
     if(!userData.hasChangedNameBefore){
-        costText.innerText="🎉 أول تغيير اسم مجاني";
+        costText.innerText="🎉 أول تغيير مجاني";
         userData.finalCost=0;
         return;
     }
-
-    let cost=BASE_COST;
-    costText.innerText=`💰 تكلفة التغيير: ${BASE_COST} كوينز`; // القيمة الافتراضية
-
-    if(isPro){
-        // 🚨 التصحيح: استخدام التاريخ العالمي الموحد (UTC)
-        const now = new Date();
-        // تنسيق التاريخ كـ YYYY-MM-DD باستخدام UTC
-        const todayUTC = `${now.getUTCFullYear()}-${now.getUTCMonth() + 1}-${now.getUTCDate()}`;
-        
-        let currentDiscount = userData.dailyDiscount;
-        
-        // إنشاء خصم جديد إذا كان اليوم مختلفاً عن التاريخ المخزن
-        if(!currentDiscount || currentDiscount.date !== todayUTC){
-            const percent=Math.floor(Math.random()*46)+5;
-            
-            // تحديث Firestore بتاريخ UTC
-            await firebase.firestore().collection("users")
-                .doc(firebase.auth().currentUser.uid)
-                .set({dailyDiscount:{date:todayUTC,percent}}, {merge:true});
-            
-            // تحديث البيانات المحلية
-            userData.dailyDiscount = {date:todayUTC,percent};
-            currentDiscount = userData.dailyDiscount;
-        }
-        
-        // حساب التكلفة بناءً على الخصم
-        cost = Math.floor(BASE_COST * (1 - currentDiscount.percent/100));
-        costText.innerText=`👑 خصم اليوم ${currentDiscount.percent}% → ${cost} كوينز`;
-    }
-
-    userData.finalCost=cost;
+    userData.finalCost=BASE_COST;
+    costText.innerText=`💰 تكلفة التغيير: ${BASE_COST} كوينز`;
 }
-
-// ------------------------------------------------------------------
-// 4. منطق الحفظ والتحديث
-// ------------------------------------------------------------------
 
 saveBtn.onclick=async()=>{
     if(isSaving) return;
-    isSaving=true;
-    saveBtn.disabled=true;
-    errorBox.innerText="";
+    isSaving=true; saveBtn.disabled=true; errorBox.innerText="";
 
     const user=firebase.auth().currentUser;
     const newName=nameInput.value.trim();
 
-    // التحقق من توافر الاسم
     if(!(await isNameAvailable(newName))){
-        errorBox.innerText="❌ الاسم مستخدم بالفعل";
-        errorBox.style.color="#ef4444";
-        isSaving=false;
-        validate();
-        return;
+        errorBox.innerText="❌ الاسم مستخدم";
+        isSaving=false; validate(); return;
     }
 
-    // التحقق من الكوينز
-    if(userData.totalCoins < userData.finalCost){
-        errorBox.innerText=`❌ كوينز غير كافية. مطلوب ${userData.finalCost} كوينز.`;
-        errorBox.style.color="#ef4444";
-        isSaving=false;
-        validate();
-        return;
+    if(userData.totalCoins<userData.finalCost){
+        errorBox.innerText="❌ كوينز غير كافية";
+        isSaving=false; validate(); return;
     }
 
     try{
-        // 1. تحديث اسم العرض في Firebase Auth
         await user.updateProfile({displayName:newName});
-        const newCoins = userData.totalCoins - userData.finalCost;
+        const newCoins=userData.totalCoins-userData.finalCost;
 
-        // 2. تحديث Firestore باستخدام saveUserData لضمان حفظ كل الحقول
-        await saveUserData(
-            newCoins,
-            userData.proExpiryTime || 0,
-            userData.players || [],
-            userData.settings || {},
-            userData.level || 1,
-            userData.xp || 0,
-            userData.ownedPacksPermanent || [],
-            userData.ownedPacksTemporary || {}
-        );
-        
-        // 3. تحديث الحقول الإضافية الخاصة بالبروفايل (في Firestore)
-        await firebase.firestore().collection("users").doc(user.uid)
-        .set({
-            hasChangedNameBefore: true,
-            displayName: newName 
+        await firebase.firestore().collection("users").doc(user.uid).set({
+            displayName:newName,
+            totalCoins:newCoins,
+            hasChangedNameBefore:true
         },{merge:true});
 
-        // 4. تحديث البيانات المحلية وعرضها
         userData.totalCoins=newCoins;
-        userData.hasChangedNameBefore=true;
         document.getElementById("coins").innerText=newCoins;
-        
-        errorBox.innerText=userData.finalCost===0
-            ?"✅ تم التغيير مجانًا"
-            :`✅ تم الخصم ${userData.finalCost} كوينز`;
+        errorBox.innerText="✅ تم الحفظ";
         errorBox.style.color="#22c55e";
-
-        await updateCost(userData.proExpiryTime > Date.now()); 
-        validate();
-
     }catch(e){
-        console.error("Error during name change:", e);
-        errorBox.innerText="❌ حدث خطأ في الحفظ. حاول لاحقاً.";
+        errorBox.innerText="❌ خطأ أثناء الحفظ";
         errorBox.style.color="#ef4444";
     }
-
-    isSaving=false;
+    isSaving=false; validate();
 };
 </script>
 
 </body>
 </html>
-
