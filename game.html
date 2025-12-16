@@ -181,7 +181,7 @@ let timerInterval;
 let gameCompleted = false; 
 
 // تم وضعها على نطاق window لسهولة الوصول إليها في الدوال المساعدة
-let currentUserData = { totalCoins: 0, proExpiryTime: 0, players: [], settings: {} }; // أضفنا حقول players و settings هنا
+let currentUserData = { totalCoins: 0, proExpiryTime: 0, players: [], settings: {}, xp: 0, level: 1 }; // أضفنا حقول xp و level
 
 
 /**
@@ -200,14 +200,14 @@ async function loadGameData() {
         const data = await loadUserData(); // من auth.js
         if (data) {
             currentUserData = data;
-            // 🚨 2. تعيين المتغيرات العالمية من البيانات المحملة
-            players = currentUserData.players || [];
-            settings = currentUserData.settings || {};
         } else {
              // تهيئة إذا لم يتم تحميل البيانات (قد يحدث خطأ في الاتصال)
-            players = [];
-            settings = {};
+            currentUserData = { totalCoins: 0, proExpiryTime: 0, players: [], settings: {}, xp: 0, level: 1 };
         }
+
+        // 🚨 2. تعيين المتغيرات العالمية من البيانات المحملة
+        players = currentUserData.players || [];
+        settings = currentUserData.settings || {};
         
         const selectedCategories = settings.selectedCategories || [];
         
@@ -238,9 +238,8 @@ async function loadGameData() {
 // 1. منطق الكوينزات والـ Pro
 // ----------------------------------
 
-function isPro() {
-    const proExpiryTime = currentUserData.proExpiryTime || 0; 
-    return proExpiryTime > new Date().getTime();
+function isProUser() {
+    return isPro(currentUserData); // استخدام دالة isPro من auth.js
 }
 
 function getTotalCoins() {
@@ -252,48 +251,39 @@ function displayTotalCoins() {
 }
 
 /**
- * @function calculateAndAddCoins
- * @description احتساب الكوينز المكتسبة (من 5 إلى 15) وإضافتها عبر Firestore.
+ * @function grantGameRewards
+ * @description منح الكوينز والـ XP عند بدء النقاش.
  */
-async function calculateAndAddCoins() {
-    const proMultiplier = isPro() ? 1.5 : 1; 
+async function grantGameRewards() {
+    // الكوينز والخبرة الأساسية عند بدء اللعبة
     const minCoins = 5;
     const maxCoins = 15; 
     const baseCoins = Math.floor(Math.random() * (maxCoins - minCoins + 1)) + minCoins; 
-    const coinsEarned = Math.floor(baseCoins * proMultiplier);
     
-    const currentCoins = getTotalCoins();
-    const newTotalCoins = currentCoins + coinsEarned;
+    const baseXp = 20; // XP أساسية لكل لعبة
     
-    // 🚨 التحديث: نمرر الحقول الأربعة المطلوبة
-    const saveSuccessful = await saveUserData(
-        newTotalCoins, 
-        currentUserData.proExpiryTime || 0,
-        currentUserData.players || [], // قائمة اللاعبين المحملة
-        currentUserData.settings || {} // الإعدادات المحملة
-    );
+    // استدعاء الدالة الجديدة لجمع الكوينز والـ XP ورفع المستوى
+    const result = await addXPAndCoins(currentUserData, baseCoins, baseXp);
     
-    if (saveSuccessful) {
-        currentUserData.totalCoins = newTotalCoins; 
-        displayTotalCoins();
-        
-        alert(`🎉 تهانينا! لقد ربحت ${coinsEarned} كوينزًا لبدء المناقشة. ${isPro() ? '(مكافأة Pro مطبقة!)' : ''} إجمالي الكوينزات الآن: ${newTotalCoins}`);
-    } else {
-        console.error("فشل حفظ الكوينزات.");
-        alert("حدث خطأ في حفظ الكوينزات. يرجى التأكد من تسجيل الدخول.");
+    // عرض رسالة المكافأة
+    let message = `🎉 تم منحك **${result.coins} كوينز** و **${result.xp} XP** لبدء المناقشة.`;
+    if (result.isPro) {
+        message += ` (مكافأة Pro مطبقة!)`;
     }
+    message += ` إجمالي الكوينزات الآن: ${currentUserData.totalCoins}`;
     
-    return coinsEarned;
+    alert(message);
+    displayTotalCoins(); // تحديث عرض الكوينزات
 }
 
 // ----------------------------------
 // 2. إعداد الأدوار (تطبيق منطق الـ Pro على الكلمات)
 // ----------------------------------
-
+// ... (بقية الدالة setupGameRoles تبقى كما هي)
 function setupGameRoles() {
     if (!players || players.length < 3) return; 
 
-    const isUserPro = isPro(); 
+    const isUserPro = isProUser(); 
     let allWords = [];
     const selectedIds = settings.selectedCategories || [];
     
@@ -391,9 +381,8 @@ function setupGameRoles() {
     }
 }
 
-
 // ----------------------------------
-// 3. دوال تفاعلية
+// 3. دوال تفاعلية (التحديث الوحيد هنا هو استدعاء grantGameRewards)
 // ----------------------------------
 
 function show() {
@@ -451,7 +440,8 @@ function startTimer(duration) {
             timerContainer.style.color = '#ff4f4f'; 
             
             gameCompleted = true; 
-            calculateAndAddCoins(); 
+            // 🚨 استدعاء منح المكافآت هنا عند انتهاء المؤقت
+            grantGameRewards(); 
             
             alert("انتهى وقت المناقشة! حان وقت التصويت.");
         }
@@ -483,9 +473,9 @@ function next() {
 
     startTimer(settings.discussionTimer);
 
-    // منح الكوينزات فوراً إذا لم يكن هناك مؤقت
+    // 🚨 منح الكوينزات والـ XP فوراً إذا لم يكن هناك مؤقت
     if (settings.discussionTimer === 0) {
-        calculateAndAddCoins();
+        grantGameRewards();
     }
     
     return;
