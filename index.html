@@ -255,13 +255,14 @@
 </a>  
 
 <div id="level-xp-display">  
-    المستوى <span id="user-level">...</span> | خبرة <span id="user-xp">...</span> XP  
+    المستوى <span id="user-level">1</span> | خبرة <span id="user-xp">0</span> XP  
 </div>  
 
 <div id="xp-bar-container">
     <div id="xp-bar"></div>
 </div>
-<div id="xp-next-level-info"></div>
+<div id="xp-next-level-info">جاري التحميل...</div>
+
 <h1>ابدأ لعبة المدني المحتال</h1>  
 
 <div class="card">  
@@ -303,34 +304,37 @@
     // دوال المصادقة والكوينزات وعرضها  
     // ----------------------------------  
       
+    // 🚨 ملاحظة: يجب أن تكون دالة isPro موجودة في auth.js
     function isProUser() {  
-        const expiryTime = currentUserData.proExpiryTime || 0;  
-        return expiryTime > Date.now();  
+        // نستخدم دالة isPro من auth.js
+        return isPro(currentUserData); 
     }  
   
     async function checkAuthState() {  
          firebase.auth().onAuthStateChanged(async (user) => {  
             if (user) {  
+                // 1. تحميل البيانات
                 const data = await loadUserData();   
                 if (data) {  
                     currentUserData = data;
                     // **نقطة مهمة:** نتحقق من رفع المستوى هنا عند تحميل الصفحة
-                    await checkAndLevelUp(currentUserData);
+                    // (يجب أن يتم تحديث currentUserData داخلياً في checkAndLevelUp)
+                    const leveledUp = await checkAndLevelUp(currentUserData);
+                    
+                    if (leveledUp) {
+                         alert(`تهانينا! لقد وصلت إلى المستوى ${currentUserData.level}!`);
+                    }
                 }  
                   
-                // عرض الاسم: يستخدم displayName ثم الإيميل كحل احتياطي  
-                const displayName = user.displayName;  
-                if (displayName) {  
-                    displayUserName(displayName);  
-                } else if (user.email) {  
-                    const tempName = user.email.split('@')[0];  
-                    displayUserName(tempName);  
-                } else {  
-                    displayUserName("مستخدم جديد");  
-                }  
+                // 2. تحديث الاسم
+                const nameToDisplay = currentUserData.displayName || user.email?.split('@')[0] || "مستخدم جديد";
+                displayUserName(nameToDisplay); 
                   
+                // 3. تحديث الكوينز والمستوى والـ XP فوراً
                 displayTotalCoins();   
                 displayLevelAndXP();   
+                
+                // 4. تحميل اللاعبين
                 await loadPlayers();   
             } else {  
                 window.location.href = "auth.html";  
@@ -339,6 +343,7 @@
     }  
   
     function displayUserName(name) {  
+        // 🚨 ملاحظة: تم تحديث هذا المنطق
         const isPro = isProUser();  
         const proTag = isPro   
             ? '<i class="fas fa-crown pro-tag" title="عضو متميز (Pro)"></i>'  
@@ -355,6 +360,7 @@
     // منطق المستويات والخبرة (تحديث)
     // ----------------------------------
 
+    // 🚨 ملاحظة: يجب أن تكون دالة getRequiredXPForLevel موجودة في auth.js
     /**
      * @function calculateLevelProgress
      * @description يحسب تقدم الخبرة في المستوى الحالي.
@@ -366,7 +372,8 @@
         
         // حساب إجمالي الخبرة التي كان يحتاجها حتى نهاية المستوى السابق
         for (let i = 1; i < level; i++) {
-            xpGainedUpToPreviousLevel += getRequiredXPForLevel(i);
+            // 🚨 استخدام الدالة من auth.js
+            xpGainedUpToPreviousLevel += getRequiredXPForLevel(i); 
         }
         
         // الخبرة المطلوبة لإكمال المستوى الحالي
@@ -389,6 +396,7 @@
      * @description عرض المستوى والخبرة وشريط التقدم.  
      */  
     function displayLevelAndXP() {  
+        // 🚨 التأكد من وجود قيم افتراضية 1 و 0
         const level = currentUserData.level || 1;  
         const xp = currentUserData.xp || 0;
         
@@ -408,7 +416,7 @@
         const xpRemaining = progress.xpNeeded - progress.xpProgress;
         
         if (progress.percentage >= 100) {
-            xpNextLevelInfo.innerHTML = `🌟 **المستوى ${level} مكتمل!** يرجى تحديث الصفحة لجني المكافأة.`;
+            xpNextLevelInfo.innerHTML = `🌟 **المستوى ${level} مكتمل!** اضغط زر العودة أو تحديث الصفحة لجني المكافأة.`;
         } else {
             xpNextLevelInfo.innerHTML = `متبقي: **${xpRemaining}** XP للمستوى ${level + 1}`;
         }
@@ -438,6 +446,7 @@
         }  
     }  
   
+    // 🚨 نضمن هنا أننا نستخدم saveUserData من auth.js مع جميع الحقول الضرورية
     async function savePlayersToFirestore() {  
         const user = firebase.auth().currentUser;  
         if (!user) return;   
