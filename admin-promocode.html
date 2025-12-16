@@ -8,12 +8,14 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="auth.js"></script>
+
+<script src="auth.js"></script> 
 
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
+/* ... التنسيقات (تم الاحتفاظ بها كما هي) ... */
 body{
   font-family:'Cairo',sans-serif;
   background:#0f172a;
@@ -118,7 +120,7 @@ button:hover{background:#4f46e5;}
 
 <script>
 let targetUserRef = null;
-const db = firebase.firestore();
+// المتغير db مُعرَّف بالفعل في auth.js
 
 firebase.auth().onAuthStateChanged(user => {
   // 🚨 فحص صلاحيات البريد الإلكتروني للمسؤول (Admin)
@@ -128,13 +130,12 @@ firebase.auth().onAuthStateChanged(user => {
   }
   
   // ==================================
-  // دوال إدارة الأكواد (القسم القديم)
+  // دوال إدارة الأكواد
   // ==================================
   const dbRef = db.collection("promocodes");
   const codeMsg = document.getElementById("codeMsg");
 
   document.getElementById("createBtn").onclick = async () => {
-    // ... منطق إنشاء الكود (كما هو) ...
     const code = document.getElementById("codeName").value.trim().toUpperCase();
     const coins = Number(document.getElementById("coins").value);
     const proDays = Number(document.getElementById("proDays").value);
@@ -169,7 +170,6 @@ firebase.auth().onAuthStateChanged(user => {
   };
 
   async function loadCodes(){
-    // ... منطق تحميل الأكواد (كما هو) ...
     const listDiv = document.getElementById("codesList");
     listDiv.innerHTML = "";
     const snapshot = await dbRef.orderBy("createdAt","desc").get();
@@ -200,7 +200,6 @@ firebase.auth().onAuthStateChanged(user => {
   }
 
   window.toggleActive = async (codeId,currentStatus) => {
-    // ... منطق تفعيل/تعطيل الكود (كما هو) ...
     try{
       await dbRef.doc(codeId).update({active: !currentStatus});
       loadCodes();
@@ -208,7 +207,6 @@ firebase.auth().onAuthStateChanged(user => {
   }
 
   window.deleteCode = async (codeId) => {
-    // ... منطق حذف الكود (كما هو) ...
     if(!confirm(`هل تريد حذف الكود ${codeId}?`)) return;
     try{
       await dbRef.doc(codeId).delete();
@@ -216,10 +214,9 @@ firebase.auth().onAuthStateChanged(user => {
     }catch(e){ console.error(e); alert("❌ حدث خطأ"); }
   }
 
-  loadCodes();
 
   // ==================================
-  // دوال تغيير UID (القسم الجديد)
+  // دوال تغيير UID
   // ==================================
   const uidMsg = document.getElementById("uidMsg");
   const userInfoDisplay = document.getElementById("userInfoDisplay");
@@ -234,6 +231,7 @@ firebase.auth().onAuthStateChanged(user => {
     }
 
     try {
+      // الوصول إلى مسار المستخدمين باستخدام db المُعرف في auth.js
       targetUserRef = db.collection("users").doc(targetUid);
       const doc = await targetUserRef.get();
 
@@ -250,7 +248,7 @@ firebase.auth().onAuthStateChanged(user => {
       uidMsg.textContent = "✅ تم العثور على المستخدم.";
     } catch (e) {
       console.error("خطأ في البحث:", e);
-      uidMsg.textContent = "❌ حدث خطأ أثناء البحث عن المستخدم.";
+      uidMsg.textContent = "❌ حدث خطأ أثناء البحث عن المستخدم. تأكد من إدخال Firebase UID صحيح.";
     }
   };
 
@@ -262,6 +260,7 @@ firebase.auth().onAuthStateChanged(user => {
 
     const newPublicUid = document.getElementById("newPublicUidInput").value.trim().toUpperCase();
 
+    // التحقق من التنسيق (14 حرفًا وتبدأ بـ IMP-)
     if (newPublicUid.length !== 14 || !newPublicUid.startsWith('IMP-')) {
         uidMsg.textContent = "❌ المعرّف الجديد يجب أن يكون 14 حرفاً ويبدأ بـ 'IMP-'.";
         return;
@@ -293,8 +292,11 @@ firebase.auth().onAuthStateChanged(user => {
     }
   };
 
+  loadCodes();
+
 });
 </script>
 
 </body>
 </html>
+
