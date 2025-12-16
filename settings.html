@@ -1,6 +1,3 @@
- 
-
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -13,7 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <script src="auth.js"></script> 
 
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
@@ -227,7 +224,7 @@ const impostorsInput = document.getElementById("impostors");
 const timerInput = document.getElementById("discussionTimer");
 const noTimerCheckbox = document.getElementById("noTimerMode");
 // تحديث الهيكلية الافتراضية ل currentUserData 
-let currentUserData = { totalCoins:0, proExpiryTime:0, players:[], settings:{} }; 
+let currentUserData = { totalCoins:0, proExpiryTime:0, players:[], settings:{}, receivedGifts: [] }; 
 
 // ----------------------------------------------------
 // بيانات الأقسام (مدمجة هنا)
@@ -378,7 +375,7 @@ function getSelectedWords() {
 
 
 // ----------------------------------------------------
-// دالة بدء تشغيل الإعدادات (LoadSettings) - تم التحديث
+// دالة بدء تشغيل الإعدادات (LoadSettings) 
 // ----------------------------------------------------
 async function loadSettings(){
   firebase.auth().onAuthStateChanged(async user=>{
@@ -441,7 +438,7 @@ async function loadSettings(){
 }
 
 // ----------------------------------------------------
-// دالة حفظ الإعدادات (SaveSettings) - تم التحديث
+// دالة حفظ الإعدادات (SaveSettings) - تم التحديث لاستخدام saveUserData الجديد
 // ----------------------------------------------------
 
 async function saveSettings(){
@@ -476,19 +473,22 @@ async function saveSettings(){
       selectedCategories: selectedCategories 
   };
   
-  // 🚨 حفظ الإعدادات في Firestore فقط
-  const success = await saveUserData(
-      currentUserData.totalCoins || 0,
-      currentUserData.proExpiryTime || 0,
-      currentUserData.players || [], // الحفاظ على قائمة اللاعبين الحالية
-      settings // كائن الإعدادات الجديد ليتم حفظه في Firestore
-  );
+  // 🚨 حفظ الإعدادات في Firestore باستخدام دالة saveUserData الجديدة
+  const success = await saveUserData({
+      totalCoins: currentUserData.totalCoins || 0,
+      proExpiryTime: currentUserData.proExpiryTime || 0,
+      players: currentUserData.players || [], 
+      settings: settings,
+      level: currentUserData.level || 1,
+      xp: currentUserData.xp || 0,
+      ownedPacksPermanent: currentUserData.ownedPacksPermanent || [],
+      ownedPacksTemporary: currentUserData.ownedPacksTemporary || {},
+      dailyDiscount: currentUserData.dailyDiscount || { date: null, percent: 0 },
+      receivedGifts: currentUserData.receivedGifts || []
+  });
   
   if(success){
       currentUserData.settings = settings; 
-      
-      // ❌ تم حذف سطر localStorage.setItem("settings",...) نهائياً
-      
       location.href="index.html"; 
   } else {
       alert("فشل في حفظ الإعدادات. يرجى المحاولة مرة أخرى.");
@@ -496,7 +496,7 @@ async function saveSettings(){
 }
 
 
-// ⚡ دوال الكودات (بدون تغيير عن آخر تحديث)
+// ⚡ دوال الكودات (تم تعديلها لاستخدام دالة updateCoinsAndProTime الموحدة)
 async function redeemCode() {
     const codeInput = document.getElementById('promocode-input');
     const msgDiv = document.getElementById('promocode-msg');
@@ -509,11 +509,11 @@ async function redeemCode() {
     if(!user){ alert("الرجاء تسجيل الدخول."); return; } 
     
     const db = firebase.firestore(); 
+    const codeRef = db.collection("promocodes").doc(code); 
+    
     try { 
-        const codeRef = db.collection("promocodes").doc(code); 
-        const userRef = db.collection("users").doc(user.uid); 
-
-        await db.runTransaction(async t => { 
+        // 🚨 بدء عملية المعاملة (Transaction) - مهم جداً للتأكد من استخدام الكود مرة واحدة فقط
+        const result = await db.runTransaction(async t => { 
             const doc = await t.get(codeRef); 
             if(!doc.exists) throw "❌ الكود غير موجود أو منتهي الصلاحية"; 
             
@@ -527,39 +527,43 @@ async function redeemCode() {
             if(usedBy.includes(user.uid)) throw "⚠️ لقد استخدمت هذا الكود مسبقًا"; 
             if(usedCount >= maxUses) throw "⌛ انتهت صلاحية الكود (وصل للحد الأقصى للاستخدام)"; 
 
-            const userDoc = await t.get(userRef);
-            let userData = userDoc.exists ? userDoc.data() : {totalCoins:0, proExpiryTime:0};
-
-            const now = Date.now();
-            let successMessage = "";
-
-            const amount = data.amount || data.coins || 0;
-            if (amount > 0) {
-                userData.totalCoins = (userData.totalCoins || 0) + amount; 
-                successMessage += `🎉 تم إضافة ${amount} كوينز لحسابك! `;
-            } 
+            const coinsAmount = data.coins || 0;
+            const daysDuration = data.durationDays || 0;
             
-            const durationDays = data.durationDays || 0;
-            if (durationDays > 0) {
-                const currentExpiry = (userData.proExpiryTime > now) ? userData.proExpiryTime : now; 
-                userData.proExpiryTime = currentExpiry + (durationDays * 24*60*60*1000); 
-                successMessage += `🎉 تم تفعيل عضوية Pro لمدة ${durationDays} يومًا! `;
-            }
-            
-            if (successMessage === "") throw "❌ نوع المكافأة غير معروف أو غير محدد";
+            if (coinsAmount === 0 && daysDuration === 0) throw "❌ نوع المكافأة غير معروف أو غير محدد";
 
-            t.set(userRef, userData, {merge:true}); 
-            
+            // تحديث سجل الكود داخل الـ Transaction
             t.update(codeRef, { 
                 usedCount: firebase.firestore.FieldValue.increment(1), 
                 redeemedBy: firebase.firestore.FieldValue.arrayUnion(user.uid) 
             }); 
             
-            msgDiv.innerText = successMessage.trim();
-            currentUserData = userData; 
-            codeInput.value = ""; 
-
+            // نمرر تفاصيل المكافأة ليتم معالجتها لاحقاً
+            return { coins: coinsAmount, days: daysDuration };
         }); 
+        
+        // 🚨 بعد نجاح المعاملة (Transaction)، نقوم بتحديث سجل المستخدم
+        let successMessage = "";
+        
+        // 1. تحديث بيانات المستخدم في Firestore عبر الدالة الموحدة في auth.js
+        const updateSuccess = await updateCoinsAndProTime(currentUserData, result.coins, result.days);
+
+        if (updateSuccess) {
+            if (result.coins > 0) {
+                successMessage += `🎉 تم إضافة ${result.coins} كوينز لحسابك! `;
+            } 
+            if (result.days > 0) {
+                successMessage += `🎉 تم تفعيل عضوية Pro لمدة ${result.days} يومًا! `;
+            }
+            
+            msgDiv.innerText = successMessage.trim();
+            codeInput.value = ""; 
+        } else {
+             // هذا الخطأ نادر ويحدث إذا فشل تحديث سجل المستخدم بعد نجاح الكود
+             msgDiv.innerText = "⚠️ تم استخدام الكود، لكن حدث خطأ في تحديث حسابك. يرجى إعادة تحميل الصفحة.";
+        }
+
+
     } catch(err) { 
         msgDiv.innerText = typeof err === "string" ? err : "❌ حدث خطأ أثناء استخدام الكود"; 
         console.error("Redeem Error:", err); 
@@ -571,3 +575,4 @@ function openAdminPage(){ window.open("admin-promocode.html","_blank"); }
 </script>
 </body>
 </html>
+
