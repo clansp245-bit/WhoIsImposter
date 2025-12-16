@@ -8,8 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <script src="auth.js"></script> 
-
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
@@ -40,6 +39,51 @@ h2 { font-size: 2rem; font-weight: 700; margin-bottom: 10px; color: #34d399; }
 #role-word { font-size: 1.8rem; color: #f1f5f9; font-weight: 700; margin-bottom: 20px; }
 #role-instructions { color: #94a3b8; font-size: 1rem; }
 #status-message { margin-top: 20px; color: #ffcc00; font-weight: 700; }
+
+/* 🚨 جديد: ستايل لاسم اللاعب القابل للضغط */
+.player-name-link { 
+    cursor: pointer; 
+    transition: color 0.2s; 
+}
+.player-name-link:hover { 
+    color: #ffd700; 
+}
+
+/* 🚨 جديد: ستايل الـ Modal (ملف التعريف) */
+.modal {
+    display: none; 
+    position: fixed; 
+    z-index: 100; 
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6);
+}
+.modal-content {
+    background-color: #1e293b;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #334155;
+    width: 80%;
+    max-width: 400px;
+    border-radius: 12px;
+    text-align: right;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+.close-btn {
+    color: #aaa;
+    float: left;
+    font-size: 28px;
+    font-weight: bold;
+}
+.close-btn:hover,
+.close-btn:focus {
+    color: #ff4f4f;
+    text-decoration: none;
+    cursor: pointer;
+}
 </style>
 </head>
 
@@ -84,6 +128,15 @@ h2 { font-size: 2rem; font-weight: 700; margin-bottom: 10px; color: #34d399; }
     </button>
 </div>
 
+<div id="profile-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="document.getElementById('profile-modal').style.display='none'">&times;</span>
+        <h3 style="color:#34d399;"><i class="fas fa-id-badge"></i> ملف اللاعب</h3>
+        <div id="modal-profile-content">
+            </div>
+    </div>
+</div>
+
 
 <script>
 let currentUID;
@@ -91,11 +144,14 @@ let roomCode;
 let roomData = null;
 let isHost = false;
 let listenerUnsubscribe = null;
+let allUsersData = {}; // 🚨 جديد: لتخزين بيانات جميع اللاعبين (DisplayName, PublicUID, etc.)
 
 // 🚨 وسم ثابت يستخدم لتحديد أن المحتال بلا كلمة في بيانات اللعبة
 const IMPOSTOR_NO_WORD_TAG = 'IMPOSTOR_NO_WORD_TAG_BLANK'; 
 
 // 🚨 قائمة الكلمات والأقسام 
+// ... (تبقى كما هي) ...
+
 const wordCategories = {
     // تم حذف الكلمات هنا للاختصار، لكن يجب أن تكون موجودة في النسخة الكاملة
     free: [
@@ -143,7 +199,7 @@ function startRoomListener(code) {
 
     const roomRef = db.collection('rooms').doc(code);
 
-    listenerUnsubscribe = roomRef.onSnapshot(doc => {
+    listenerUnsubscribe = roomRef.onSnapshot(async doc => { // 🚨 تم جعلها async
         if (!doc.exists) {
             alert("تم إغلاق الغرفة أو طردك منها.");
             window.location.href = "index.html";
@@ -152,6 +208,14 @@ function startRoomListener(code) {
 
         roomData = doc.data();
         isHost = (roomData.hostUID === currentUID);
+        
+        // 🚨 جديد: فحص قائمة الحظر
+        const bannedPlayers = roomData.bannedPlayers || [];
+        if (bannedPlayers.includes(currentUID)) {
+             alert("لقد تم حظرك من الدخول إلى هذه الغرفة من قِبل المضيف.");
+             window.location.href = "index.html";
+             return;
+        }
 
         // التحقق من وجود اللاعب الحالي في قائمة اللاعبين
         if (!roomData.players || !roomData.players.includes(currentUID)) {
@@ -159,6 +223,10 @@ function startRoomListener(code) {
              window.location.href = "index.html";
              return;
         }
+        
+        // 🚨 جديد: تحميل بيانات المستخدمين (لإظهار الأسماء الحقيقية)
+        await fetchAllPlayerDetails(roomData.players);
+
 
         if (roomData.status === 'playing') {
             displayRoleCard();
@@ -179,6 +247,62 @@ function startRoomListener(code) {
     });
 }
 
+// ----------------------------------------------------
+// 🚨 دوال جديدة لتحميل بيانات المستخدمين (لإظهار الأسماء الحقيقية)
+// ----------------------------------------------------
+
+async function fetchAllPlayerDetails(playerUIDs) {
+    const db = firebase.firestore();
+    
+    const usersToFetch = playerUIDs.filter(uid => !allUsersData[uid]);
+
+    if (usersToFetch.length === 0) return;
+
+    try {
+        const userRefs = usersToFetch.map(uid => db.collection('users').doc(uid));
+        
+        const docs = await db.getAll(...userRefs);
+        
+        docs.forEach(doc => {
+            if (doc.exists) {
+                const data = doc.data();
+                allUsersData[doc.id] = {
+                    displayName: data.playerName || `لاعب#${doc.id.substring(0, 4)}`, // 🚨 استخدام playerName من سجل المستخدم
+                    publicUid: data.publicUid || doc.id.substring(0, 8),
+                    // يمكنك إضافة الإحصائيات هنا:
+                    level: data.level || 1, 
+                    gamesPlayed: data.gamesPlayed || 0,
+                    impostorWins: data.impostorWins || 0
+                };
+            }
+        });
+        
+        // تحديث playerNames في الغرفة لضمان رؤية المضيف للأسماء الصحيحة
+        let updatedPlayerNames = { ...roomData.playerNames };
+        let needsUpdate = false;
+        playerUIDs.forEach(uid => {
+            const currentName = updatedPlayerNames[uid];
+            const fetchedName = allUsersData[uid]?.displayName;
+            if (fetchedName && fetchedName !== currentName) {
+                updatedPlayerNames[uid] = fetchedName;
+                needsUpdate = true;
+            }
+        });
+        
+        if (needsUpdate && isHost) {
+            // تحديث playerNames في الغرفة (اختياري)
+            await db.collection('rooms').doc(roomCode).update({ playerNames: updatedPlayerNames });
+        }
+        
+    } catch (error) {
+        console.error("فشل في جلب تفاصيل اللاعبين:", error);
+    }
+}
+
+// ----------------------------------------------------
+// تحديث دالة عرض قائمة اللاعبين (لعرض الاسم الحقيقي وجعلها قابلة للضغط)
+// ----------------------------------------------------
+
 function updateLobbyUI() {
     if (!roomData) return;
     
@@ -191,13 +315,13 @@ function updateLobbyUI() {
 
     document.getElementById('player-count').innerText = playerCount;
     
-    // 1. عرض ملخص الإعدادات
+    // 1. عرض ملخص الإعدادات (تبقى كما هي)
     const settings = roomData.settings || {};
     const selectedCategoriesNames = getCategoryNamesByIds(settings.selectedCategories);
     const summaryText = `محتالون: ${settings.impostors || 1} | مجموعات: ${selectedCategoriesNames.join(', ')}`;
     document.getElementById('settings-summary').innerText = summaryText;
     
-    // 2. تحديث زر البدء 
+    // 2. تحديث زر البدء (يبقى كما هو)
     if (isHost && playerCount >= 3) {
         startGameBtn.disabled = false;
         startGameBtn.innerHTML = `<i class="fas fa-play"></i> بدء اللعب (${playerCount} لاعب)`;
@@ -216,10 +340,13 @@ function updateLobbyUI() {
         document.getElementById('status-message').style.color = '#ffcc00';
     }
 
-    // 3. عرض قائمة اللاعبين
+    // 3. عرض قائمة اللاعبين (المعدل)
     playersContainer.innerHTML = '';
     roomData.players.forEach(uid => {
-        const name = roomData.playerNames[uid] || `لاعب مجهول#${uid.substring(0, 4)}`;
+        // 🚨 استخدام الاسم من allUsersData
+        const playerDetails = allUsersData[uid];
+        const name = playerDetails ? playerDetails.displayName : roomData.playerNames[uid] || `لاعب مجهول#${uid.substring(0, 4)}`;
+        
         const isPlayerHost = (uid === roomData.hostUID);
         const isCurrentPlayer = (uid === currentUID);
         
@@ -228,14 +355,22 @@ function updateLobbyUI() {
         
         let kickButtonHTML = '';
         if (isHost && !isCurrentPlayer) {
-            kickButtonHTML = `<button class="kick-btn" onclick="kickPlayer('${uid}')"><i class="fas fa-user-times"></i> طرد</button>`;
+            // 🚨 تمرير اسم اللاعب أيضاً إلى دالة الطرد (للتأكيد)
+            kickButtonHTML = `<button class="kick-btn" onclick="kickPlayer('${uid}', '${name}')"><i class="fas fa-user-times"></i> طرد/حظر</button>`;
         }
         
         let statusIcon = isPlayerHost ? '<i class="fas fa-crown" style="color:#ffd700; margin-left: 5px;"></i>' : '';
         if (isCurrentPlayer && !isPlayerHost) statusIcon = '<i class="fas fa-user" style="color:#34d399; margin-left: 5px;"></i>';
 
+        // 🚨 جديد: جعل الاسم قابلاً للضغط لفتح صفحة الإحصائيات
+        const nameDisplay = `
+            <span class="player-name-link" onclick="openProfileModal('${uid}')">
+                ${statusIcon}${name} ${isPlayerHost ? '(المضيف)' : ''}
+            </span>
+        `;
+
         div.innerHTML = `
-            <div>${statusIcon}${name} ${isPlayerHost ? '(المضيف)' : ''}</div>
+            <div>${nameDisplay}</div>
             ${kickButtonHTML}
         `;
         playersContainer.appendChild(div);
@@ -253,26 +388,32 @@ function getCategoryNamesByIds(ids) {
     return names;
 }
 
-// ... (باقي دوال kickPlayer و leaveRoom لا تحتاج تعديلات) ...
-
-async function kickPlayer(playerUID) {
+// ----------------------------------------------------
+// 🚨 تحديث دالة طرد اللاعب (مع الحظر من الغرفة)
+// ----------------------------------------------------
+async function kickPlayer(playerUID, playerName) {
     if (!isHost || !roomData) return;
     
-    if (confirm(`هل أنت متأكد من طرد اللاعب: ${roomData.playerNames[playerUID]}؟`)) {
+    if (confirm(`هل أنت متأكد من طرد اللاعب: ${playerName}؟ سيتم طرده وحظره من الانضمام لهذه الغرفة مجدداً.`)) {
         const roomRef = db.collection('rooms').doc(roomCode);
         
         try {
             await roomRef.update({
                 players: firebase.firestore.FieldValue.arrayRemove(playerUID),
+                // 🚨 جديد: إضافة اللاعب إلى قائمة المحظورين في هذه الغرفة فقط
+                bannedPlayers: firebase.firestore.FieldValue.arrayUnion(playerUID),
             });
-            alert(`تم طرد اللاعب ${roomData.playerNames[playerUID]}.`);
+            alert(`تم طرد اللاعب ${playerName} وحظره من العودة لهذه الغرفة.`);
         } catch (error) {
             console.error("خطأ في طرد اللاعب:", error);
-            alert("فشل في طرد اللاعب.");
+            alert("فشل في طرد اللاعب. تحقق من قواعد أمان Firestore.");
         }
     }
 }
 
+// ----------------------------------------------------
+// دالة مغادرة الغرفة (تبقى كما هي)
+// ----------------------------------------------------
 async function leaveRoom(event) {
     event.preventDefault(); 
     if (!roomData || !currentUID) { window.location.href = "index.html"; return; }
@@ -309,7 +450,7 @@ async function leaveRoom(event) {
 
 
 /**
- * @function startGame 🚨 تم التعديل لإضافة فحص أخطاء أكثر شمولاً
+ * @function startGame (تبقى كما هي)
  * @description يبدأ اللعبة بتوزيع الأدوار وتحديث حالة الغرفة.
  */
 async function startGame() {
@@ -349,7 +490,6 @@ async function startGame() {
             currentGameData: gameResult
         });
         console.log("LOG: تم تحديث Firebase بنجاح. حالة اللعبة: playing.");
-        // عند نجاح التحديث، سيتم استدعاء startRoomListener مرة أخرى مما يؤدي لتشغيل displayRoleCard
         
     } catch (error) {
         console.error("❌ فشل في تحديث Firebase لبدء اللعبة:", error);
@@ -361,24 +501,20 @@ async function startGame() {
 
 
 // ----------------------------------------------------
-// دوال مساعدة في اللعبة (توزيع الأدوار)
+// دوال مساعدة في اللعبة (توزيع الأدوار) (تبقى كما هي)
 // ----------------------------------------------------
 
 function getAllWordsFromSelectedCategories(selectedIds) {
     if (!selectedIds) return [];
     let combinedWords = [];
     [...wordCategories.free, ...wordCategories.pro].forEach(cat => {
-        if (selectedIds.includes(cat.id)) {
+        if (ids.includes(cat.id)) {
             combinedWords.push(...cat.words);
         }
     });
     return [...new Set(combinedWords)];
 }
 
-/**
- * @function distributeRoles 
- * @description توزيع الأدوار والكلمات بشكل عشوائي.
- */
 function distributeRoles(players, settings, allWords) {
     const numImpostors = settings.impostors || 1;
     const noWordRole = settings.noWordRole || false; 
@@ -431,13 +567,9 @@ function distributeRoles(players, settings, allWords) {
 
 
 // ----------------------------------------------------
-// دوال عرض الدور (بعد بدء اللعبة)
+// دوال عرض الدور (بعد بدء اللعبة) (تبقى كما هي)
 // ----------------------------------------------------
 
-/**
- * @function displayRoleCard 
- * @description عرض بطاقة الدور الخاصة باللاعب الحالي.
- */
 function displayRoleCard() {
     document.getElementById('waiting-lobby').style.display = 'none';
     document.getElementById('role-display-card').style.display = 'block';
@@ -448,7 +580,6 @@ function displayRoleCard() {
     const playerRoleData = gameData.roles[currentUID];
     
     if (!playerRoleData) {
-        // إذا لم يكن اللاعب مسجلاً في الأدوار، فمن المحتمل أنه طُرد أو خرج
         console.error("خطأ: لم يتم العثور على دور للاعب الحالي في اللعبة الجارية.");
         return;
     }
@@ -461,12 +592,10 @@ function displayRoleCard() {
         case 'impostor':
             title = 'أنت المحتال!';
             color = '#ff4f4f';
-            // التحقق من وسم المحتال بلا كلمة واستبداله بالنص المرئي
             if (word === IMPOSTOR_NO_WORD_TAG) {
                 displayedWord = '---'; 
                 instructions = `كلمتك: **لا كلمة لديك**. مهمتك هي معرفة كلمة المدنيين من خلال إجاباتهم وإخفاء هويتك كمحتال.`;
             } else {
-                // في حالة المحتال بكلمة (إذا تم تفعيلها لاحقاً)
                 instructions = `كلمتك المزيفة هي: **${word}**. مهمتك هي التظاهر بأن لديك كلمة المدنيين (دون كشف كلمتك!).`;
             }
             break;
@@ -507,7 +636,52 @@ function copyCode() {
         console.error('فشل في نسخ النص: ', err);
     });
 }
+
+// ----------------------------------------------------
+// 🚨 دوال جديدة لفتح ملف التعريف وإرسال الهدية
+// ----------------------------------------------------
+
+function openProfileModal(playerUID) {
+    const playerDetails = allUsersData[playerUID];
+    const modalContent = document.getElementById('modal-profile-content');
+    
+    if (!playerDetails) {
+        modalContent.innerHTML = `<p style="color:#ff4f4f;">⚠️ جاري تحميل بيانات اللاعب أو لم يتم العثور عليها.</p>`;
+        document.getElementById('profile-modal').style.display = 'block';
+        return;
+    }
+    
+    // بناء محتوى Modal
+    modalContent.innerHTML = `
+        <h4 style="color:#f1f5f9;">${playerDetails.displayName}</h4>
+        <p style="color:#94a3b8; font-size: 0.9rem;">المعرّف: ${playerDetails.publicUid}</p>
+        <hr style="border-color: #334155;">
+        
+        <p><strong>المستوى:</strong> ${playerDetails.level}</p>
+        <p><strong>الألعاب الملعوبة:</strong> ${playerDetails.gamesPlayed}</p>
+        <p><strong>انتصارات كمحتال:</strong> ${playerDetails.impostorWins}</p>
+        
+        <button onclick="sendGiftToPlayer('${playerUID}', '${playerDetails.displayName}')" style="background-color: #ffd700; color: #0f172a; border:none; padding: 10px 20px; border-radius: 8px; margin-top: 20px; font-weight: 700;">
+            <i class="fas fa-gift"></i> إرسال هدية
+        </button>
+    `;
+    
+    document.getElementById('profile-modal').style.display = 'block';
+}
+
+function sendGiftToPlayer(receiverUID, receiverName) {
+    // إخفاء الـ Modal الحالي
+    document.getElementById('profile-modal').style.display = 'none';
+    
+    if (confirm(`هل تريد الانتقال لصفحة الهدايا لإرسال هدية إلى ${receiverName}؟`)) {
+        // يمكنك تخزين UID في localStorage أو تمريره في URL
+        localStorage.setItem('giftReceiverUID', receiverUID);
+        localStorage.setItem('giftReceiverName', receiverName);
+        // 🚨 يجب أن تكون صفحة الهدايا (gifts.html) جاهزة لاستقبال هذه البيانات
+        window.location.href = 'gifts.html'; 
+    }
+}
+
 </script>
 </body>
 </html>
-
