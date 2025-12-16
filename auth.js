@@ -50,9 +50,9 @@ async function createFirestoreUserEntry(user) {
         return initialData;
     }
 
-    // تأكد من وجود خصم يومي
+    // تأكد من وجود خصم يومي إذا كان مفقوداً
     const data = doc.data();
-    if (!data.dailyDiscount) {
+    if (!data.dailyDiscount || typeof data.dailyDiscount !== 'object' || data.dailyDiscount === null) {
         await userRef.update({ dailyDiscount: { date: null, percent: 0 } });
         data.dailyDiscount = { date: null, percent: 0 };
     }
@@ -114,7 +114,15 @@ async function loadUserData() {
 
     try {
         const doc = await db.collection("users").doc(userId).get();
-        let data = doc.exists ? doc.data() : await createFirestoreUserEntry(auth.currentUser);
+        let data;
+        
+        if (doc.exists) {
+            data = doc.data();
+        } else if (auth.currentUser) {
+            data = await createFirestoreUserEntry(auth.currentUser);
+        } else {
+            return null;
+        }
 
         // ضمان وجود جميع الحقول
         return {
@@ -296,3 +304,4 @@ async function generateDailyProDiscount() {
 
     return percent;
 }
+
