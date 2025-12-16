@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
-/* (أضف تنسيقات CSS الجديدة هنا، بما في ذلك الأنماط لـ #purchase-animation-overlay) */
+/* -------------------- التنسيقات -------------------- */
 body { font-family: 'Cairo', sans-serif; background:#0f172a; color:#f1f5f9; padding:20px; min-height:100vh; text-align:center; }
 h2 { color:#34d399; margin-bottom:20px; font-size:2rem; }
 .card { background:#1e293b; border-radius:12px; padding:20px; max-width:500px; margin:15px auto; text-align:right; }
@@ -23,7 +23,6 @@ button { padding:10px; width:100%; border:none; border-radius:8px; font-weight:7
 .send-btn { background:#34d399; color:white; }
 .send-btn:hover:enabled { background:#10b981; }
 
-/* التنسيقات المضافة/المحدثة */
 #coins-header { position: absolute; top: 20px; right: 20px; font-size: 1.2rem; color: #ffd700; font-weight: 700; }
 #self-gift-btn { width: auto; padding: 10px 15px; background: #3b82f6; color: white; margin-bottom: 10px; }
 #self-gift-btn:hover { background: #2563eb; }
@@ -48,87 +47,39 @@ button { padding:10px; width:100%; border:none; border-radius:8px; font-weight:7
 
 /* -------------------- أنيميشن الهدايا (Animation Overlay) -------------------- */
 #purchase-animation-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.7); display: none;
+    justify-content: center; align-items: center; z-index: 1000;
 }
 .animation-box {
-    width: 300px;
-    height: 300px;
-    border-radius: 20px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    font-size: 3rem;
-    color: white;
-    position: relative;
-    overflow: hidden;
-    animation: fadeIn 0.5s;
+    width: 300px; height: 300px; border-radius: 20px;
+    display: flex; flex-direction: column; justify-content: center;
+    align-items: center; font-size: 3rem; color: white;
+    position: relative; overflow: hidden; animation: fadeIn 0.5s;
 }
 
-/* Common particle animation */
 @keyframes confetti-fall {
     0% { transform: translateY(-100%) rotate(0deg); opacity: 1; }
     100% { transform: translateY(100%) rotate(720deg); opacity: 0; }
 }
 
 .animation-box::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 1;
+    content: ''; position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%; pointer-events: none; z-index: 1;
 }
-
-/* تأثير عادي - لمعان خفيف */
-.animation-box.عادي {
-    background: #1e293b;
-    border: 2px solid #94a3b8;
-}
-
-/* تأثير غالي - حدود ذهبية متوهجة */
-.animation-box.غالي {
-    background: #1e293b;
-    border: 3px solid #facc15;
-    box-shadow: 0 0 20px #facc15;
-}
-
-/* تأثير أسطوري - حدود حمراء مع جزيئات متساقطة */
-.animation-box.أسطوري {
-    background: #1e293b;
-    border: 4px solid #ef4444;
-    box-shadow: 0 0 30px #ef4444;
-}
+.animation-box.عادي { background: #1e293b; border: 2px solid #94a3b8; }
+.animation-box.غالي { background: #1e293b; border: 3px solid #facc15; box-shadow: 0 0 20px #facc15; }
+.animation-box.أسطوري { background: #1e293b; border: 4px solid #ef4444; box-shadow: 0 0 30px #ef4444; }
 .animation-box.أسطوري::before {
-    /* تأثير الجزيئات المتساقطة */
-    content: '✨🔥🌟🎉'; /* يمكن تغيير الأحرف أو استخدام صورة */
-    font-size: 20px;
-    white-space: pre;
-    opacity: 0.8;
+    content: '✨🔥🌟🎉'; 
+    font-size: 20px; white-space: pre; opacity: 0.8;
     animation: confetti-fall 3s linear infinite;
     animation-delay: 0s, 0.5s, 1s, 1.5s;
-    height: 100%;
-    width: 100%;
-    top: -100%;
-    left: 0;
-    position: absolute;
-    transform: translateY(0);
+    height: 100%; width: 100%; top: -100%; left: 0;
+    position: absolute; transform: translateY(0);
 }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-/* التنبيهات */
 .alert { color:#ffcc00; font-size:0.9rem; margin-top:10px; }
 </style>
 </head>
@@ -147,7 +98,7 @@ button { padding:10px; width:100%; border:none; border-radius:8px; font-weight:7
     </button>
     
     <label>ابحث عن مستلم:</label>
-    <input type="text" id="player-search" placeholder="أدخل اسم العرض">
+    <input type="text" id="player-search" placeholder="أدخل اسم العرض أو Public UID">
     <div id="search-results"><p class="alert">اختر لنفسك أو ابدأ البحث عن لاعب آخر</p></div>
     <p class="alert" id="recipient-alert">المستلم: (لم يتم الاختيار)</p>
 </div>
@@ -157,7 +108,7 @@ button { padding:10px; width:100%; border:none; border-radius:8px; font-weight:7
     <div id="gifts-container"></div>
     
     <div id="cart-summary">
-        <p>إجمالي XP للمستلم: <span id="total-xp-display">0</span> XP</p>
+        <p>إجمالي XP الإضافي للمستلم: <span id="total-xp-display">0</span> XP</p>
         <p>التكلفة الإجمالية: <span id="total-cost-display">0</span> Coins</p>
     </div>
 
@@ -182,16 +133,25 @@ let selectedPlayer = { uid: null, displayName: null }; // يخزن UID والا�
 let giftCart = {}; // { giftIndex: quantity }
 let currentUserId = null;
 
-// -------------------- الهدايا --------------------
+// -------------------- الهدايا (المحدثة) --------------------
 const gifts = [
-    {name:"وردة", cost:50, xp:10, rarity:"عادي", icon:"🌹"},
-    {name:"قلم ذهبي", cost:200, xp:50, rarity:"غالي", icon:"🖋️"},
-    {name:"سيارة سباق", cost:1500, xp:450, rarity:"أسطوري", icon:"🏎️"},
-    {name:"طائرة خاصة", cost:5000, xp:1200, rarity:"أسطوري", icon:"✈️"},
-    {name:"يخت فاخر", cost:3000, xp:800, rarity:"غالي", icon:"🛥️"},
-    {name:"مجوهرات", cost:8000, xp:2000, rarity:"أسطوري", icon:"💎"},
-    {name:"كتاب سحري", cost:100, xp:20, rarity:"عادي", icon:"📖"},
-    {name:"تاج ملكي", cost:10000, xp:2500, rarity:"أسطوري", icon:"👑"}
+    // الهدايا المادية (XP) - النوع: 'xp'
+    {name:"وردة", cost:50, xp:10, rarity:"عادي", icon:"🌹", type: 'xp'},
+    {name:"قلم ذهبي", cost:200, xp:50, rarity:"غالي", icon:"🖋️", type: 'xp'},
+    {name:"سيارة سباق", cost:1500, xp:450, rarity:"أسطوري", icon:"🏎️", type: 'xp'},
+    {name:"طائرة خاصة", cost:5000, xp:1200, rarity:"أسطوري", icon:"✈️", type: 'xp'},
+    {name:"يخت فاخر", cost:3000, xp:800, rarity:"غالي", icon:"🛥️", type: 'xp'},
+    {name:"مجوهرات", cost:8000, xp:2000, rarity:"أسطوري", icon:"💎", type: 'xp'},
+    {name:"كتاب سحري", cost:100, xp:20, rarity:"عادي", icon:"📖", type: 'xp'},
+    {name:"تاج ملكي", cost:10000, xp:2500, rarity:"أسطوري", icon:"👑", type: 'xp'},
+    
+    // هدايا Pro - النوع: 'pro', القيمة: عدد الأيام
+    {name:"عضوية Pro (شهر)", cost:20000, days: 30, rarity:"أسطوري", icon:"🌟", type: 'pro'},
+    {name:"عضوية Pro (سنة)", cost:150000, days: 365, rarity:"أسطوري", icon:"👑", type: 'pro'},
+
+    // هدايا الكوينز - النوع: 'coins', القيمة: عدد الكوينز
+    {name:"حزمة 5000 كوينز", cost:4500, coins: 5000, rarity:"غالي", icon:"💰", type: 'coins'},
+    {name:"حزمة 15000 كوينز", cost:12000, coins: 15000, rarity:"أسطوري", icon:"💸", type: 'coins'}
 ];
 
 // -------------------- الإدارة والعرض --------------------
@@ -204,11 +164,15 @@ function calculateCartTotals() {
         const quantity = giftCart[index];
         const gift = gifts[index];
         totalCost += gift.cost * quantity;
-        totalXP += gift.xp * quantity;
+        
+        // حساب XP فقط للهدايا من نوع 'xp'
+        if (gift.type === 'xp') {
+            totalXP += (gift.xp || 0) * quantity;
+        }
     }
     
     document.getElementById("total-cost-display").innerText = totalCost;
-    document.getElementById("total-xp-display").innerText = totalXP;
+    document.getElementById("total-xp-display").innerText = totalXP; 
     
     // تمكين/تعطيل زر الإرسال
     document.getElementById("send-gift-btn").disabled = 
@@ -221,6 +185,15 @@ function updateGiftQuantity(index, change) {
     
     if (newQuantity < 0) newQuantity = 0;
     
+    const gift = gifts[index];
+    // قيد: هدايا Pro والكوينز لا يمكن شراؤها بكميات متعددة في نفس العملية
+    if (gift.type !== 'xp' && newQuantity > 1) {
+        newQuantity = 1; 
+        if (currentQuantity === 0 && change > 0) { // التنبيه فقط عند محاولة الزيادة الأولى
+             alert(`يمكنك اختيار هدية ${gift.name} مرة واحدة فقط في كل إرسال.`);
+        }
+    }
+
     if (newQuantity === 0) {
         delete giftCart[index];
     } else {
@@ -237,17 +210,21 @@ function populateGifts() {
     const container = document.getElementById("gifts-container");
     container.innerHTML = '';
     gifts.forEach((g, i) => {
+        const valueDisplay = g.type === 'xp' ? `${g.xp} XP` : 
+                             g.type === 'pro' ? `${g.days} يوم Pro` : 
+                             `${g.coins} Coins`;
+        
         const div = document.createElement("div");
         div.className = "gift-item";
         div.setAttribute("data-index", i);
         div.innerHTML = `
             <div class="gift-info">
                 <div class="gift-name">${g.icon} ${g.name}</div>
-                <div class="gift-cost">${g.cost} Coins | <span class="gift-rarity ${g.rarity}">${g.rarity}</span></div>
+                <div class="gift-cost">${g.cost} Coins | <span class="gift-rarity ${g.rarity}">${g.rarity} (${valueDisplay})</span></div>
             </div>
             <div class="quantity-controls">
                 <button onclick="updateGiftQuantity(${i}, 1)"><i class="fas fa-plus"></i></button>
-                <span class="quantity-display">0</span>
+                <span class="quantity-display">${giftCart[i] || 0}</span>
                 <button onclick="updateGiftQuantity(${i}, -1)"><i class="fas fa-minus"></i></button>
             </div>
         `;
@@ -293,7 +270,7 @@ async function initGiftPage() {
         
         updateUserDisplay();
         setupSearch();
-        selectSelf(); // 🚨 اختيار النفس كخيار افتراضي
+        selectSelf(); // اختيار النفس كخيار افتراضي
     });
 }
 
@@ -324,8 +301,8 @@ function setupSearch() {
             if (u.uid === currentUserId) return; 
             
             const div = document.createElement("div");
-            div.className = "gift-item"; // استخدام نفس التنسيق لسهولة الاختيار
-            div.innerHTML = `<div class="gift-info"><div class="gift-name">${u.displayName}</div></div>`;
+            div.className = "gift-item"; 
+            div.innerHTML = `<div class="gift-info"><div class="gift-name">${u.displayName} (UID: ${u.publicUid || 'N/A'})</div></div>`;
             div.onclick = () => { 
                 selectedPlayer.uid = u.uid; 
                 selectedPlayer.displayName = u.displayName; 
@@ -348,7 +325,6 @@ function showPurchaseAnimation(rarity) {
     const icon = document.getElementById("animation-icon");
     const text = document.getElementById("animation-text");
 
-    // تحديد الأيقونة والنص واللون بناءً على الندرة
     let displayIcon = "🎁";
     let displayText = "تم الشراء بنجاح!";
     
@@ -370,7 +346,7 @@ function showPurchaseAnimation(rarity) {
     overlay.style.display = 'flex';
     setTimeout(() => {
         overlay.style.display = 'none';
-    }, 2500); // عرض الأنيميشن لمدة 2.5 ثانية
+    }, 2500); 
 }
 
 // -------------------- SEND GIFTS --------------------
@@ -378,28 +354,35 @@ async function sendGifts() {
     if(!selectedPlayer.uid || Object.keys(giftCart).length === 0) return;
     
     let totalCost = calculateCartTotalsFromCart();
-    let totalXP = calculateTotalXPFromCart();
-    let highestRarity = "عادي"; // لتحديد الأنيميشن
+    let totalXP = 0;
+    let totalDaysPro = 0;
+    let totalGiftCoins = 0;
+    let highestRarity = "عادي"; 
+
+    // حساب المجاميع النهائية وتحديد أعلى ندرة
+    for (const index in giftCart) {
+        const quantity = giftCart[index];
+        const gift = gifts[index];
+        
+        if (gift.type === 'xp') {
+            totalXP += (gift.xp || 0) * quantity;
+        } else if (gift.type === 'pro') {
+            totalDaysPro += (gift.days || 0) * quantity;
+        } else if (gift.type === 'coins') {
+            totalGiftCoins += (gift.coins || 0) * quantity;
+        }
+
+        if (gift.rarity === "أسطوري") highestRarity = "أسطوري";
+        else if (gift.rarity === "غالي" && highestRarity !== "أسطوري") highestRarity = "غالي";
+    }
 
     if((currentUserData.totalCoins || 0) < totalCost) {
-        alert("ليس لديك رصيد كافي!");
+        alert("ليس لديك رصيد كافي لتمويل هذه الهدايا!");
         return;
     }
     
-    // تحديد أعلى ندرة
-    for (const index in giftCart) {
-        const giftRarity = gifts[index].rarity;
-        if (giftRarity === "أسطوري") {
-            highestRarity = "أسطوري";
-            break; 
-        }
-        if (giftRarity === "غالي") {
-            highestRarity = "غالي";
-        }
-    }
-
     // تأكيد الشراء
-    if (!confirm(`هل أنت متأكد من إرسال الهدايا لـ ${selectedPlayer.displayName} بتكلفة إجمالية ${totalCost} Coins؟`)) {
+    if (!confirm(`هل أنت متأكد من إرسال هذه الهدايا لـ ${selectedPlayer.displayName} بتكلفة إجمالية ${totalCost} Coins؟`)) {
         return;
     }
 
@@ -411,28 +394,45 @@ async function sendGifts() {
         await firebase.firestore().runTransaction(async tx => {
             const senderDoc = await tx.get(senderRef);
             const recipientDoc = await tx.get(recipientRef);
-            if (!senderDoc.exists || !recipientDoc.exists) throw "المستخدم المرسل أو المستلم غير موجود";
+            if (!senderDoc.exists) throw new Error("المستخدم المرسل غير موجود.");
+            if (!recipientDoc.exists) throw new Error("المستخدم المستلم غير موجود.");
 
             const senderCoins = senderDoc.data().totalCoins || 0;
-            if (senderCoins < totalCost) throw "لا يوجد رصيد كافي";
-
-            const recipientXP = recipientDoc.data().xp || 0;
-            const recipientLevel = recipientDoc.data().level || 1;
+            if (senderCoins < totalCost) throw new Error("لا يوجد رصيد كافي للخصم.");
             
             // 1. خصم الكوينز من المرسل
             tx.update(senderRef, { totalCoins: senderCoins - totalCost });
             
-            // 2. إضافة XP للمستلم
-            let newXP = recipientXP + totalXP;
-            let newLevel = recipientLevel;
-
-            // 🚨 تحديث: يجب أن يتم التحقق من رفع المستوى عبر دالة checkAndLevelUp في auth.js
-            // (بما أننا داخل Transaction، لا يمكننا استدعاء الدوال الخارجية المعقدة التي تتطلب تحديث قاعدة البيانات)
-            // لحل هذه المشكلة بأفضل طريقة:
-            // سنضيف فقط XP الآن، ونعتمد على أن المستلم سيقوم بتشغيل دالة checkAndLevelUp في المرة القادمة التي يفتح فيها صفحته الرئيسية.
-            // أو... نستخدم دالة لحساب المستوى محلياً ونرسلها
+            // 2. تحديث المستلم
+            const recipientData = recipientDoc.data();
+            let recipientUpdate = {};
             
-            tx.update(recipientRef, { xp: newXP });
+            // تحديث XP
+            if (totalXP > 0) {
+                recipientUpdate.xp = (recipientData.xp || 0) + totalXP;
+            }
+
+            // تحديث الكوينز المهدى
+            if (totalGiftCoins > 0) {
+                recipientUpdate.totalCoins = firebase.firestore.FieldValue.increment(totalGiftCoins);
+            }
+
+            // تحديث مدة Pro
+            if (totalDaysPro > 0) {
+                const now = Date.now();
+                let currentExpiry = recipientData.proExpiryTime || 0;
+                // إذا كان برو منتهياً، نبدأ من الآن، وإلا نبدأ من وقت الانتهاء
+                const baseTime = (currentExpiry > now) ? currentExpiry : now;
+                
+                recipientUpdate.proExpiryTime = baseTime + (totalDaysPro * 24 * 60 * 60 * 1000);
+            }
+
+            // التأكد من وجود تحديثات للمستلم
+            if (Object.keys(recipientUpdate).length > 0) {
+                tx.update(recipientRef, recipientUpdate);
+            } else {
+                 throw new Error("لا توجد قيمة في الهدايا لتحديث سجل المستلم.");
+            }
         });
 
         // 3. تحديث الواجهة والبيانات المحلية
@@ -442,15 +442,24 @@ async function sendGifts() {
         // 4. عرض الأنيميشن
         showPurchaseAnimation(highestRarity);
 
-        // 5. مسح السلة
-        alert(`🎉 تم إرسال الهدايا بنجاح إلى ${selectedPlayer.displayName}! (بمجموع +${totalXP} XP للمستلم)`);
+        // 5. مسح السلة وإظهار ملخص
+        let summaryMessage = `🎉 تم إرسال الهدايا بنجاح إلى ${selectedPlayer.displayName}!`;
+        if (totalXP > 0) summaryMessage += ` (+${totalXP} XP)`;
+        if (totalGiftCoins > 0) summaryMessage += ` (+${totalGiftCoins} Coins)`;
+        if (totalDaysPro > 0) summaryMessage += ` (+${totalDaysPro} يوم Pro)`;
+
+        alert(summaryMessage);
         giftCart = {}; 
-        populateGifts(); // لإعادة تعيين الكميات المرئية إلى 0
+        populateGifts(); 
         calculateCartTotals();
         
     } catch(e) {
         console.error("خطأ أثناء إرسال الهدايا:", e);
-        alert(`فشل الإرسال. السبب: ${e.message || e}`);
+        // رسالة خطأ واضحة
+        const errorMessage = e.message && e.message.includes('permission') 
+                           ? "فشل الإرسال: تحقق من قواعد أمان Firestore (Firestore Rules)." 
+                           : `فشل الإرسال. السبب: ${e.message || e}`;
+        alert(errorMessage);
     }
 }
 
@@ -466,10 +475,13 @@ function calculateCartTotalsFromCart() {
 function calculateTotalXPFromCart() {
     let totalXP = 0;
     for (const index in giftCart) {
-        totalXP += gifts[index].xp * giftCart[index];
+        if (gifts[index].type === 'xp') {
+             totalXP += (gifts[index].xp || 0) * giftCart[index];
+        }
     }
     return totalXP;
 }
 </script>
 </body>
 </html>
+
