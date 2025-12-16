@@ -1,6 +1,6 @@
 /**
  * @file: auth.js
- * @description: سكربت موحد لإدارة Firebase، المصادقة، وحفظ/تحميل بيانات المستخدم.
+ * @description: سكربت موحد لإدارة Firebase، المصادقة، وحفظ/تحميل بيانات المستخدم، ومنطق XP والمستويات.
  */
 
 // ****************************************************
@@ -181,13 +181,13 @@ async function saveUserData(
 // ****************************************************
 // 7. التحقق من عضوية Pro
 // ****************************************************
-function isPro() {
-    const expiry = window.currentUserData?.proExpiryTime || 0;
+function isPro(userData) {
+    const expiry = userData?.proExpiryTime || 0;
     return expiry > Date.now();
 }
 
 // ****************************************************
-// 8. إدارة الأصدقاء والطلبات
+// 8. إدارة الأصدقاء والطلبات (بقية الدوال تبقى كما هي)
 // ****************************************************
 async function searchUsersByDisplayName(searchTerm) {
     const user = auth.currentUser;
@@ -286,7 +286,7 @@ async function removeFriend(friendId) {
 }
 
 // ****************************************************
-// 9. توليد خصم يومي عشوائي لكل مستخدم برو
+// 9. توليد خصم يومي عشوائي لكل مستخدم برو (تبقى كما هي)
 // ****************************************************
 async function generateDailyProDiscount() {
     const user = auth.currentUser;
@@ -305,3 +305,119 @@ async function generateDailyProDiscount() {
     return percent;
 }
 
+// ****************************************************
+// 10. منطق المستويات والخبرة (XP)
+// ****************************************************
+
+/**
+ * @function getRequiredXPForLevel
+ * @description دالة تحسب إجمالي الخبرة المطلوبة للوصول إلى المستوى التالي.
+ * @param {number} level - المستوى الحالي.
+ * @returns {number} الخبرة المطلوبة للمستوى التالي (XP).
+ */
+function getRequiredXPForLevel(level) {
+    return 20 + (level * 20);
+}
+
+/**
+ * @function getLevelUpCoinReward
+ * @description تحدد مكافأة الكوينز لكل مستوى جديد.
+ * @param {number} newLevel - المستوى الذي تم الوصول إليه.
+ * @returns {number} عدد الكوينز كمكافأة.
+ */
+function getLevelUpCoinReward(newLevel) {
+    return newLevel * 50;
+}
+
+/**
+ * @function checkAndLevelUp
+ * @description يتحقق مما إذا كان المستخدم مؤهلاً لرفع المستوى، ويرفع مستواه ويمنحه مكافأة.
+ * @param {Object} userData - بيانات المستخدم الحالية (يتم تمريرها كمرجع).
+ * @returns {boolean} True إذا تم رفع المستوى.
+ */
+async function checkAndLevelUp(userData) {
+    let leveledUp = false;
+    let currentLevel = userData.level || 1;
+    let currentXP = userData.xp || 0;
+    
+    let totalXpRequired = 0;
+    for (let i = 1; i <= currentLevel; i++) {
+        totalXpRequired += getRequiredXPForLevel(i);
+    }
+    
+    // عملية رفع المستوى المتكرر إذا تجاوز XP مستويات متعددة
+    if (currentXP >= totalXpRequired) {
+        while (currentXP >= totalXpRequired) {
+            currentLevel++; 
+            const reward = getLevelUpCoinReward(currentLevel);
+            userData.totalCoins += reward; 
+            
+            // إعادة حساب إجمالي XP المطلوب للمستوى الجديد
+            totalXpRequired += getRequiredXPForLevel(currentLevel); 
+            
+            console.log(`🎉 رفع المستوى إلى ${currentLevel}! تمت إضافة ${reward} كوينز.`);
+            leveledUp = true;
+        }
+        
+        // حفظ البيانات بعد رفع المستوى 
+        await saveUserData(
+            userData.totalCoins,
+            userData.proExpiryTime || 0,
+            userData.players || [],
+            userData.settings || {},
+            currentLevel,
+            currentXP,
+            userData.ownedPacksPermanent || [],
+            userData.ownedPacksTemporary || {}
+        );
+        
+        userData.level = currentLevel;
+        return true;
+    }
+    
+    return false;
+}
+
+/**
+ * @function addXPAndCoins
+ * @description يمنح المستخدم الكوينز والخبرة (XP) مع بونص للـ Pro، ثم يتحقق من رفع المستوى.
+ * @param {Object} userData - بيانات المستخدم الحالية (يجب أن تكون مرجعاً لـ currentUserData).
+ * @param {number} baseCoins - عدد الكوينز الأساسي قبل البونص.
+ * @param {number} baseXp - عدد الخبرة الأساسي قبل البونص.
+ * @returns {Object} يحتوي على amountAdded (XP و Coins).
+ */
+async function addXPAndCoins(userData, baseCoins, baseXp) {
+    const isUserPro = isPro(userData);
+    const proMultiplier = isUserPro ? 1.5 : 1; 
+
+    // 1. حساب القيم النهائية
+    const coinsEarned = Math.floor(baseCoins * proMultiplier);
+    const xpEarned = Math.floor(baseXp * proMultiplier);
+
+    // 2. تحديث البيانات محلياً
+    userData.totalCoins = (userData.totalCoins || 0) + coinsEarned;
+    userData.xp = (userData.xp || 0) + xpEarned;
+
+    // 3. التحقق من رفع المستوى (سيتم حفظ البيانات داخل هذه الدالة إذا تم رفع المستوى)
+    const leveledUp = await checkAndLevelUp(userData);
+
+    // 4. حفظ البيانات إذا لم يتم رفع المستوى (يجب الحفظ لتحديث الكوينز والـ XP)
+    if (!leveledUp) {
+        await saveUserData(
+            userData.totalCoins,
+            userData.proExpiryTime || 0,
+            userData.players || [],
+            userData.settings || {},
+            userData.level || 1,
+            userData.xp || 0,
+            userData.ownedPacksPermanent || [],
+            userData.ownedPacksTemporary || {}
+        );
+    }
+
+    return {
+        coins: coinsEarned,
+        xp: xpEarned,
+        isPro: isUserPro
+    };
+}
