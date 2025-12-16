@@ -39,11 +39,13 @@ async function createFirestoreUserEntry(user) {
             proExpiryTime: 0,
             players: [],
             settings: {},
+            // 🚨 إضافة حقل الهدايا (مهم لظهور الهدايا)
+            receivedGifts: [], 
             level: 1,
             xp: 0,
             ownedPacksPermanent: [],
             ownedPacksTemporary: {},
-            dailyDiscount: { date: null, percent: 0 }, // الخصم اليومي
+            dailyDiscount: { date: null, percent: 0 }, 
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         await userRef.set(initialData);
@@ -56,7 +58,12 @@ async function createFirestoreUserEntry(user) {
         await userRef.update({ dailyDiscount: { date: null, percent: 0 } });
         data.dailyDiscount = { date: null, percent: 0 };
     }
-
+    // ضمان وجود حقل الهدايا
+    if (!data.receivedGifts) {
+        await userRef.update({ receivedGifts: [] });
+        data.receivedGifts = [];
+    }
+    
     return data;
 }
 
@@ -105,6 +112,23 @@ async function isDisplayNameAvailable(name) {
     return snapshot.docs[0].id === user.uid;
 }
 
+// 🚨 دالة مساعدة للحصول على أسماء العرض (مفترض وجودها لظهور الهدايا)
+async function getDisplayNamesByUids(uids) {
+    if (!uids || uids.length === 0) return {};
+    const namesMap = {};
+    const batchSize = 10; // حد Firestore لـ 'in'
+    
+    for (let i = 0; i < uids.length; i += batchSize) {
+        const batchUids = uids.slice(i, i + batchSize);
+        const snapshot = await db.collection("users").where(firebase.firestore.FieldPath.documentId(), 'in', batchUids).get();
+        snapshot.forEach(doc => {
+            namesMap[doc.id] = doc.data().displayName || "مستخدم غير معروف";
+        });
+    }
+    return namesMap;
+}
+
+
 // ****************************************************
 // 5. تحميل بيانات المستخدم
 // ****************************************************
@@ -133,6 +157,7 @@ async function loadUserData() {
             proExpiryTime: data.proExpiryTime || 0,
             players: data.players || [],
             settings: data.settings || {},
+            receivedGifts: data.receivedGifts || [], // ضمان تحميل حقل الهدايا
             level: data.level || 1,
             xp: data.xp || 0,
             ownedPacksPermanent: data.ownedPacksPermanent || [],
@@ -146,33 +171,29 @@ async function loadUserData() {
 }
 
 // ****************************************************
-// 6. حفظ بيانات المستخدم
+// 6. حفظ بيانات المستخدم (تم تعديلها لاستقبال كائن التحديث)
 // ****************************************************
-async function saveUserData(
-    newCoins,
-    newProTime,
-    playersData,
-    settingsData,
-    newLevel,
-    newXP,
-    permanentPacks,
-    temporaryPacks
-) {
+/**
+ * @function saveUserData
+ * @description يحفظ بيانات المستخدم في Firestore. يمكنه قبول تحديثات جزئية.
+ * @param {Object} updatedFields - كائن يحتوي على الحقول المراد تحديثها (مثل { totalCoins: 100, settings: {...}, displayName: 'NewName' }).
+ * @returns {Promise<boolean>} True عند النجاح.
+ */
+async function saveUserData(updatedFields = {}) {
     const user = auth.currentUser;
     if (!user) throw new Error("لا يوجد مستخدم مسجل دخول");
 
     const dataToSave = {
-        totalCoins: newCoins,
-        proExpiryTime: newProTime,
-        players: playersData || [],
-        settings: settingsData || {},
-        level: newLevel || 1,
-        xp: newXP || 0,
-        ownedPacksPermanent: permanentPacks || [],
-        ownedPacksTemporary: temporaryPacks || {},
-        displayName: user.displayName || user.email.split("@")[0],
+        ...updatedFields,
         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
     };
+    
+    // إذا كان التحديث يتضمن تغيير اسم العرض، يجب تحديثه في Auth أيضاً
+    if (dataToSave.displayName && user.displayName !== dataToSave.displayName) {
+        await user.updateProfile({ displayName: dataToSave.displayName });
+    }
+    // التأكد من أن اسم العرض يتم حفظه حتى لو لم يتم تمريره في التحديث الجزئي
+    dataToSave.displayName = user.displayName || user.email.split("@")[0];
 
     await db.collection("users").doc(user.uid).set(dataToSave, { merge: true });
     return true;
@@ -359,17 +380,18 @@ async function checkAndLevelUp(userData) {
             leveledUp = true;
         }
         
-        // حفظ البيانات بعد رفع المستوى 
-        await saveUserData(
-            userData.totalCoins,
-            userData.proExpiryTime || 0,
-            userData.players || [],
-            userData.settings || {},
-            currentLevel,
-            currentXP,
-            userData.ownedPacksPermanent || [],
-            userData.ownedPacksTemporary || {}
-        );
+        // حفظ البيانات بعد رفع المستوى (باستخدام الدالة الجديدة)
+        await saveUserData({
+            totalCoins: userData.totalCoins,
+            proExpiryTime: userData.proExpiryTime || 0,
+            players: userData.players || [],
+            settings: userData.settings || {},
+            level: currentLevel,
+            xp: currentXP,
+            ownedPacksPermanent: userData.ownedPacksPermanent || [],
+            ownedPacksTemporary: userData.ownedPacksTemporary || {},
+            receivedGifts: userData.receivedGifts || []
+        });
         
         userData.level = currentLevel;
         return true;
@@ -401,18 +423,19 @@ async function addXPAndCoins(userData, baseCoins, baseXp) {
     // 3. التحقق من رفع المستوى (سيتم حفظ البيانات داخل هذه الدالة إذا تم رفع المستوى)
     const leveledUp = await checkAndLevelUp(userData);
 
-    // 4. حفظ البيانات إذا لم يتم رفع المستوى (يجب الحفظ لتحديث الكوينز والـ XP)
+    // 4. حفظ البيانات إذا لم يتم رفع المستوى (باستخدام الدالة الجديدة)
     if (!leveledUp) {
-        await saveUserData(
-            userData.totalCoins,
-            userData.proExpiryTime || 0,
-            userData.players || [],
-            userData.settings || {},
-            userData.level || 1,
-            userData.xp || 0,
-            userData.ownedPacksPermanent || [],
-            userData.ownedPacksTemporary || {}
-        );
+        await saveUserData({
+            totalCoins: userData.totalCoins,
+            proExpiryTime: userData.proExpiryTime || 0,
+            players: userData.players || [],
+            settings: userData.settings || {},
+            level: userData.level || 1,
+            xp: userData.xp || 0,
+            ownedPacksPermanent: userData.ownedPacksPermanent || [],
+            ownedPacksTemporary: userData.ownedPacksTemporary || {},
+            receivedGifts: userData.receivedGifts || []
+        });
     }
 
     return {
@@ -421,3 +444,52 @@ async function addXPAndCoins(userData, baseCoins, baseXp) {
         isPro: isUserPro
     };
 }
+
+// ****************************************************
+// 11. تحديث الكوينز وعضوية Pro بشكل آمن (جديد)
+// ****************************************************
+
+/**
+ * @function updateCoinsAndProTime
+ * @description تحديث الكوينز ومدة Pro في Firestore وAuth.js
+ * @param {Object} userData - بيانات المستخدم الحالية التي تم تحميلها (مرجع).
+ * @param {number} coinChange - التغير في الكوينز (+ أو -).
+ * @param {number} daysToAdd - عدد الأيام لإضافتها لمدة Pro.
+ * @returns {Promise<boolean>}
+ */
+async function updateCoinsAndProTime(userData, coinChange, daysToAdd) {
+    const newCoins = (userData.totalCoins || 0) + coinChange;
+    const now = Date.now();
+    let newProTime = userData.proExpiryTime || 0;
+    
+    if (daysToAdd > 0) {
+        const currentExpiry = (newProTime > now) ? newProTime : now;
+        newProTime = currentExpiry + (daysToAdd * 24 * 60 * 60 * 1000);
+    }
+    
+    // حفظ التغييرات باستخدام الدالة الموحدة
+    try {
+        await saveUserData({
+            totalCoins: newCoins,
+            proExpiryTime: newProTime,
+            players: userData.players,
+            settings: userData.settings,
+            level: userData.level,
+            xp: userData.xp,
+            ownedPacksPermanent: userData.ownedPacksPermanent,
+            ownedPacksTemporary: userData.ownedPacksTemporary,
+            dailyDiscount: userData.dailyDiscount,
+            receivedGifts: userData.receivedGifts || []
+        });
+        
+        // تحديث البيانات المحلية للمستخدم
+        userData.totalCoins = newCoins;
+        userData.proExpiryTime = newProTime;
+        return true;
+        
+    } catch (error) {
+        console.error("فشل تحديث الكوينز والمدة:", error);
+        return false;
+    }
+}
+
