@@ -8,7 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <script src="auth.js"></script> 
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
@@ -40,7 +40,7 @@ h2 { font-size: 2rem; font-weight: 700; margin-bottom: 10px; color: #34d399; }
 #role-instructions { color: #94a3b8; font-size: 1rem; }
 #status-message { margin-top: 20px; color: #ffcc00; font-weight: 700; }
 
-/* 🚨 جديد: ستايل لاسم اللاعب القابل للضغط */
+/* ستايل لاسم اللاعب القابل للضغط */
 .player-name-link { 
     cursor: pointer; 
     transition: color 0.2s; 
@@ -49,7 +49,7 @@ h2 { font-size: 2rem; font-weight: 700; margin-bottom: 10px; color: #34d399; }
     color: #ffd700; 
 }
 
-/* 🚨 جديد: ستايل الـ Modal (ملف التعريف) */
+/* ستايل الـ Modal (ملف التعريف) */
 .modal {
     display: none; 
     position: fixed; 
@@ -83,6 +83,21 @@ h2 { font-size: 2rem; font-weight: 700; margin-bottom: 10px; color: #34d399; }
     color: #ff4f4f;
     text-decoration: none;
     cursor: pointer;
+}
+/* 🚨 جديد: ستايل زر إرسال الهدية */
+.gift-btn {
+    background-color: #ffd700; 
+    color: #0f172a; 
+    border:none; 
+    padding: 10px 20px; 
+    border-radius: 8px; 
+    margin-top: 20px; 
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.gift-btn:hover {
+    background-color: #ffc400;
 }
 </style>
 </head>
@@ -144,14 +159,13 @@ let roomCode;
 let roomData = null;
 let isHost = false;
 let listenerUnsubscribe = null;
-let allUsersData = {}; // 🚨 جديد: لتخزين بيانات جميع اللاعبين (DisplayName, PublicUID, etc.)
+// 🚨 لتخزين بيانات جميع اللاعبين (DisplayName, Stats, etc.)
+let allUsersData = {}; 
 
-// 🚨 وسم ثابت يستخدم لتحديد أن المحتال بلا كلمة في بيانات اللعبة
+// وسم ثابت يستخدم لتحديد أن المحتال بلا كلمة في بيانات اللعبة
 const IMPOSTOR_NO_WORD_TAG = 'IMPOSTOR_NO_WORD_TAG_BLANK'; 
 
-// 🚨 قائمة الكلمات والأقسام 
-// ... (تبقى كما هي) ...
-
+// قائمة الكلمات والأقسام 
 const wordCategories = {
     // تم حذف الكلمات هنا للاختصار، لكن يجب أن تكون موجودة في النسخة الكاملة
     free: [
@@ -224,7 +238,7 @@ function startRoomListener(code) {
              return;
         }
         
-        // 🚨 جديد: تحميل بيانات المستخدمين (لإظهار الأسماء الحقيقية)
+        // 🚨 جديد: تحميل بيانات المستخدمين (لإظهار الأسماء الحقيقية والإحصائيات)
         await fetchAllPlayerDetails(roomData.players);
 
 
@@ -248,51 +262,37 @@ function startRoomListener(code) {
 }
 
 // ----------------------------------------------------
-// 🚨 دوال جديدة لتحميل بيانات المستخدمين (لإظهار الأسماء الحقيقية)
+// 🚨 دوال جديدة لتحميل بيانات المستخدمين (حل مشكلة الأسماء والإحصائيات)
 // ----------------------------------------------------
 
 async function fetchAllPlayerDetails(playerUIDs) {
     const db = firebase.firestore();
     
-    const usersToFetch = playerUIDs.filter(uid => !allUsersData[uid]);
+    // فلترة اللاعبين الذين لم يتم جلب بياناتهم بعد
+    const usersToFetch = playerUIDs.filter(uid => !allUsersData[uid] || !allUsersData[uid].displayName);
 
     if (usersToFetch.length === 0) return;
 
     try {
         const userRefs = usersToFetch.map(uid => db.collection('users').doc(uid));
         
+        // استخدام getAll لجلب جميع المستندات دفعة واحدة
         const docs = await db.getAll(...userRefs);
         
         docs.forEach(doc => {
             if (doc.exists) {
                 const data = doc.data();
                 allUsersData[doc.id] = {
-                    displayName: data.playerName || `لاعب#${doc.id.substring(0, 4)}`, // 🚨 استخدام playerName من سجل المستخدم
+                    // 🚨 استخدام playerName لاسم الحساب
+                    displayName: data.playerName || `لاعب#${doc.id.substring(0, 4)}`, 
                     publicUid: data.publicUid || doc.id.substring(0, 8),
-                    // يمكنك إضافة الإحصائيات هنا:
+                    // الإحصائيات (حل مشكلة عدم رؤية الإحصائيات)
                     level: data.level || 1, 
                     gamesPlayed: data.gamesPlayed || 0,
                     impostorWins: data.impostorWins || 0
                 };
             }
         });
-        
-        // تحديث playerNames في الغرفة لضمان رؤية المضيف للأسماء الصحيحة
-        let updatedPlayerNames = { ...roomData.playerNames };
-        let needsUpdate = false;
-        playerUIDs.forEach(uid => {
-            const currentName = updatedPlayerNames[uid];
-            const fetchedName = allUsersData[uid]?.displayName;
-            if (fetchedName && fetchedName !== currentName) {
-                updatedPlayerNames[uid] = fetchedName;
-                needsUpdate = true;
-            }
-        });
-        
-        if (needsUpdate && isHost) {
-            // تحديث playerNames في الغرفة (اختياري)
-            await db.collection('rooms').doc(roomCode).update({ playerNames: updatedPlayerNames });
-        }
         
     } catch (error) {
         console.error("فشل في جلب تفاصيل اللاعبين:", error);
@@ -315,13 +315,13 @@ function updateLobbyUI() {
 
     document.getElementById('player-count').innerText = playerCount;
     
-    // 1. عرض ملخص الإعدادات (تبقى كما هي)
+    // 1. عرض ملخص الإعدادات 
     const settings = roomData.settings || {};
     const selectedCategoriesNames = getCategoryNamesByIds(settings.selectedCategories);
     const summaryText = `محتالون: ${settings.impostors || 1} | مجموعات: ${selectedCategoriesNames.join(', ')}`;
     document.getElementById('settings-summary').innerText = summaryText;
     
-    // 2. تحديث زر البدء (يبقى كما هو)
+    // 2. تحديث زر البدء 
     if (isHost && playerCount >= 3) {
         startGameBtn.disabled = false;
         startGameBtn.innerHTML = `<i class="fas fa-play"></i> بدء اللعب (${playerCount} لاعب)`;
@@ -343,9 +343,9 @@ function updateLobbyUI() {
     // 3. عرض قائمة اللاعبين (المعدل)
     playersContainer.innerHTML = '';
     roomData.players.forEach(uid => {
-        // 🚨 استخدام الاسم من allUsersData
+        // 🚨 استخدام الاسم من allUsersData (التي تم جلبها من سجل المستخدم)
         const playerDetails = allUsersData[uid];
-        const name = playerDetails ? playerDetails.displayName : roomData.playerNames[uid] || `لاعب مجهول#${uid.substring(0, 4)}`;
+        const name = playerDetails ? playerDetails.displayName : `جاري التحميل...#${uid.substring(0, 4)}`;
         
         const isPlayerHost = (uid === roomData.hostUID);
         const isCurrentPlayer = (uid === currentUID);
@@ -355,14 +355,14 @@ function updateLobbyUI() {
         
         let kickButtonHTML = '';
         if (isHost && !isCurrentPlayer) {
-            // 🚨 تمرير اسم اللاعب أيضاً إلى دالة الطرد (للتأكيد)
+            // تمرير اسم اللاعب أيضاً إلى دالة الطرد (للتأكيد)
             kickButtonHTML = `<button class="kick-btn" onclick="kickPlayer('${uid}', '${name}')"><i class="fas fa-user-times"></i> طرد/حظر</button>`;
         }
         
         let statusIcon = isPlayerHost ? '<i class="fas fa-crown" style="color:#ffd700; margin-left: 5px;"></i>' : '';
         if (isCurrentPlayer && !isPlayerHost) statusIcon = '<i class="fas fa-user" style="color:#34d399; margin-left: 5px;"></i>';
 
-        // 🚨 جديد: جعل الاسم قابلاً للضغط لفتح صفحة الإحصائيات
+        // جعل الاسم قابلاً للضغط لفتح صفحة الإحصائيات
         const nameDisplay = `
             <span class="player-name-link" onclick="openProfileModal('${uid}')">
                 ${statusIcon}${name} ${isPlayerHost ? '(المضيف)' : ''}
@@ -389,7 +389,7 @@ function getCategoryNamesByIds(ids) {
 }
 
 // ----------------------------------------------------
-// 🚨 تحديث دالة طرد اللاعب (مع الحظر من الغرفة)
+// دالة طرد اللاعب (مع الحظر من الغرفة)
 // ----------------------------------------------------
 async function kickPlayer(playerUID, playerName) {
     if (!isHost || !roomData) return;
@@ -400,7 +400,7 @@ async function kickPlayer(playerUID, playerName) {
         try {
             await roomRef.update({
                 players: firebase.firestore.FieldValue.arrayRemove(playerUID),
-                // 🚨 جديد: إضافة اللاعب إلى قائمة المحظورين في هذه الغرفة فقط
+                // إضافة اللاعب إلى قائمة المحظورين في هذه الغرفة فقط
                 bannedPlayers: firebase.firestore.FieldValue.arrayUnion(playerUID),
             });
             alert(`تم طرد اللاعب ${playerName} وحظره من العودة لهذه الغرفة.`);
@@ -450,7 +450,7 @@ async function leaveRoom(event) {
 
 
 /**
- * @function startGame (تبقى كما هي)
+ * @function startGame 
  * @description يبدأ اللعبة بتوزيع الأدوار وتحديث حالة الغرفة.
  */
 async function startGame() {
@@ -491,6 +491,9 @@ async function startGame() {
         });
         console.log("LOG: تم تحديث Firebase بنجاح. حالة اللعبة: playing.");
         
+        // 🚨 هام: استدعاء displayRoleCard مباشرة بعد نجاح التحديث (حل مشكلة "جاري التوزيع" المعلقة)
+        displayRoleCard(); 
+
     } catch (error) {
         console.error("❌ فشل في تحديث Firebase لبدء اللعبة:", error);
         alert("حدث خطأ في حفظ بيانات اللعبة (Firebase).");
@@ -507,8 +510,9 @@ async function startGame() {
 function getAllWordsFromSelectedCategories(selectedIds) {
     if (!selectedIds) return [];
     let combinedWords = [];
+    // يجب دمج القائمتين (free و pro) للعثور على الفئات
     [...wordCategories.free, ...wordCategories.pro].forEach(cat => {
-        if (ids.includes(cat.id)) {
+        if (selectedIds.includes(cat.id)) { // تصحيح: استخدام selectedIds
             combinedWords.push(...cat.words);
         }
     });
@@ -638,15 +642,21 @@ function copyCode() {
 }
 
 // ----------------------------------------------------
-// 🚨 دوال جديدة لفتح ملف التعريف وإرسال الهدية
+// 🚨 دوال لفتح ملف التعريف وإرسال الهدية (حل مشكلة الإحصائيات والهدايا)
 // ----------------------------------------------------
 
 function openProfileModal(playerUID) {
     const playerDetails = allUsersData[playerUID];
     const modalContent = document.getElementById('modal-profile-content');
     
-    if (!playerDetails) {
-        modalContent.innerHTML = `<p style="color:#ff4f4f;">⚠️ جاري تحميل بيانات اللاعب أو لم يتم العثور عليها.</p>`;
+    // فحص إذا كانت البيانات غير موجودة أو قيد التحميل
+    if (!playerDetails || !playerDetails.displayName || !playerDetails.publicUid) {
+        modalContent.innerHTML = `
+            <p style="color:#ff4f4f; text-align: center;">
+                <i class="fas fa-spinner fa-spin"></i>
+                ⚠️ جاري تحميل بيانات اللاعب أو لم يتم العثور عليها.
+            </p>
+        `;
         document.getElementById('profile-modal').style.display = 'block';
         return;
     }
@@ -654,14 +664,14 @@ function openProfileModal(playerUID) {
     // بناء محتوى Modal
     modalContent.innerHTML = `
         <h4 style="color:#f1f5f9;">${playerDetails.displayName}</h4>
-        <p style="color:#94a3b8; font-size: 0.9rem;">المعرّف: ${playerDetails.publicUid}</p>
+        <p style="color:#94a3b8; font-size: 0.9rem;">المعرّف العام: ${playerDetails.publicUid}</p>
         <hr style="border-color: #334155;">
         
-        <p><strong>المستوى:</strong> ${playerDetails.level}</p>
+        <p><strong>المستوى:</strong> <span style="color:#ffd700;">${playerDetails.level}</span></p>
         <p><strong>الألعاب الملعوبة:</strong> ${playerDetails.gamesPlayed}</p>
-        <p><strong>انتصارات كمحتال:</strong> ${playerDetails.impostorWins}</p>
+        <p><strong>انتصارات كمحتال:</strong> <span style="color:#ff4f4f;">${playerDetails.impostorWins}</span></p>
         
-        <button onclick="sendGiftToPlayer('${playerUID}', '${playerDetails.displayName}')" style="background-color: #ffd700; color: #0f172a; border:none; padding: 10px 20px; border-radius: 8px; margin-top: 20px; font-weight: 700;">
+        <button class="gift-btn" onclick="sendGiftToPlayer('${playerUID}', '${playerDetails.displayName}')">
             <i class="fas fa-gift"></i> إرسال هدية
         </button>
     `;
@@ -674,10 +684,11 @@ function sendGiftToPlayer(receiverUID, receiverName) {
     document.getElementById('profile-modal').style.display = 'none';
     
     if (confirm(`هل تريد الانتقال لصفحة الهدايا لإرسال هدية إلى ${receiverName}؟`)) {
-        // يمكنك تخزين UID في localStorage أو تمريره في URL
+        // تخزين UID والاسم في localStorage لتستخدمهما صفحة الهدايا (gifts.html)
         localStorage.setItem('giftReceiverUID', receiverUID);
         localStorage.setItem('giftReceiverName', receiverName);
-        // 🚨 يجب أن تكون صفحة الهدايا (gifts.html) جاهزة لاستقبال هذه البيانات
+        
+        // الانتقال لصفحة الهدايا
         window.location.href = 'gifts.html'; 
     }
 }
@@ -685,3 +696,4 @@ function sendGiftToPlayer(receiverUID, receiverName) {
 </script>
 </body>
 </html>
+
