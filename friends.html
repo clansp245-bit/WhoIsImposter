@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -15,93 +14,244 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
+/* (أضف تنسيقات CSS الجديدة هنا، بما في ذلك الأنماط لـ #purchase-animation-overlay) */
 body { font-family: 'Cairo', sans-serif; background:#0f172a; color:#f1f5f9; padding:20px; min-height:100vh; text-align:center; }
 h2 { color:#34d399; margin-bottom:20px; font-size:2rem; }
 .card { background:#1e293b; border-radius:12px; padding:20px; max-width:500px; margin:15px auto; text-align:right; }
 input, select { width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:10px; background:#334155; color:white; }
 button { padding:10px; width:100%; border:none; border-radius:8px; font-weight:700; cursor:pointer; margin-top:10px; }
 .send-btn { background:#34d399; color:white; }
-.send-btn:hover { background:#10b981; }
-.gift-card { display:flex; justify-content:space-between; align-items:center; padding:12px 15px; margin-bottom:10px; border-radius:8px; border:1px solid #334155; cursor:pointer; transition:all 0.2s; }
-.gift-card.selected { background-color:#6366f1; border-color:#4f46e5; box-shadow:0 0 10px rgba(99,102,241,0.5); }
-.gift-name { font-weight:700; }
-.gift-cost { font-size:0.85rem; color:#94a3b8; }
+.send-btn:hover:enabled { background:#10b981; }
+
+/* التنسيقات المضافة/المحدثة */
+#coins-header { position: absolute; top: 20px; right: 20px; font-size: 1.2rem; color: #ffd700; font-weight: 700; }
+#self-gift-btn { width: auto; padding: 10px 15px; background: #3b82f6; color: white; margin-bottom: 10px; }
+#self-gift-btn:hover { background: #2563eb; }
+
+/* بطاقة الهدية الجديدة مع الكمية */
+.gift-item { display: flex; align-items: center; background: #334155; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
+.gift-info { flex-grow: 1; text-align: right; margin-right: 10px; }
+.gift-info .gift-cost { color: #34d399; font-weight: 700; }
+.gift-info .gift-rarity { font-size: 0.75rem; color: #94a3b8; }
+.gift-info .gift-rarity.عادي { color: #94a3b8; }
+.gift-info .gift-rarity.غالي { color: #facc15; }
+.gift-info .gift-rarity.أسطوري { color: #ef4444; }
+
+.quantity-controls { display: flex; align-items: center; }
+.quantity-controls button { width: 30px; height: 30px; margin: 0 5px; padding: 0; background: #475569; font-size: 1.2rem; }
+.quantity-display { width: 40px; text-align: center; font-weight: 700; }
+
+/* سلة التسوق */
+#cart-summary { background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #475569; margin-top: 15px; }
+#total-cost-display { font-size: 1.2rem; color: #facc15; font-weight: 700; }
+.send-btn:disabled { background: #475569; cursor: not-allowed; }
+
+/* -------------------- أنيميشن الهدايا (Animation Overlay) -------------------- */
+#purchase-animation-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+.animation-box {
+    width: 300px;
+    height: 300px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 3rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    animation: fadeIn 0.5s;
+}
+
+/* Common particle animation */
+@keyframes confetti-fall {
+    0% { transform: translateY(-100%) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100%) rotate(720deg); opacity: 0; }
+}
+
+.animation-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* تأثير عادي - لمعان خفيف */
+.animation-box.عادي {
+    background: #1e293b;
+    border: 2px solid #94a3b8;
+}
+
+/* تأثير غالي - حدود ذهبية متوهجة */
+.animation-box.غالي {
+    background: #1e293b;
+    border: 3px solid #facc15;
+    box-shadow: 0 0 20px #facc15;
+}
+
+/* تأثير أسطوري - حدود حمراء مع جزيئات متساقطة */
+.animation-box.أسطوري {
+    background: #1e293b;
+    border: 4px solid #ef4444;
+    box-shadow: 0 0 30px #ef4444;
+}
+.animation-box.أسطوري::before {
+    /* تأثير الجزيئات المتساقطة */
+    content: '✨🔥🌟🎉'; /* يمكن تغيير الأحرف أو استخدام صورة */
+    font-size: 20px;
+    white-space: pre;
+    opacity: 0.8;
+    animation: confetti-fall 3s linear infinite;
+    animation-delay: 0s, 0.5s, 1s, 1.5s;
+    height: 100%;
+    width: 100%;
+    top: -100%;
+    left: 0;
+    position: absolute;
+    transform: translateY(0);
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* التنبيهات */
 .alert { color:#ffcc00; font-size:0.9rem; margin-top:10px; }
 </style>
 </head>
 
 <body onload="initGiftPage()">
 
-<h2>🎁 أرسل هدايا للاعب</h2>
+<div id="coins-header">
+    <i class="fas fa-coins"></i> <span id="user-coins">0</span>
+</div>
+
+<h2>🎁 متجر الهدايا</h2>
 
 <div class="card">
-    <label>ابحث عن لاعب:</label>
+    <button id="self-gift-btn" onclick="selectSelf()">
+        <i class="fas fa-gift"></i> أرسل لنفسي
+    </button>
+    
+    <label>ابحث عن مستلم:</label>
     <input type="text" id="player-search" placeholder="أدخل اسم العرض">
-    <div id="search-results"><p class="alert">أدخل 3 أحرف على الأقل للبحث</p></div>
+    <div id="search-results"><p class="alert">اختر لنفسك أو ابدأ البحث عن لاعب آخر</p></div>
+    <p class="alert" id="recipient-alert">المستلم: (لم يتم الاختيار)</p>
 </div>
 
 <div class="card">
-    <h3>اختر الهدايا:</h3>
+    <h3>اختر الهدايا والكمية:</h3>
     <div id="gifts-container"></div>
-    <button class="send-btn" id="send-gift-btn" disabled>إرسال الهدايا المحددة</button>
-    <p class="alert" id="gift-alert"></p>
+    
+    <div id="cart-summary">
+        <p>إجمالي XP للمستلم: <span id="total-xp-display">0</span> XP</p>
+        <p>التكلفة الإجمالية: <span id="total-cost-display">0</span> Coins</p>
+    </div>
+
+    <button class="send-btn" id="send-gift-btn" disabled onclick="sendGifts()">إرسال الهدايا <i class="fas fa-paper-plane"></i></button>
 </div>
 
 <div class="card">
-    <h3>رصيدك الحالي:</h3>
-    <p>Coins: <span id="user-coins">0</span> | XP: <span id="user-xp">0</span> | المستوى: <span id="user-level">1</span></p>
+    <h3>بياناتي الحالية:</h3>
+    <p>XP: <span id="user-xp">0</span> | المستوى: <span id="user-level">1</span></p>
+</div>
+
+<div id="purchase-animation-overlay">
+    <div class="animation-box">
+        <i id="animation-icon" class="fas fa-gift"></i>
+        <div id="animation-text" style="font-size: 1.5rem; margin-top: 15px;">تم الشراء!</div>
+    </div>
 </div>
 
 <script>
 let currentUserData = {};
-let selectedPlayerId = null;
-let selectedGifts = [];
+let selectedPlayer = { uid: null, displayName: null }; // يخزن UID والاسم
+let giftCart = {}; // { giftIndex: quantity }
+let currentUserId = null;
 
 // -------------------- الهدايا --------------------
 const gifts = [
-    {name:"وردة", cost:50, xp:10, type:"عادي"},
-    {name:"قلم ذهبي", cost:200, xp:50, type:"غالي"},
-    {name:"سيارة سباق", cost:1500, xp:450, type:"أسطوري"},
-    {name:"طائرة خاصة", cost:5000, xp:1200, type:"أسطوري"},
-    {name:"يخت فاخر", cost:3000, xp:800, type:"غالي"},
-    {name:"مجوهرات", cost:8000, xp:2000, type:"أسطوري"},
-    {name:"كتاب سحري", cost:100, xp:20, type:"عادي"},
-    {name:"تاج ملكي", cost:10000, xp:2500, type:"أسطوري"}
+    {name:"وردة", cost:50, xp:10, rarity:"عادي", icon:"🌹"},
+    {name:"قلم ذهبي", cost:200, xp:50, rarity:"غالي", icon:"🖋️"},
+    {name:"سيارة سباق", cost:1500, xp:450, rarity:"أسطوري", icon:"🏎️"},
+    {name:"طائرة خاصة", cost:5000, xp:1200, rarity:"أسطوري", icon:"✈️"},
+    {name:"يخت فاخر", cost:3000, xp:800, rarity:"غالي", icon:"🛥️"},
+    {name:"مجوهرات", cost:8000, xp:2000, rarity:"أسطوري", icon:"💎"},
+    {name:"كتاب سحري", cost:100, xp:20, rarity:"عادي", icon:"📖"},
+    {name:"تاج ملكي", cost:10000, xp:2500, rarity:"أسطوري", icon:"👑"}
 ];
+
+// -------------------- الإدارة والعرض --------------------
+
+function calculateCartTotals() {
+    let totalCost = 0;
+    let totalXP = 0;
+    
+    for (const index in giftCart) {
+        const quantity = giftCart[index];
+        const gift = gifts[index];
+        totalCost += gift.cost * quantity;
+        totalXP += gift.xp * quantity;
+    }
+    
+    document.getElementById("total-cost-display").innerText = totalCost;
+    document.getElementById("total-xp-display").innerText = totalXP;
+    
+    // تمكين/تعطيل زر الإرسال
+    document.getElementById("send-gift-btn").disabled = 
+        totalCost === 0 || !selectedPlayer.uid || (currentUserData.totalCoins || 0) < totalCost;
+}
+
+function updateGiftQuantity(index, change) {
+    const currentQuantity = giftCart[index] || 0;
+    let newQuantity = currentQuantity + change;
+    
+    if (newQuantity < 0) newQuantity = 0;
+    
+    if (newQuantity === 0) {
+        delete giftCart[index];
+    } else {
+        giftCart[index] = newQuantity;
+    }
+    
+    // تحديث عرض الكمية
+    document.querySelector(`.gift-item[data-index='${index}'] .quantity-display`).innerText = newQuantity;
+    
+    calculateCartTotals();
+}
 
 function populateGifts() {
     const container = document.getElementById("gifts-container");
+    container.innerHTML = '';
     gifts.forEach((g, i) => {
         const div = document.createElement("div");
-        div.className = "gift-card";
+        div.className = "gift-item";
         div.setAttribute("data-index", i);
-        div.onclick = () => toggleGift(i);
-        div.innerHTML = `<div class="gift-name">${g.name}</div><div class="gift-cost">${g.cost} Coins | ${g.type}</div>`;
+        div.innerHTML = `
+            <div class="gift-info">
+                <div class="gift-name">${g.icon} ${g.name}</div>
+                <div class="gift-cost">${g.cost} Coins | <span class="gift-rarity ${g.rarity}">${g.rarity}</span></div>
+            </div>
+            <div class="quantity-controls">
+                <button onclick="updateGiftQuantity(${i}, 1)"><i class="fas fa-plus"></i></button>
+                <span class="quantity-display">0</span>
+                <button onclick="updateGiftQuantity(${i}, -1)"><i class="fas fa-minus"></i></button>
+            </div>
+        `;
         container.appendChild(div);
-    });
-}
-
-function toggleGift(index) {
-    const div = document.querySelector(`.gift-card[data-index='${index}']`);
-    if (selectedGifts.includes(index)) {
-        selectedGifts = selectedGifts.filter(i => i!==index);
-        div.classList.remove("selected");
-    } else {
-        selectedGifts.push(index);
-        div.classList.add("selected");
-    }
-    document.getElementById("send-gift-btn").disabled = selectedGifts.length === 0 || !selectedPlayerId;
-}
-
-// -------------------- INIT --------------------
-async function initGiftPage() {
-    populateGifts();
-    firebase.auth().onAuthStateChanged(async user => {
-        if(!user) return window.location.href="auth.html";
-        const data = await loadUserData(); // من auth.js
-        if(data) currentUserData = data;
-        updateUserDisplay();
-        setupSearch();
     });
 }
 
@@ -111,6 +261,43 @@ function updateUserDisplay() {
     document.getElementById("user-level").innerText = currentUserData.level || 1;
 }
 
+function updateRecipientDisplay() {
+    const alertElement = document.getElementById("recipient-alert");
+    if (selectedPlayer.displayName) {
+        alertElement.innerText = `المستلم الحالي: ${selectedPlayer.displayName}`;
+        alertElement.style.color = selectedPlayer.uid === currentUserId ? '#3b82f6' : '#34d399';
+    } else {
+        alertElement.innerText = `المستلم: (لم يتم الاختيار)`;
+        alertElement.style.color = '#ffcc00';
+    }
+    calculateCartTotals();
+}
+
+function selectSelf() {
+    selectedPlayer.uid = currentUserId;
+    selectedPlayer.displayName = firebase.auth().currentUser.displayName || firebase.auth().currentUser.email.split('@')[0];
+    document.getElementById("player-search").value = ''; // مسح البحث
+    document.getElementById("search-results").innerHTML = '<p class="alert">اخترت إرسال الهدايا لنفسك.</p>';
+    updateRecipientDisplay();
+}
+
+// -------------------- INIT --------------------
+async function initGiftPage() {
+    populateGifts();
+    firebase.auth().onAuthStateChanged(async user => {
+        if(!user) return window.location.href="auth.html";
+        currentUserId = user.uid; 
+        
+        const data = await loadUserData(); // من auth.js
+        if(data) currentUserData = data;
+        
+        updateUserDisplay();
+        setupSearch();
+        selectSelf(); // 🚨 اختيار النفس كخيار افتراضي
+    });
+}
+
+
 // -------------------- SEARCH --------------------
 function setupSearch() {
     const input = document.getElementById("player-search");
@@ -118,56 +305,171 @@ function setupSearch() {
         const q = input.value.trim();
         const resultsDiv = document.getElementById("search-results");
         resultsDiv.innerHTML = '<p class="alert">جاري البحث...</p>';
-        if (q.length < 3) { resultsDiv.innerHTML = '<p class="alert">أدخل 3 أحرف على الأقل للبحث</p>'; return; }
+        
+        if (q.length < 3) { 
+            resultsDiv.innerHTML = '<p class="alert">أدخل 3 أحرف للبحث، أو اضغط "أرسل لنفسي"</p>'; 
+            return; 
+        }
+        
         const res = await searchUsersByDisplayName(q); // من auth.js
         resultsDiv.innerHTML = "";
-        if(!res.length) { resultsDiv.innerHTML = "<p class='alert'>لا توجد نتائج</p>"; return; }
+        
+        if(!res.length) { 
+            resultsDiv.innerHTML = "<p class='alert'>لا توجد نتائج</p>"; 
+            return; 
+        }
+        
         res.forEach(u=>{
+            // استبعاد المستخدم الحالي من نتائج البحث العادية
+            if (u.uid === currentUserId) return; 
+            
             const div = document.createElement("div");
-            div.className = "gift-card";
-            div.innerHTML = `<div class="gift-name">${u.displayName}</div>`;
-            div.onclick = () => { selectedPlayerId = u.uid; document.getElementById("send-gift-btn").disabled = selectedGifts.length === 0; document.getElementById("gift-alert").innerText="تم اختيار اللاعب!"; };
+            div.className = "gift-item"; // استخدام نفس التنسيق لسهولة الاختيار
+            div.innerHTML = `<div class="gift-info"><div class="gift-name">${u.displayName}</div></div>`;
+            div.onclick = () => { 
+                selectedPlayer.uid = u.uid; 
+                selectedPlayer.displayName = u.displayName; 
+                updateRecipientDisplay();
+                resultsDiv.innerHTML = ''; // إخفاء النتائج بعد الاختيار
+            };
             resultsDiv.appendChild(div);
         });
+        
+        if(resultsDiv.innerHTML === "") {
+             resultsDiv.innerHTML = "<p class='alert'>لا توجد نتائج</p>"; 
+        }
     });
 }
 
+// -------------------- ANIMATION --------------------
+function showPurchaseAnimation(rarity) {
+    const overlay = document.getElementById("purchase-animation-overlay");
+    const box = overlay.querySelector(".animation-box");
+    const icon = document.getElementById("animation-icon");
+    const text = document.getElementById("animation-text");
+
+    // تحديد الأيقونة والنص واللون بناءً على الندرة
+    let displayIcon = "🎁";
+    let displayText = "تم الشراء بنجاح!";
+    
+    switch (rarity) {
+        case "غالي":
+            displayIcon = "🌟";
+            displayText = "شراء رائع! تم الإرسال.";
+            break;
+        case "أسطوري":
+            displayIcon = "✨";
+            displayText = "صفقة أسطورية! تهانينا.";
+            break;
+    }
+    
+    box.className = `animation-box ${rarity}`;
+    icon.innerHTML = displayIcon;
+    text.innerText = displayText;
+
+    overlay.style.display = 'flex';
+    setTimeout(() => {
+        overlay.style.display = 'none';
+    }, 2500); // عرض الأنيميشن لمدة 2.5 ثانية
+}
+
 // -------------------- SEND GIFTS --------------------
-document.getElementById("send-gift-btn").addEventListener("click", async () => {
-    if(!selectedPlayerId || selectedGifts.length===0) return;
-    let totalCost = selectedGifts.reduce((sum,i)=>sum+gifts[i].cost,0);
-    if((currentUserData.totalCoins||0)<totalCost){document.getElementById("gift-alert").innerText="ليس لديك رصيد كافي!"; return;}
+async function sendGifts() {
+    if(!selectedPlayer.uid || Object.keys(giftCart).length === 0) return;
+    
+    let totalCost = calculateCartTotalsFromCart();
+    let totalXP = calculateTotalXPFromCart();
+    let highestRarity = "عادي"; // لتحديد الأنيميشن
+
+    if((currentUserData.totalCoins || 0) < totalCost) {
+        alert("ليس لديك رصيد كافي!");
+        return;
+    }
+    
+    // تحديد أعلى ندرة
+    for (const index in giftCart) {
+        const giftRarity = gifts[index].rarity;
+        if (giftRarity === "أسطوري") {
+            highestRarity = "أسطوري";
+            break; 
+        }
+        if (giftRarity === "غالي") {
+            highestRarity = "غالي";
+        }
+    }
+
+    // تأكيد الشراء
+    if (!confirm(`هل أنت متأكد من إرسال الهدايا لـ ${selectedPlayer.displayName} بتكلفة إجمالية ${totalCost} Coins؟`)) {
+        return;
+    }
 
     try {
         const user = firebase.auth().currentUser;
         const senderRef = firebase.firestore().collection("users").doc(user.uid);
-        const recipientRef = firebase.firestore().collection("users").doc(selectedPlayerId);
+        const recipientRef = firebase.firestore().collection("users").doc(selectedPlayer.uid);
 
-        await firebase.firestore().runTransaction(async tx=>{
+        await firebase.firestore().runTransaction(async tx => {
             const senderDoc = await tx.get(senderRef);
             const recipientDoc = await tx.get(recipientRef);
-            if(!senderDoc.exists || !recipientDoc.exists) throw "المستخدم المرسل أو المستلم غير موجود";
+            if (!senderDoc.exists || !recipientDoc.exists) throw "المستخدم المرسل أو المستلم غير موجود";
 
             const senderCoins = senderDoc.data().totalCoins || 0;
-            if(senderCoins<totalCost) throw "لا يوجد رصيد كافي";
+            if (senderCoins < totalCost) throw "لا يوجد رصيد كافي";
 
             const recipientXP = recipientDoc.data().xp || 0;
-            const totalXP = selectedGifts.reduce((sum,i)=>sum+gifts[i].xp,0);
+            const recipientLevel = recipientDoc.data().level || 1;
+            
+            // 1. خصم الكوينز من المرسل
+            tx.update(senderRef, { totalCoins: senderCoins - totalCost });
+            
+            // 2. إضافة XP للمستلم
+            let newXP = recipientXP + totalXP;
+            let newLevel = recipientLevel;
 
-            tx.update(senderRef,{totalCoins: senderCoins-totalCost});
-            tx.update(recipientRef,{xp: recipientXP+totalXP});
+            // 🚨 تحديث: يجب أن يتم التحقق من رفع المستوى عبر دالة checkAndLevelUp في auth.js
+            // (بما أننا داخل Transaction، لا يمكننا استدعاء الدوال الخارجية المعقدة التي تتطلب تحديث قاعدة البيانات)
+            // لحل هذه المشكلة بأفضل طريقة:
+            // سنضيف فقط XP الآن، ونعتمد على أن المستلم سيقوم بتشغيل دالة checkAndLevelUp في المرة القادمة التي يفتح فيها صفحته الرئيسية.
+            // أو... نستخدم دالة لحساب المستوى محلياً ونرسلها
+            
+            tx.update(recipientRef, { xp: newXP });
         });
 
+        // 3. تحديث الواجهة والبيانات المحلية
         currentUserData.totalCoins -= totalCost;
         updateUserDisplay();
-        document.getElementById("gift-alert").innerText=`تم إرسال ${selectedGifts.length} هدية بنجاح! (+${selectedGifts.reduce((sum,i)=>sum+gifts[i].xp,0)} XP للمستلم)`;
-        selectedGifts=[]; document.querySelectorAll(".gift-card.selected").forEach(c=>c.classList.remove("selected"));
-        document.getElementById("send-gift-btn").disabled = true;
-    } catch(e){
-        console.error(e);
-        document.getElementById("gift-alert").innerText="حدث خطأ أثناء إرسال الهدايا.";
+        
+        // 4. عرض الأنيميشن
+        showPurchaseAnimation(highestRarity);
+
+        // 5. مسح السلة
+        alert(`🎉 تم إرسال الهدايا بنجاح إلى ${selectedPlayer.displayName}! (بمجموع +${totalXP} XP للمستلم)`);
+        giftCart = {}; 
+        populateGifts(); // لإعادة تعيين الكميات المرئية إلى 0
+        calculateCartTotals();
+        
+    } catch(e) {
+        console.error("خطأ أثناء إرسال الهدايا:", e);
+        alert(`فشل الإرسال. السبب: ${e.message || e}`);
     }
-});
+}
+
+// دوال مساعدة لـ sendGifts
+function calculateCartTotalsFromCart() {
+    let totalCost = 0;
+    for (const index in giftCart) {
+        totalCost += gifts[index].cost * giftCart[index];
+    }
+    return totalCost;
+}
+
+function calculateTotalXPFromCart() {
+    let totalXP = 0;
+    for (const index in giftCart) {
+        totalXP += gifts[index].xp * giftCart[index];
+    }
+    return totalXP;
+}
 </script>
 </body>
 </html>
