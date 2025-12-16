@@ -224,6 +224,7 @@ function startRoomListener(code) {
         roomData = doc.data();
         isHost = (roomData.hostUID === currentUID);
         
+        // فحص الحظر
         const bannedPlayers = roomData.bannedPlayers || [];
         if (bannedPlayers.includes(currentUID)) {
              alert("لقد تم حظرك من الدخول إلى هذه الغرفة من قِبل المضيف.");
@@ -260,15 +261,14 @@ function startRoomListener(code) {
 }
 
 // ----------------------------------------------------
-// 🚨 دالة جلب بيانات المستخدمين (تم تصحيح اسم الحقل)
+// 🚨 دالة جلب بيانات المستخدمين (بمرونة أكبر في قراءة اسم اللاعب)
 // ----------------------------------------------------
 
 async function fetchAllPlayerDetails(playerUIDs) {
-    if (isFetchingDetails) return; // منع الجلب المتعدد
+    if (isFetchingDetails) return;
     isFetchingDetails = true;
     const db = firebase.firestore();
     
-    // فلترة اللاعبين الذين لم يتم جلب بياناتهم بعد أو بياناتهم غير كاملة
     const usersToFetch = playerUIDs.filter(uid => !allUsersData[uid] || !allUsersData[uid].displayName || allUsersData[uid].isStale);
 
     if (usersToFetch.length === 0) {
@@ -278,24 +278,24 @@ async function fetchAllPlayerDetails(playerUIDs) {
 
     try {
         const userRefs = usersToFetch.map(uid => db.collection('users').doc(uid));
-        // استخدام db.getAll() لجلب المستندات دفعة واحدة
         const docs = await db.getAll(...userRefs);
         
         docs.forEach(doc => {
             const uid = doc.id;
             if (doc.exists) {
                 const data = doc.data();
+                // محاولة القراءة من حقول متعددة: displayName, username, name, PlayerName
+                const playerName = data.displayName || data.username || data.name || data.PlayerName || `لاعب#${uid.substring(0, 4)}`;
+
                 allUsersData[uid] = {
-                    // ✔️ تم التصحيح لاستخدام 'displayName' بدلاً من 'playerName'
-                    displayName: data.displayName || `لاعب#${uid.substring(0, 4)}`, 
+                    displayName: playerName, 
                     publicUid: data.publicUid || uid.substring(0, 8),
                     level: data.level || 1, 
                     gamesPlayed: data.gamesPlayed || 0,
                     impostorWins: data.impostorWins || 0,
-                    isStale: false // تم التحديث بنجاح
+                    isStale: false 
                 };
             } else {
-                // إذا لم يتم العثور على سجل المستخدم في Firestore
                 allUsersData[uid] = { 
                     displayName: `لاعب مفقود#${uid.substring(0, 4)}`,
                     publicUid: uid.substring(0, 8),
@@ -369,7 +369,7 @@ function updateLobbyUI() {
         
         let actionsHTML = '';
         if (isHost && !isCurrentPlayer) {
-            // تحكم المضيف: الطرد فقط
+            // تحكم المضيف: الطرد والحظر الدائم لهذه الغرفة
             actionsHTML = `<button class="kick-btn" onclick="kickPlayer('${uid}', '${name}')"><i class="fas fa-user-times"></i> طرد/حظر</button>`;
         }
 
@@ -440,7 +440,7 @@ async function startGame() {
 
 
 // ----------------------------------------------------
-// دوال عرض الملف الشخصي وإرسال الهدية (حل مشكلة الإحصائيات)
+// دوال عرض الملف الشخصي وإرسال الهدية 
 // ----------------------------------------------------
 
 function openProfileModal(playerUID) {
@@ -493,12 +493,13 @@ function sendGiftToPlayer(receiverUID, receiverName) {
 }
 
 // ----------------------------------------------------
-// (بقية الدوال المساعدة)
+// دوال المساعدة
 // ----------------------------------------------------
 
 async function kickPlayer(playerUID, playerName) {
     if (!isHost || !roomData) return;
     
+    // ⚠️ تنبيه: هذه الدالة تحظر اللاعب من الانضمام لهذه الغرفة مجدداً (حظر دائم)
     if (confirm(`هل أنت متأكد من طرد اللاعب: ${playerName}؟ سيتم طرده وحظره من الانضمام لهذه الغرفة مجدداً.`)) {
         const roomRef = db.collection('rooms').doc(roomCode);
         
@@ -686,3 +687,4 @@ function copyCode() {
 </script>
 </body>
 </html>
+
