@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -13,7 +12,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
-/* نفس التنسيقات السابقة */
+/* التنسيقات العامة */
 #home-icon { position: absolute; top: 20px; left: 20px; font-size: 24px; color: #94a3b8; cursor: pointer; transition: color 0.3s; }
 #home-icon:hover { color: #ff4f4f; }
 body { font-family: 'Cairo', sans-serif; background-color: #0f172a; color: #f1f5f9; text-align: center; padding: 20px; min-height: 100vh; margin: 0; display: flex; flex-direction: column; align-items: center; }
@@ -23,21 +22,93 @@ h2 { font-size: 2rem; font-weight: 700; margin-bottom: 10px; color: #34d399; }
 #room-code-value { font-size: 1.8rem; font-weight: 700; letter-spacing: 3px; text-shadow: 0 0 5px rgba(255, 215, 0, 0.5); }
 #copy-btn { background: none; border: none; color: #34d399; font-size: 1.2rem; cursor: pointer; transition: color 0.2s; }
 .players-list { margin-top: 20px; }
-.player-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; margin-bottom: 8px; background-color: #334155; border-radius: 8px; font-weight: 700; border-left: 5px solid transparent; }
+.player-item { 
+    display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; 
+    margin-bottom: 8px; background-color: #334155; border-radius: 8px; font-weight: 700; 
+    border-left: 5px solid transparent; 
+    transition: all 0.3s; /* إضافة انتقال لتمييز الدخول */
+    position: relative;
+}
 .player-item.host { border-left-color: #6366f1; }
+
+/* 🌟 تمييز العضوية الاحترافية والمدير (الإصلاح 4 و 5) */
+.player-item.pro-member { border-left-color: #ffd700; }
+.player-item.super-host::before {
+    content: "👑 DEV";
+    position: absolute;
+    top: -10px;
+    right: 10px;
+    background-color: #ff4f4f;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    animation: pulse 1.5s infinite;
+}
+
+/* تأثير الدخول/التمييز */
+.player-item.new-join {
+    animation: join-pulse 1s ease-out;
+}
+@keyframes join-pulse {
+    0% { transform: scale(0.95); opacity: 0.5; }
+    50% { transform: scale(1.01); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(255, 79, 79, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 79, 79, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 79, 79, 0); }
+}
+
 .kick-btn { background-color: #ff4f4f; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: background-color 0.2s; margin-left: 5px; }
 .kick-btn:hover { background-color: #e53e3e; }
 #start-game-btn { margin-top: 25px; padding: 15px 30px; font-size: 20px; font-weight: 700; background-color: #34d399; color: #0f172a; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.3s; width: 100%; }
 #start-game-btn:disabled { background-color: #4b5563; cursor: not-allowed; color: #94a3b8; }
-#role-card { background-color: #1e293b; padding: 40px; border-radius: 15px; box-shadow: 0 0 20px rgba(52, 211, 153, 0.4); margin-top: 30px; text-align: center; border: 3px solid #34d399; }
-#role-title { font-size: 2.5rem; color: #ffd700; margin-bottom: 10px; }
-#role-word { font-size: 1.8rem; color: #f1f5f9; font-weight: 700; margin-bottom: 20px; }
-#role-instructions { color: #94a3b8; font-size: 1rem; }
+.words-settings-summary { text-align: right; border-top: 1px solid #334155; padding-top: 15px; margin-top: 15px; }
+
+/* 🃏 تحسين تصميم البطاقة (الإصلاح 3) */
+#role-display-card {
+    background-color: #1e293b;
+    padding: 20px;
+    border-radius: 15px;
+    margin-top: 30px;
+    text-align: center;
+    border: 3px solid #34d399;
+}
+#role-card { 
+    background: linear-gradient(145deg, #0f172a, #1e293b);
+    padding: 30px 20px;
+    border-radius: 12px;
+    box-shadow: 0 0 25px rgba(52, 211, 153, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.1);
+    border: 1px solid #34d399;
+    margin-top: 20px;
+}
+#role-title { 
+    font-size: 2.8rem; 
+    font-weight: 900;
+    color: #ffd700; 
+    margin-bottom: 10px;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+}
+#role-word { 
+    font-size: 2.2rem; 
+    color: #f1f5f9; 
+    font-weight: 700; 
+    padding: 10px 0;
+    border-top: 1px dashed #334155;
+    border-bottom: 1px dashed #334155;
+    margin: 20px 0;
+}
+#role-instructions { color: #94a3b8; font-size: 1.1rem; }
 #status-message { margin-top: 20px; color: #ffcc00; font-weight: 700; }
 .player-name-link { cursor: pointer; transition: color 0.2s; }
 .player-name-link:hover { color: #ffd700; }
-.modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); }
-.modal-content { background-color: #1e293b; margin: 10% auto; padding: 20px; border: 1px solid #334155; width: 80%; max-width: 400px; border-radius: 12px; text-align: right; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+/* تصميم المودال */
+.modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7); animation: fadeIn 0.3s; }
+.modal-content { background-color: #1e293b; margin: 10% auto; padding: 30px; border: 1px solid #334155; width: 80%; max-width: 400px; border-radius: 12px; text-align: right; box-shadow: 0 8px 25px rgba(0,0,0,0.7); animation: slideIn 0.3s; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 .close-btn { color: #aaa; float: left; font-size: 28px; font-weight: bold; }
 .close-btn:hover, .close-btn:focus { color: #ff4f4f; text-decoration: none; cursor: pointer; }
 .gift-btn { background-color: #ffd700; color: #0f172a; border:none; padding: 10px 20px; border-radius: 8px; margin-top: 20px; font-weight: 700; cursor: pointer; transition: background-color 0.2s; }
@@ -61,8 +132,14 @@ h2 { font-size: 2rem; font-weight: 700; margin-bottom: 10px; color: #34d399; }
     
     <div id="status-message">جاري انتظار اللاعبين...</div>
 
-    <div class="words-settings-summary" style="color:#94a3b8; font-size:0.9rem; text-align: center; margin-bottom: 15px;">
-        <i class="fas fa-cog"></i> الإعدادات: <span id="settings-summary">---</span>
+    <div class="words-settings-summary">
+        <div style="font-size:1.1rem; color:#f1f5f9; font-weight: 700; margin-bottom: 8px;">
+            <i class="fas fa-cog"></i> إعدادات اللعبة
+        </div>
+        <div style="color:#94a3b8; font-size:0.95rem; text-align: center;">
+            <p>المحتالون: <span id="impostors-count">---</span></p>
+            <p>أقسام الكلمات: <span id="categories-list">---</span></p>
+        </div>
     </div>
     
     <h3><i class="fas fa-users"></i> قائمة اللاعبين (<span id="player-count">0</span>)</h3>
@@ -81,7 +158,7 @@ h2 { font-size: 2rem; font-weight: 700; margin-bottom: 10px; color: #34d399; }
         <div id="role-instructions">---</div>
     </div>
     <button onclick="hideRoleCard()" style="margin-top: 20px; background-color: #6366f1;">
-        <i class="fas fa-eye-slash"></i> إخفاء البطاقة
+        <i class="fas fa-eye-slash"></i> إخفاء البطاقة والعودة للغرفة
     </button>
 </div>
 
@@ -101,11 +178,13 @@ let isHost = false;
 let listenerUnsubscribe = null;
 let allUsersData = {}; 
 let isFetchingDetails = false;
+let previousPlayers = []; // لتتبع اللاعبين الجدد
+const DEV_UID = 'IMP-VVVC-2JZ7'; // 🎯 الـ UID الخاص بك (الإصلاح 5)
 
 // الثوابت
 const IMPOSTOR_NO_WORD_TAG = 'IMPOSTOR_NO_WORD_TAG_BLANK'; 
 
-// 🎯 قائمة الكلمات والأقسام - تم تزويدها بالكلمات التي طلبتها 🎯
+// 🎯 قائمة الكلمات والأقسام - (كما هي)
 const wordCategories = {
     free: [
         { id: 'objects', name: 'أشياء وأدوات', words: ["قلم", "كوب", "كرسي", "مفتاح", "هاتف", "كتاب", "ساعة", "مصباح", "ملعقة", "حذاء", "حقيبة", "طاولة", "مرآة", "دفتر", "ممحاة", "جدار", "شباك", "باب", "سرير", "وسادة", "غطاء", "جرس", "مظلة", "لوحة", "مروحة", "صندوق", "فرشاة", "مشط", "ممحاة", "مطرقة", "مسمار", "خيط", "إبرة", "خزانة", "حبل", "شريط", "كاميرا", "ماوس", "بطارية", "لمبة", "مقص", "منشفة", "صنبور", "قفل", "سلة", "سلك", "شاحن", "أريكة", "رف"] },
@@ -159,8 +238,6 @@ function startRoomListener(code) {
         roomData = doc.data();
         isHost = (roomData.hostUID === currentUID);
         
-        // 🛑 ملاحظة: تم حذف التحقق من الطرد حتى نصلح مشكلة الانضمام أولاً
-        
         await fetchAllPlayerDetails(roomData.players || []);
 
         if (roomData.status === 'playing') {
@@ -169,6 +246,9 @@ function startRoomListener(code) {
         }
 
         updateLobbyUI();
+        
+        // 🛑 بعد التحديث، قم بتحديث قائمة اللاعبين السابقة
+        previousPlayers = roomData.players || [];
     }, error => {
         console.error("خطأ في الاستماع للغرفة:", error);
     });
@@ -178,7 +258,6 @@ async function fetchAllPlayerDetails(playerUIDs) {
     if (isFetchingDetails || !playerUIDs || playerUIDs.length === 0) return;
     isFetchingDetails = true;
     
-    // جلب فقط من ليس لدينا بياناتهم
     const usersToFetch = playerUIDs.filter(uid => !allUsersData[uid] || !allUsersData[uid].displayName);
 
     if (usersToFetch.length === 0) {
@@ -195,10 +274,14 @@ async function fetchAllPlayerDetails(playerUIDs) {
             if (doc.exists) {
                 const data = doc.data();
                 const playerName = data.displayName || data.username || data.name || `لاعب#${uid.substring(0, 4)}`;
+                
+                // 🎯 إضافة حالة البرو هنا (الإصلاح 4)
+                const isPro = data.proExpiryTime && data.proExpiryTime.seconds > (Date.now() / 1000);
 
                 allUsersData[uid] = {
                     displayName: playerName, 
                     publicUid: data.publicUid || '---',
+                    isPro: isPro,
                     level: data.level || 1, 
                     gamesPlayed: data.gamesPlayed || 0,
                     impostorWins: data.impostorWins || 0
@@ -207,6 +290,7 @@ async function fetchAllPlayerDetails(playerUIDs) {
                 allUsersData[uid] = { 
                     displayName: `مجهول#${uid.substring(0, 4)}`,
                     publicUid: '---',
+                    isPro: false,
                     error: true
                 };
             }
@@ -234,10 +318,27 @@ function updateLobbyUI() {
 
     document.getElementById('player-count').innerText = playerCount;
     
-    // إعدادات
+    // 🎯 تحديث الإعدادات (الإصلاح 1)
     const settings = roomData.settings || {};
-    document.getElementById('settings-summary').innerText = `محتالون: ${settings.impostors || 1}`;
+    const selectedCategoryIDs = settings.selectedCategories || [];
+    const impostorsCount = settings.impostors || 1;
     
+    document.getElementById('impostors-count').innerText = impostorsCount;
+    
+    // تحويل ID الأقسام إلى أسماء قابلة للقراءة
+    let categoryNames = [];
+    const allCategories = [...wordCategories.free, ...wordCategories.pro];
+    
+    selectedCategoryIDs.forEach(id => {
+        const category = allCategories.find(cat => cat.id === id);
+        if (category) {
+            categoryNames.push(category.name);
+        }
+    });
+    
+    document.getElementById('categories-list').innerText = categoryNames.join('، ') || 'لم يتم اختيار أي قسم!';
+
+
     // زر البدء
     if (isHost) {
         startGameBtn.style.display = 'block';
@@ -256,25 +357,41 @@ function updateLobbyUI() {
 
     // القائمة
     playersContainer.innerHTML = '';
+    
+    // تحديد اللاعبين الذين انضموا للتو (لتفعيل الأنميشن)
+    const newJoins = players.filter(uid => !previousPlayers.includes(uid));
+
     players.forEach(uid => {
         const playerDetails = allUsersData[uid];
         const name = playerDetails ? playerDetails.displayName : `جاري التحميل...`;
         
         const isPlayerHost = (uid === roomData.hostUID);
+        const isProMember = playerDetails ? playerDetails.isPro : false;
+        const isDev = (playerDetails && playerDetails.publicUid === DEV_UID); // 🎯 التحقق من الـ UID الخاص بك (الإصلاح 5)
+        
         const div = document.createElement('div');
-        div.className = `player-item ${isPlayerHost ? 'host' : ''}`;
+        
+        let classList = ['player-item'];
+        if (isPlayerHost) classList.push('host');
+        if (isProMember) classList.push('pro-member'); // للإصلاح 4
+        if (isDev) classList.push('super-host'); // للإصلاح 5
+        if (newJoins.includes(uid)) classList.push('new-join'); // أنميشن الدخول
+        
+        div.className = classList.join(' ');
         
         let actionsHTML = '';
         if (isHost && uid !== currentUID) {
             actionsHTML = `<button class="kick-btn" onclick="kickPlayer('${uid}', '${name}')"><i class="fas fa-user-times"></i></button>`;
         }
 
-        const crownIcon = isPlayerHost ? '<i class="fas fa-crown" style="color:#ffd700;"></i> ' : '';
+        const iconHTML = isDev ? '<i class="fas fa-bolt" style="color:#ff4f4f;"></i>' : 
+                         isPlayerHost ? '<i class="fas fa-crown" style="color:#ffd700;"></i>' : 
+                         isProMember ? '<i class="fas fa-star" style="color:#ffd700;"></i>' : '';
         
         div.innerHTML = `
             <div style="display: flex; align-items: center; gap: 8px;">
                 <span class="player-name-link" onclick="openProfileModal('${uid}')">
-                    ${crownIcon} ${name}
+                    ${iconHTML} ${name}
                 </span>
             </div>
             <div>${actionsHTML}</div>
@@ -283,37 +400,91 @@ function updateLobbyUI() {
     });
 }
 
+function getRandomWord(categories) {
+    let allWords = [];
+    const allCategories = [...wordCategories.free, ...wordCategories.pro];
+    
+    categories.forEach(id => {
+        const category = allCategories.find(cat => cat.id === id);
+        if (category) {
+            allWords = allWords.concat(category.words);
+        }
+    });
+    
+    if (allWords.length === 0) return 'كلمة افتراضية'; // احتياطي
+
+    const randomIndex = Math.floor(Math.random() * allWords.length);
+    return allWords[randomIndex];
+}
+
 async function startGame() {
     if (!isHost) return;
     
-    // 🚨 يجب إضافة منطق توزيع الأدوار واختيار الكلمة الصحيح هنا
+    const players = roomData.players;
+    const impostorsCount = roomData.settings.impostors || 1;
+    
+    if (players.length < 3) {
+         document.getElementById('status-message').innerText = 'يجب أن يكون هناك 3 لاعبين على الأقل للبدء.';
+         return;
+    }
+
+    // اختيار الكلمة
+    const word = getRandomWord(roomData.settings.selectedCategories);
+
+    // خلط اللاعبين لاختيار المحتالين بشكل عادل
+    const shuffledPlayers = [...players].sort(() => Math.random() - 0.5);
+    
+    // توزيع الأدوار
+    const roles = {};
+    for (let i = 0; i < players.length; i++) {
+        const playerUID = shuffledPlayers[i];
+        
+        if (i < impostorsCount) {
+            // 🎯 المحتال بدون كلمة (الإصلاح 2)
+            roles[playerUID] = { role: 'impostor', word: IMPOSTOR_NO_WORD_TAG };
+        } else {
+            roles[playerUID] = { role: 'civilian', word: word };
+        }
+    }
+
     const roomRef = db.collection('rooms').doc(roomCode);
     
-    // توزيع بسيط للأدوار للتجربة
-    const players = roomData.players;
-    const roles = {};
-    players.forEach((p, i) => {
-        // يمكنك تغيير كلمة 'تجربة' إلى كلمة حقيقية من قائمة الكلمات
-        roles[p] = { role: i === 0 ? 'impostor' : 'civilian', word: 'تجربة' }; 
-    });
-
     await roomRef.update({
         status: 'playing',
-        currentGameData: { roles: roles }
+        currentGameData: { 
+            roles: roles,
+            actualWord: word
+        }
     });
 }
 
 function displayRoleCard() {
-    // 🚨 يجب إضافة منطق عرض الدور والكلمة الحقيقية هنا
+    // 🎯 عرض الدور والكلمة (الإصلاح 2)
     document.getElementById('waiting-lobby').style.display = 'none';
     document.getElementById('role-display-card').style.display = 'block';
     
-    // بيانات تجريبية مؤقتة
     const role = roomData.currentGameData.roles[currentUID];
     
-    document.getElementById('role-title').innerText = role.role === 'impostor' ? 'أنت المحتال 😈' : 'أنت مدني 😇';
-    document.getElementById('role-word').innerText = role.word === IMPOSTOR_NO_WORD_TAG ? 'لا توجد كلمة لك' : `الكلمة: ${role.word}`;
-    document.getElementById('role-instructions').innerText = role.role === 'impostor' ? 'حاول معرفة الكلمة وتظاهر أنك تعرفها.' : 'حاول اكتشاف المحتال من خلال الأسئلة.';
+    const roleTitleEl = document.getElementById('role-title');
+    const roleWordEl = document.getElementById('role-word');
+    const roleInstructionsEl = document.getElementById('role-instructions');
+    const roleCardEl = document.getElementById('role-card');
+
+    if (role.role === 'impostor') {
+        roleTitleEl.innerText = 'أنت المحتال 😈';
+        roleTitleEl.style.color = '#ff4f4f';
+        roleCardEl.style.borderColor = '#ff4f4f';
+        roleWordEl.innerText = 'لا توجد كلمة لك!';
+        roleWordEl.style.color = '#ff4f4f';
+        roleInstructionsEl.innerText = 'مهمتك: حاول معرفة الكلمة وتظاهر أنك مدني لتتجنب كشفك. لا تستخدم كلمة "لا" أو "غير موجودة"';
+    } else {
+        roleTitleEl.innerText = 'أنت مدني 😇';
+        roleTitleEl.style.color = '#34d399';
+        roleCardEl.style.borderColor = '#34d399';
+        roleWordEl.innerText = `الكلمة: ${role.word}`;
+        roleWordEl.style.color = '#f1f5f9';
+        roleInstructionsEl.innerText = 'مهمتك: حاول اكتشاف المحتال من خلال الأسئلة الذكية حول الكلمة.';
+    }
 }
 
 function openProfileModal(playerUID) {
@@ -322,32 +493,41 @@ function openProfileModal(playerUID) {
     
     if (!playerDetails) { return; }
     
+    // 🎯 تمييز حالة البرو في المودال
+    const proStatus = playerDetails.isPro ? 
+        '<p style="color:#ffd700;"><i class="fas fa-star"></i> عضوية برو</p>' : 
+        '<p style="color:#94a3b8;"><i class="fas fa-times-circle"></i> ليس عضو برو</p>';
+
     modalContent.innerHTML = `
         <h4 style="color:#f1f5f9;">${playerDetails.displayName}</h4>
+        ${proStatus}
         <p>المعرّف: ${playerDetails.publicUid}</p>
         <p>المستوى: ${playerDetails.level}</p>
+        <p>ألعاب تم لعبها: ${playerDetails.gamesPlayed}</p>
         <button class="gift-btn" onclick="alert('قريباً!')">إرسال هدية</button>
     `;
     document.getElementById('profile-modal').style.display = 'block';
 }
 
-// بقية الدوال المساعدة (نسخ الرمز، مغادرة، إلخ)
+// بقية الدوال المساعدة
 function copyCode() {
     const code = document.getElementById('room-code-value').innerText;
     navigator.clipboard.writeText(code);
 }
 function leaveRoom(e) {
     e.preventDefault();
-    // 🚨 يجب إضافة منطق مغادرة الغرفة من Firestore هنا
+    if(listenerUnsubscribe) listenerUnsubscribe();
+    // 🚨 يجب إضافة منطق arrayRemove لمغادرة الغرفة هنا
     window.location.href = "index.html";
 }
 function hideRoleCard() {
+    // 🎯 إخفاء البطاقة وتفعيل شاشة اللعب الرئيسية هنا (إذا كانت هناك شاشة لعب)
     document.getElementById('role-display-card').style.display = 'none';
-    // 🚨 يجب إضافة إخفاء البطاقة وتفعيل شاشة اللعب الرئيسية هنا
+    // مؤقتاً، نعود لشاشة اللوبي
+    document.getElementById('waiting-lobby').style.display = 'block'; 
 }
-// دوال الطرد
 async function kickPlayer(uid, name) {
-    if(!confirm(`طرد ${name}؟`)) return;
+    if(!confirm(`هل أنت متأكد من طرد اللاعب ${name} من الغرفة؟`)) return;
     await db.collection('rooms').doc(roomCode).update({
         players: firebase.firestore.FieldValue.arrayRemove(uid)
     });
@@ -355,3 +535,4 @@ async function kickPlayer(uid, name) {
 </script>
 </body>
 </html>
+
