@@ -4,17 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>👤 ملفي الشخصي</title>
-
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <script src="auth.js"></script>
 
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
-/* التنسيقات الأصلية */
+/* ... (التنسيقات الأصلية تبقى كما هي) ... */
 body{font-family:'Cairo',sans-serif;background:#0f172a;color:#f1f5f9;text-align:center;padding:20px}
 h2 { color:#34d399; }
 .card{background:#1e293b;padding:25px;border-radius:12px;max-width:450px;margin:20px auto;text-align:right;}
@@ -23,8 +22,32 @@ input,button{width:100%;padding:12px;border-radius:8px;border:none;font-family:'
 input{background:#334155;color:white;margin-bottom:10px}
 button{background:#34d399;color:white;font-weight:700;cursor:pointer}
 button:disabled{background:#475569}
-#error{margin-top:10px;min-height:20px}
+#error{margin-top:10px;min-height:20px;text-align:center;}
 
+/* تعديل عرض الـ UID مع زر النسخ */
+.uid-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* لجعله يبدأ من اليمين */
+    gap: 10px;
+    direction: ltr; /* لضمان عرض الـ UID من اليسار لليمين */
+}
+#publicUid {
+    direction: ltr; 
+    font-size: 0.9rem;
+    color: #ffd700;
+}
+.copy-btn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+}
+.copy-btn:hover {
+    color: #34d399;
+}
 /* التنسيقات الجديدة للهدايا */
 .gifts-grid {
     display: grid;
@@ -81,7 +104,17 @@ button:disabled{background:#475569}
 
 <div class="card">
     <div class="info-item"><span>البريد</span><span id="email">...</span></div>
-    <div class="info-item"><span>Public UID</span><span id="publicUid">...</span></div>
+    
+    <div class="info-item">
+        <span>Public UID</span>
+        <div class="uid-container">
+            <span id="publicUid">...</span>
+            <button class="copy-btn" onclick="copyPublicUid()">
+                <i class="fas fa-copy"></i>
+            </button>
+        </div>
+    </div>
+    
     <div class="info-item"><span>المستوى</span><span id="level">...</span></div>
     <div class="info-item"><span>XP</span><span id="xp">...</span></div>
     <div class="info-item"><span>الحالة</span><span id="status">...</span></div>
@@ -92,7 +125,8 @@ button:disabled{background:#475569}
     <h3>مجموعة هدايا <i class="fas fa-box-open"></i></h3>
     <p style="color:#94a3b8; font-size:0.9rem;">الهدايا التي تلقيتها</p>
     <div id="gifts-collection-container" class="gifts-grid">
-        </div>
+        جاري تحميل الهدايا...
+    </div>
 </div>
 
 <div class="card">
@@ -111,7 +145,7 @@ button:disabled{background:#475569}
 let userData=null;
 let isSaving=false;
 const BASE_COST=500;
-const GIFTS_DEFINITION = [ // قائمة الهدايا (يجب أن تتطابق مع قائمة الهدايا في gifts.html)
+const GIFTS_DEFINITION = [ /* ... (قائمة الهدايا تبقى كما هي) ... */
     {name:"وردة", icon:"🌹"},
     {name:"قلم ذهبي", icon:"🖋️"},
     {name:"سيارة سباق", icon:"🏎️"},
@@ -127,23 +161,29 @@ const saveBtn=document.getElementById("saveBtn");
 const errorBox=document.getElementById("error");
 const costText=document.getElementById("costText");
 
-/* ---------------- PUBLIC UID ---------------- */
-function generatePublicUid(){
-    const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    const part=()=>Array.from({length:4},()=>chars[Math.floor(Math.random()*chars.length)]).join("");
-    return `IMP-${part()}-${part()}`;
+// 🚨 دالة النسخ الجديدة
+function copyPublicUid() {
+    const uid = document.getElementById("publicUid").innerText;
+    navigator.clipboard.writeText(uid)
+        .then(() => {
+            errorBox.innerText = "✅ تم نسخ الـ UID!";
+            errorBox.style.color = "#22c55e";
+            setTimeout(() => { errorBox.innerText = ""; }, 3000);
+        })
+        .catch(err => {
+            console.error('فشل النسخ:', err);
+            errorBox.innerText = "❌ فشل النسخ";
+            errorBox.style.color = "#ef4444";
+        });
 }
 
-async function generateUniquePublicUid(){
-    while(true){
-        const uid=generatePublicUid();
-        const snap=await firebase.firestore()
-            .collection("users")
-            .where("publicUid","==",uid)
-            .limit(1).get();
-        if(snap.empty) return uid;
-    }
+// 🚨 تحديث الدالة: لن نحتاج لـ generateUniquePublicUid هنا بعد الآن، فقط في auth.js
+// ولكن يجب التأكد من وجود دالة isPro/isProUser في auth.js 
+function isProUser(data) {
+    const expiry = data?.proExpiryTime || 0;
+    return expiry > Date.now();
 }
+
 
 /* ---------------- GIFT RENDERING ---------------- */
 
@@ -151,13 +191,8 @@ async function loadGiftsData() {
     const user = firebase.auth().currentUser;
     if (!user) return {};
 
-    // 🚨 افتراض: يتم حفظ بيانات الهدايا المستلمة في حقل 'receivedGifts'
-    // { "giftIndex": { "count": 5, "senders": { "UID1": 3, "UID2": 2 } }, ... }
-    
-    // سنستخدم دالة loadUserData لحفظ الحقل
     const receivedGifts = userData.receivedGifts || {};
     
-    // الحصول على أسماء العرض (Display Names) للمرسلين الرئيسيين
     const senderUids = new Set();
     for (const index in receivedGifts) {
         const senders = receivedGifts[index].senders || {};
@@ -167,9 +202,8 @@ async function loadGiftsData() {
 
     const senderNames = {};
     if (senderUids.size > 0) {
-        // تحميل أسماء المستخدمين (هذه العملية قد تكون معقدة وتعتمد على دالة مساعدة)
-        // 🚨 افتراض: لدينا دالة getDisplayNamesByUids(uids) في auth.js
-        const namesMap = await getDisplayNamesByUids(Array.from(senderUids));
+        // 🚨 استخدام دالة getDisplayNamesByUids من auth.js
+        const namesMap = await getDisplayNamesByUids(Array.from(senderUids)); 
         Object.assign(senderNames, namesMap);
     }
     
@@ -180,32 +214,51 @@ async function renderGifts() {
     const container = document.getElementById("gifts-collection-container");
     container.innerHTML = 'جاري تحميل الهدايا...';
     
-    const { receivedGifts, senderNames } = await loadGiftsData();
-    container.innerHTML = '';
-    
-    GIFTS_DEFINITION.forEach((gift, index) => {
-        const giftData = receivedGifts[index];
-        const unlocked = !!giftData;
+    try {
+        const { receivedGifts, senderNames } = await loadGiftsData();
+        container.innerHTML = '';
         
-        const div = document.createElement('div');
-        div.className = `gift-icon ${unlocked ? 'unlocked' : 'locked'}`;
-        div.setAttribute('title', gift.name);
-        div.innerHTML = `
-            ${gift.icon}
-            ${unlocked ? `<span class="count">${giftData.count}</span>` : ''}
-            ${unlocked ? `<span class="best-sender">من: ${getBestSenderName(giftData.senders, senderNames)}</span>` : ''}
-        `;
-        container.appendChild(div);
-    });
+        GIFTS_DEFINITION.forEach((gift, index) => {
+            const giftData = receivedGifts[index];
+            const unlocked = !!giftData && (giftData.count || 0) > 0;
+            
+            const div = document.createElement('div');
+            div.className = `gift-icon ${unlocked ? 'unlocked' : 'locked'}`;
+            div.setAttribute('title', gift.name);
+            
+            let bestSenderName = 'لا يوجد';
+            if (unlocked) {
+                bestSenderName = getBestSenderName(giftData.senders, senderNames);
+            }
+            
+            div.innerHTML = `
+                ${gift.icon}
+                ${unlocked ? `<span class="count">${giftData.count}</span>` : ''}
+                ${unlocked ? `<span class="best-sender">من: ${bestSenderName}</span>` : ''}
+            `;
+            container.appendChild(div);
+        });
+        
+        if (GIFTS_DEFINITION.length === 0) {
+            container.innerHTML = "<p style='color:#94a3b8;'>لا توجد هدايا محددة بعد.</p>";
+        }
+
+    } catch (error) {
+        console.error("فشل عرض الهدايا:", error);
+        container.innerHTML = "<p style='color:#ef4444;'>خطأ في تحميل بيانات الهدايا.</p>";
+    }
 }
 
 function getBestSenderName(senders, senderNames) {
     if (!senders || Object.keys(senders).length === 0) return 'غير معروف';
 
-    // إيجاد UID للمرسل الذي أرسل أكبر عدد
     const maxSenderUid = Object.keys(senders).reduce((a, b) => senders[a] > senders[b] ? a : b);
     
-    // إرجاع الاسم أو "مستخدم مجهول"
+    // إذا كان المرسل هو المستخدم نفسه، لا تعرض الاسم
+    if (maxSenderUid === firebase.auth().currentUser.uid) {
+        return 'نفسك';
+    }
+    
     return senderNames[maxSenderUid] || 'مستخدم مجهول';
 }
 
@@ -214,25 +267,18 @@ function getBestSenderName(senders, senderNames) {
 firebase.auth().onAuthStateChanged(async user=>{
     if(!user) return location.href="auth.html";
 
+    // 🚨 لا نحتاج لإنشاء UID هنا، بل نعتمد على auth.js لجلب أو إنشاء Public UID
     userData=await loadUserData();
     if(!userData){ errorBox.innerText="فشل تحميل البيانات"; return; }
 
-    // إنشاء Public UID إذا غير موجود
-    if(!userData.publicUid){
-        const newUid=await generateUniquePublicUid();
-        await firebase.firestore().collection("users").doc(user.uid)
-            .set({publicUid:newUid},{merge:true});
-        userData.publicUid=newUid;
-    }
-
     // عرض بيانات البروفايل
     document.getElementById("email").innerText=user.email;
-    document.getElementById("publicUid").innerText=userData.publicUid;
+    document.getElementById("publicUid").innerText=userData.publicUid||"غير محدد"; // 🚨 عرض Public UID
     document.getElementById("level").innerText=userData.level||1;
     document.getElementById("xp").innerText=userData.xp||0;
     document.getElementById("coins").innerText=userData.totalCoins||0;
 
-    const isPro=isProUser(userData); // 🚨 افتراض دالة isProUser موجودة في auth.js
+    const isPro = isProUser(userData);
     document.getElementById("status").innerText=isPro?"Pro 👑":"عادي";
 
     nameInput.value=user.displayName||user.email.split("@")[0];
@@ -241,13 +287,10 @@ firebase.auth().onAuthStateChanged(async user=>{
     await updateCost(isPro);
     validate();
     
-    // 🚨 عرض الهدايا
     await renderGifts();
 });
 
 /* ---------------- NAME CHANGE ---------------- */
-
-// ... (بقية منطق تغيير الاسم كما كان في الكود الأصلي)
 
 nameInput.addEventListener("input",validate);
 
@@ -258,6 +301,9 @@ function validate(){
 }
 
 async function isNameAvailable(name){
+    // 🚨 التأكد من البحث عن الاسم وعدم تضارب الـ Public UID
+    if (name.toUpperCase().startsWith("IMP-")) return false; // لا يمكن اختيار اسم يبدأ بـ Public UID
+    
     const snap=await firebase.firestore()
         .collection("users")
         .where("displayName","==",name)
@@ -283,32 +329,39 @@ saveBtn.onclick=async()=>{
     const newName=nameInput.value.trim();
 
     if(!(await isNameAvailable(newName))){
-        errorBox.innerText="❌ الاسم مستخدم";
+        errorBox.innerText="❌ الاسم مستخدم بالفعل أو محجوز (لا يمكن أن يبدأ بـ IMP-)";
         isSaving=false; validate(); return;
     }
 
     if(userData.totalCoins<userData.finalCost){
-        errorBox.innerText="❌ كوينز غير كافية";
+        errorBox.innerText="❌ كوينز غير كافية للتغيير";
         isSaving=false; validate(); return;
     }
 
     try{
+        // 1. تحديث الاسم في Firebase Auth
         await user.updateProfile({displayName:newName});
         const newCoins=userData.totalCoins-userData.finalCost;
 
+        // 2. تحديث الحقول الضرورية في Firestore باستخدام merge: true
+        // (سيتم تحديث displayName، totalCoins، hasChangedNameBefore فقط)
         await firebase.firestore().collection("users").doc(user.uid).set({
             displayName:newName,
             totalCoins:newCoins,
-            hasChangedNameBefore:true
+            hasChangedNameBefore:true,
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp() // مهم للقواعد
         },{merge:true});
 
+        // 3. تحديث البيانات المحلية
         userData.totalCoins=newCoins;
+        userData.hasChangedNameBefore=true;
         document.getElementById("coins").innerText=newCoins;
-        errorBox.innerText="✅ تم الحفظ";
+        errorBox.innerText="✅ تم الحفظ وتغيير الاسم";
         errorBox.style.color="#22c55e";
     }catch(e){
-        errorBox.innerText="❌ خطأ أثناء الحفظ";
+        errorBox.innerText="❌ خطأ أثناء الحفظ (قد تكون مشكلة في قواعد الأمان)";
         errorBox.style.color="#ef4444";
+        console.error("خطأ تغيير الاسم:", e);
     }
     isSaving=false; validate();
 };
@@ -316,4 +369,3 @@ saveBtn.onclick=async()=>{
 
 </body>
 </html>
-
