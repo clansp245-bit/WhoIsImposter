@@ -52,14 +52,15 @@ button { padding:10px; width:100%; border:none; border-radius:8px; font-weight:7
 
 <div class="card">
     <h3>رصيدك الحالي:</h3>
-    <p>Coins: <span id="user-coins">0</span> | XP: <span id="user-xp">0</span> | المستوى: <span id="user-level">1</span></p>
+    <p>Coins: <span id="user-coins">جاري التحميل...</span> | XP: <span id="user-xp">جاري التحميل...</span> | المستوى: <span id="user-level">جاري التحميل...</span></p>
+    <p id="auth-status" class="alert"></p>
 </div>
 
 <script>
 let currentUserData = {};
 let selectedPlayerId = null;
 let selectedGifts = [];
-const db = firebase.firestore(); // تعريف db لضمان استخدامه مع الـ Transaction
+const db = firebase.firestore(); 
 
 // -------------------- الهدايا --------------------
 const gifts = [
@@ -94,20 +95,34 @@ function toggleGift(index) {
         selectedGifts.push(index);
         div.classList.add("selected");
     }
-    // تحديث حالة زر الإرسال بناءً على تحديد الهدايا والمستلم
     document.getElementById("send-gift-btn").disabled = selectedGifts.length === 0 || !selectedPlayerId;
 }
 
 // -------------------- INIT --------------------
 async function initGiftPage() {
     populateGifts();
+    
+    document.getElementById("auth-status").innerText = "جاري التحقق من حالة الدخول...";
+
     firebase.auth().onAuthStateChanged(async user => {
-        if(!user) return window.location.href="auth.html";
+        if(!user) {
+            document.getElementById("auth-status").innerText = "❌ لم يتم تسجيل الدخول. يرجى العودة لصفحة الدخول.";
+            // يمكن توجيه المستخدم لصفحة الدخول هنا إذا رغبت
+            return; 
+        }
+        
+        document.getElementById("auth-status").innerText = "✅ تم تسجيل الدخول. جاري تحميل البيانات...";
+        
         // loadUserData دالة من auth.js
         const data = await loadUserData(); 
-        if(data) currentUserData = data;
-        updateUserDisplay();
-        setupSearch();
+        if(data) {
+            currentUserData = data;
+            document.getElementById("auth-status").innerText = "";
+            updateUserDisplay();
+            setupSearch();
+        } else {
+            document.getElementById("auth-status").innerText = "❌ فشل تحميل بيانات المستخدم. قد تحتاج لإعادة تسجيل الدخول.";
+        }
     });
 }
 
@@ -134,7 +149,7 @@ function setupSearch() {
         const res = await searchUsersByDisplayName(q); 
         resultsDiv.innerHTML = "";
         
-        if(!res.length) { resultsDiv.innerHTML = "<p class='alert'>لا توجد نتائج</p>"; return; }
+        if(!res.length) { resultsDiv.innerHTML = "<p class='alert'>لا توجد نتائج مطابقة</p>"; return; }
         
         res.forEach(u=>{
             const div = document.createElement("div");
@@ -145,11 +160,9 @@ function setupSearch() {
                 selectedPlayerId = u.uid; 
                 selectedInfo.innerText = `✅ تم اختيار: ${u.displayName}`;
                 
-                // إزالة التحديد من باقي البطاقات
                 document.querySelectorAll("#search-results .gift-card").forEach(c => c.classList.remove("selected"));
                 div.classList.add("selected");
                 
-                // تفعيل زر الإرسال
                 document.getElementById("send-gift-btn").disabled = selectedGifts.length === 0; 
                 document.getElementById("gift-alert").innerText="";
             };
@@ -167,7 +180,6 @@ document.getElementById("send-gift-btn").addEventListener("click", async () => {
 
     let totalCost = selectedGifts.reduce((sum,i)=>sum+gifts[i].cost,0);
     
-    // التحقق المسبق من الرصيد
     if((currentUserData.totalCoins||0) < totalCost){
         document.getElementById("gift-alert").innerText="❌ ليس لديك رصيد كافٍ لإرسال هذه الهدايا!"; 
         return;
@@ -175,7 +187,8 @@ document.getElementById("send-gift-btn").addEventListener("click", async () => {
 
     try {
         const user = firebase.auth().currentUser;
-        // استخدام db المعرفة بالاعلى
+        if (!user) throw new Error("UserNotAuthenticated"); 
+
         const senderRef = db.collection("users").doc(user.uid);
         const recipientRef = db.collection("users").doc(selectedPlayerId);
 
@@ -197,7 +210,7 @@ document.getElementById("send-gift-btn").addEventListener("click", async () => {
 
             // 1. خصم الكوينز من المرسل
             tx.update(senderRef,{totalCoins: senderCoins - totalCost});
-            // 2. إضافة الخبرة للمستلم (هذا يتطلب قواعد الأمان المعدلة)
+            // 2. إضافة الخبرة للمستلم (يتطلب قواعد الأمان المعدلة لـ XP)
             tx.update(recipientRef,{xp: recipientXP + totalXP});
         });
 
@@ -215,17 +228,17 @@ document.getElementById("send-gift-btn").addEventListener("click", async () => {
     } catch(e){
         console.error("خطأ الـ Transaction:", e.message || e);
         
-        // عرض رسالة محددة بناءً على نوع الخطأ (للتشخيص)
-        if (e.message === "SenderNotFound") {
-            document.getElementById("gift-alert").innerText="❌ خطأ: بيانات المرسل غير موجودة. (أعد تسجيل الدخول)";
+        // عرض رسائل تشخيصية دقيقة
+        if (e.message === "UserNotAuthenticated") {
+            document.getElementById("gift-alert").innerText="❌ خطأ: يجب تسجيل الدخول لإرسال الهدايا.";
+        } else if (e.message === "SenderNotFound") {
+            document.getElementById("gift-alert").innerText="❌ خطأ: بيانات حسابك مفقودة. يرجى إعادة تسجيل الدخول.";
         } else if (e.message === "RecipientNotFound") {
-            document.getElementById("gift-alert").innerText="❌ خطأ: المستلم غير موجود في النظام. (تأكد من اختيار مستخدم مسجل)";
-        } else if (e.message === "InsufficientFunds") {
-            document.getElementById("gift-alert").innerText="❌ خطأ: الرصيد غير كافٍ. (فشل داخلي)";
+            document.getElementById("gift-alert").innerText="❌ خطأ: المستلم غير موجود في النظام. (تأكد من اختيار مستخدم مسجل).";
         } else if (e.code === 'PERMISSION_DENIED') {
             document.getElementById("gift-alert").innerText="❌ خطأ أمان: قواعد Firestore تمنع التحديث. (يجب نشر القواعد الجديدة التي تسمح بتعديل XP).";
         } else {
-            document.getElementById("gift-alert").innerText="❌ حدث خطأ أثناء إرسال الهدايا. (راجع Console للمزيد)";
+            document.getElementById("gift-alert").innerText="❌ حدث خطأ أثناء إرسال الهدايا. (راجع Console للمزيد).";
         }
     }
 });
