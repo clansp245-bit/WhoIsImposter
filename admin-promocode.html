@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎟️ إدارة الأكواد</title>
+<title>🛠️ لوحة تحكم المطور</title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -11,6 +11,7 @@
 <script src="auth.js"></script>
 
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
 body{
@@ -32,6 +33,7 @@ body{
   margin-bottom:20px;
 }
 h2{text-align:center;color:#34d399;margin-bottom:20px;}
+h3{color:#ffd700; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-top: 30px;}
 label{display:block;margin-top:12px;}
 input{width:100%;margin-top:6px;padding:10px;border-radius:8px;border:1px solid #334155;background:#334155;color:#fff;}
 button{
@@ -42,9 +44,16 @@ button{
   background:#6366f1;
   color:#fff;
   cursor:pointer;
+  transition: background 0.2s;
 }
 button:hover{background:#4f46e5;}
-.msg{margin-top:12px;text-align:center;color:#ffd700;}
+#findUserBtn { background: #10b981; }
+#findUserBtn:hover { background: #059669; }
+#updateUidBtn { background: #ef4444; }
+#updateUidBtn:hover { background: #dc2626; }
+.msg{margin-top:12px;text-align:center;font-weight: bold;}
+#codeMsg { color:#ffd700; }
+#uidMsg { color:#34d399; }
 .code-box{
   background:#334155;
   padding:15px;
@@ -55,13 +64,40 @@ button:hover{background:#4f46e5;}
 }
 .code-header{display:flex;justify-content:space-between;align-items:center;}
 .code-actions button{margin-top:6px;}
+#userInfoDisplay{
+    background: #334155;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+    text-align: right;
+    border-left: 5px solid #34d399;
+}
 </style>
 </head>
 <body>
 
-<h2>🎟️ إنشاء أكواد وإدارتها</h2>
+<h2><i class="fas fa-tools"></i> لوحة تحكم المطور</h2>
 
 <div class="card">
+  <h3><i class="fas fa-id-badge"></i> تغيير المعرف العام (Public UID)</h3>
+  
+  <label>UID الحالي (Firebase UID)</label>
+  <input id="targetUidInput" placeholder="أدخل Firebase UID الخاص باللاعب">
+  <button id="findUserBtn"><i class="fas fa-search"></i> البحث عن المستخدم</button>
+  
+  <div id="userInfoDisplay" style="display:none;">
+      <p>اسم اللاعب: <strong id="currentName">---</strong></p>
+      <p>المعرّف الحالي: <strong id="currentPublicUid">---</strong></p>
+      <label>المعرّف الجديد (Public UID)</label>
+      <input id="newPublicUidInput" placeholder="أدخل المعرّف العام الجديد (IMP-XXXX-XXXX)" maxlength="14">
+      <button id="updateUidBtn"><i class="fas fa-sync-alt"></i> تحديث المعرّف العام</button>
+  </div>
+
+  <div id="uidMsg" class="msg"></div>
+</div>
+
+<div class="card">
+  <h3><i class="fas fa-ticket-alt"></i> إدارة أكواد الخصم</h3>
   <label>اسم الكود</label>
   <input id="codeName" placeholder="مثال: FREE100">
 
@@ -75,47 +111,52 @@ button:hover{background:#4f46e5;}
   <input type="number" id="maxUses" value="0">
 
   <button id="createBtn">إنشاء الكود</button>
-  <div id="msg" class="msg"></div>
+  <div id="codeMsg" class="msg"></div>
 </div>
 
 <div id="codesList" style="width:90%; max-width:500px;"></div>
 
 <script>
-firebase.auth().onAuthStateChanged(user=>{
+let targetUserRef = null;
+const db = firebase.firestore();
+
+firebase.auth().onAuthStateChanged(user => {
   // 🚨 فحص صلاحيات البريد الإلكتروني للمسؤول (Admin)
   if(!user || user.email !== "clansp245@gmail.com"){ 
-    // يمكن تعديل هذا ليناسب صفحتك الرئيسية
     document.body.innerHTML = "<h2 style='color:#ff4f4f;'>🚫 لا تملك صلاحية الوصول لهذه الصفحة.</h2>"; 
     return;
   }
+  
+  // ==================================
+  // دوال إدارة الأكواد (القسم القديم)
+  // ==================================
+  const dbRef = db.collection("promocodes");
+  const codeMsg = document.getElementById("codeMsg");
 
-  const dbRef = firebase.firestore().collection("promocodes");
-  const msg = document.getElementById("msg");
-
-  // إنشاء الكود
   document.getElementById("createBtn").onclick = async () => {
+    // ... منطق إنشاء الكود (كما هو) ...
     const code = document.getElementById("codeName").value.trim().toUpperCase();
     const coins = Number(document.getElementById("coins").value);
     const proDays = Number(document.getElementById("proDays").value);
     const maxUses = Number(document.getElementById("maxUses").value);
-    if(!code){ msg.textContent = "❌ أدخل اسم الكود"; return; }
+    if(!code){ codeMsg.textContent = "❌ أدخل اسم الكود"; return; }
     if(!confirm(`هل تريد إنشاء الكود ${code}?`)) return;
 
     try{
       const ref = dbRef.doc(code);
       const snap = await ref.get();
-      if(snap.exists){ msg.textContent="❌ الكود موجود مسبقًا"; return; }
+      if(snap.exists){ codeMsg.textContent="❌ الكود موجود مسبقًا"; return; }
 
       await ref.set({
-        coins: coins, // تم التأكد من استخدام اسم الحقل الصحيح
-        durationDays: proDays, // تم التأكد من استخدام اسم الحقل الصحيح
+        coins: coins,
+        durationDays: proDays,
         maxUses,
         redeemedBy: [],
         active:true,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      msg.textContent="✅ تم إنشاء الكود بنجاح";
+      codeMsg.textContent="✅ تم إنشاء الكود بنجاح";
       loadCodes();
       document.getElementById("codeName").value="";
       document.getElementById("coins").value=50;
@@ -123,12 +164,12 @@ firebase.auth().onAuthStateChanged(user=>{
       document.getElementById("maxUses").value=0;
     }catch(e){
       console.error(e);
-      msg.textContent="❌ حدث خطأ أثناء الإنشاء";
+      codeMsg.textContent="❌ حدث خطأ أثناء الإنشاء";
     }
   };
 
-  // تحميل الأكواد وعرضها
   async function loadCodes(){
+    // ... منطق تحميل الأكواد (كما هو) ...
     const listDiv = document.getElementById("codesList");
     listDiv.innerHTML = "";
     const snapshot = await dbRef.orderBy("createdAt","desc").get();
@@ -158,16 +199,16 @@ firebase.auth().onAuthStateChanged(user=>{
     });
   }
 
-  // تفعيل / تعطيل الكود
   window.toggleActive = async (codeId,currentStatus) => {
+    // ... منطق تفعيل/تعطيل الكود (كما هو) ...
     try{
       await dbRef.doc(codeId).update({active: !currentStatus});
       loadCodes();
     }catch(e){ console.error(e); alert("❌ حدث خطأ"); }
   }
 
-  // حذف الكود
   window.deleteCode = async (codeId) => {
+    // ... منطق حذف الكود (كما هو) ...
     if(!confirm(`هل تريد حذف الكود ${codeId}?`)) return;
     try{
       await dbRef.doc(codeId).delete();
@@ -176,6 +217,82 @@ firebase.auth().onAuthStateChanged(user=>{
   }
 
   loadCodes();
+
+  // ==================================
+  // دوال تغيير UID (القسم الجديد)
+  // ==================================
+  const uidMsg = document.getElementById("uidMsg");
+  const userInfoDisplay = document.getElementById("userInfoDisplay");
+
+  document.getElementById("findUserBtn").onclick = async () => {
+    uidMsg.textContent = "";
+    userInfoDisplay.style.display = 'none';
+    const targetUid = document.getElementById("targetUidInput").value.trim();
+    if (!targetUid) {
+      uidMsg.textContent = "❌ أدخل Firebase UID للبحث.";
+      return;
+    }
+
+    try {
+      targetUserRef = db.collection("users").doc(targetUid);
+      const doc = await targetUserRef.get();
+
+      if (!doc.exists) {
+        uidMsg.textContent = `❌ المستخدم ذو الـ UID: ${targetUid} غير موجود.`;
+        return;
+      }
+
+      const data = doc.data();
+      document.getElementById("currentName").textContent = data.displayName || data.username || '---';
+      document.getElementById("currentPublicUid").textContent = data.publicUid || 'لا يوجد';
+      document.getElementById("newPublicUidInput").value = data.publicUid || '';
+      userInfoDisplay.style.display = 'block';
+      uidMsg.textContent = "✅ تم العثور على المستخدم.";
+    } catch (e) {
+      console.error("خطأ في البحث:", e);
+      uidMsg.textContent = "❌ حدث خطأ أثناء البحث عن المستخدم.";
+    }
+  };
+
+  document.getElementById("updateUidBtn").onclick = async () => {
+    if (!targetUserRef) {
+      uidMsg.textContent = "❌ يجب البحث عن المستخدم أولاً.";
+      return;
+    }
+
+    const newPublicUid = document.getElementById("newPublicUidInput").value.trim().toUpperCase();
+
+    if (newPublicUid.length !== 14 || !newPublicUid.startsWith('IMP-')) {
+        uidMsg.textContent = "❌ المعرّف الجديد يجب أن يكون 14 حرفاً ويبدأ بـ 'IMP-'.";
+        return;
+    }
+
+    if (!confirm(`هل أنت متأكد من تغيير المعرّف العام للمستخدم إلى ${newPublicUid}؟`)) return;
+
+    try {
+      // 1. التحقق من عدم تكرار الـ UID الجديد
+      const existingUser = await db.collection('users').where('publicUid', '==', newPublicUid).limit(1).get();
+      if (!existingUser.empty && existingUser.docs[0].id !== targetUserRef.id) {
+          uidMsg.textContent = "❌ هذا المعرّف العام (Public UID) مستخدم بالفعل من قبل شخص آخر!";
+          return;
+      }
+
+      // 2. تحديث الحقل
+      await targetUserRef.update({
+        publicUid: newPublicUid
+      });
+
+      uidMsg.textContent = `✅ تم تحديث المعرّف العام بنجاح إلى: ${newPublicUid}`;
+      
+      // تحديث العرض
+      document.getElementById("currentPublicUid").textContent = newPublicUid;
+      
+    } catch (e) {
+      console.error("خطأ في التحديث:", e);
+      uidMsg.textContent = "❌ حدث خطأ أثناء تحديث المعرّف.";
+    }
+  };
+
 });
 </script>
 
