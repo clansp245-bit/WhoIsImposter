@@ -10,7 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <script src="auth.js"></script>
 
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;700&display=swap" rel="stylesheet">
 
 <style>
 body{
@@ -82,7 +82,12 @@ button:hover{background:#4f46e5;}
 
 <script>
 firebase.auth().onAuthStateChanged(user=>{
-  if(!user){ location.href="auth.html"; return; }
+  // 🚨 فحص صلاحيات البريد الإلكتروني للمسؤول (Admin)
+  if(!user || user.email !== "clansp245@gmail.com"){ 
+    // يمكن تعديل هذا ليناسب صفحتك الرئيسية
+    document.body.innerHTML = "<h2 style='color:#ff4f4f;'>🚫 لا تملك صلاحية الوصول لهذه الصفحة.</h2>"; 
+    return;
+  }
 
   const dbRef = firebase.firestore().collection("promocodes");
   const msg = document.getElementById("msg");
@@ -102,8 +107,8 @@ firebase.auth().onAuthStateChanged(user=>{
       if(snap.exists){ msg.textContent="❌ الكود موجود مسبقًا"; return; }
 
       await ref.set({
-        coins,
-        durationDays: proDays,
+        coins: coins, // تم التأكد من استخدام اسم الحقل الصحيح
+        durationDays: proDays, // تم التأكد من استخدام اسم الحقل الصحيح
         maxUses,
         redeemedBy: [],
         active:true,
@@ -129,16 +134,24 @@ firebase.auth().onAuthStateChanged(user=>{
     const snapshot = await dbRef.orderBy("createdAt","desc").get();
     snapshot.forEach(doc=>{
       const data = doc.data();
+      const redeemedCount = (data.redeemedBy || []).length;
+      const maxUsesDisplay = data.maxUses === 0 ? '∞' : data.maxUses;
+
       const codeDiv = document.createElement("div");
       codeDiv.className="code-box";
       codeDiv.innerHTML=`
         <div class="code-header">
-          <strong>${doc.id}</strong>
-          <span>Coins: ${data.coins}, ProDays: ${data.durationDays}, MaxUses: ${data.maxUses || '∞'}</span>
+          <strong style="color: ${data.active ? '#34d399' : '#ff4f4f'};">${doc.id} ${data.active ? '' : '(معطّل)'}</strong>
+          <span style="font-size: 0.9rem;">
+            Coins: ${data.coins || 0}, ProDays: ${data.durationDays || 0}
+          </span>
+        </div>
+        <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 5px;">
+            تم الاستخدام: ${redeemedCount} / ${maxUsesDisplay}
         </div>
         <div class="code-actions">
-          <button onclick="toggleActive('${doc.id}',${data.active})">${data.active?'تعطيل':'تفعيل'}</button>
-          <button onclick="deleteCode('${doc.id}')">حذف</button>
+          <button style="background:${data.active?'#f59e0b':'#34d399'};" onclick="toggleActive('${doc.id}',${data.active})">${data.active?'تعطيل':'تفعيل'}</button>
+          <button style="background:#ef4444;" onclick="deleteCode('${doc.id}')">حذف</button>
         </div>
       `;
       listDiv.appendChild(codeDiv);
