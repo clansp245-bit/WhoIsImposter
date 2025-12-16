@@ -132,7 +132,6 @@ async function createRoom() {
         
         try {
             document.getElementById('error-msg').innerText = `جاري التحقق من الرمز: ${roomCode}`;
-            // 🚨 هنا تم تصحيح المشكلة التي كانت تواجهها بسبب القواعد
             const doc = await roomRef.get(); 
             if (!doc.exists) {
                 break; 
@@ -199,10 +198,12 @@ async function joinRoom() {
     const roomRef = db.collection('rooms').doc(roomCode);
     
     try {
+        // 🔥 تم تصحيح طريقة التحديث هنا لضمان إضافة UID بشكل صحيح
         await db.runTransaction(async t => {
             const doc = await t.get(roomRef);
 
             if (!doc.exists) {
+                // يجب أن نستخدم throw new Error هنا ليتم إيقاف Transaction
                 throw new Error("رمز الغرفة غير موجود.");
             }
             
@@ -214,24 +215,27 @@ async function joinRoom() {
             
             const playerName = currentUserData.playerName || `لاعب#${currentUID.substring(0, 4)}`;
 
+            // 1. تحقق من وجود اللاعب
             if (!roomData.players.includes(currentUID)) {
                 
                 if (roomData.players.length >= 10) { 
                     throw new Error("الغرفة ممتلئة (10 لاعبين كحد أقصى).");
                 }
-                roomData.players.push(currentUID);
-                roomData.playerNames[currentUID] = playerName;
                 
+                // 2. تحديث الحقول باستخدام FieldValue.arrayUnion لضمان سلامة المصفوفة
                 t.update(roomRef, { 
-                    players: roomData.players, 
-                    playerNames: roomData.playerNames 
+                    players: firebase.firestore.FieldValue.arrayUnion(currentUID), 
+                    [`playerNames.${currentUID}`]: playerName // تحديث اسم اللاعب في الخريطة مباشرة
                 });
             }
-
-            // 🚀 التوجيه
-            window.location.href = `room.html?id=${roomCode}`;
+            
+            // 🚀 التوجيه (يتم فقط إذا لم يحدث أي خطأ في الـ Transaction)
         });
+        
+        window.location.href = `room.html?id=${roomCode}`;
+
     } catch (error) {
+        // يتم التقاط الأخطاء التي تم عمل throw لها في الـ Transaction هنا
         console.error("خطأ في الانضمام:", error);
         document.getElementById('error-msg').innerText = `❌ ${error.message || "حدث خطأ أثناء الانضمام."}`;
     }
