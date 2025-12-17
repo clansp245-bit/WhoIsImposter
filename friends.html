@@ -13,87 +13,23 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
     <style>
-        :root {
-            --bg-dark: #0f172a;
-            --card-bg: #1e293b;
-            --accent: #6366f1;
-            --success: #22c55e;
-            --danger: #ef4444;
-            --pro-gold: #ffd700;
-        }
-
-        body {
-            font-family: 'Cairo', sans-serif;
-            background-color: var(--bg-dark);
-            color: #f1f5f9;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
+        :root { --bg-dark: #0f172a; --card-bg: #1e293b; --accent: #6366f1; --success: #22c55e; --danger: #ef4444; --pro-gold: #ffd700; }
+        body { font-family: 'Cairo', sans-serif; background-color: var(--bg-dark); color: #f1f5f9; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 500px; }
-
-        .section-card {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-        }
-
+        .section-card { background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
         h3 { margin-top: 0; color: #94a3b8; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center; }
-
         .search-box { display: flex; gap: 10px; margin-bottom: 15px; }
-        input {
-            flex: 1;
-            background: #0f172a;
-            border: 1px solid #334155;
-            padding: 12px;
-            border-radius: 8px;
-            color: white;
-            outline: none;
-        }
-
-        .profile-result {
-            background: #334155;
-            border-radius: 12px;
-            padding: 15px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            border-left: 4px solid var(--accent);
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
+        input { flex: 1; background: #0f172a; border: 1px solid #334155; padding: 12px; border-radius: 8px; color: white; outline: none; }
+        .profile-result { background: #334155; border-radius: 12px; padding: 15px; display: flex; align-items: center; gap: 15px; border-left: 4px solid var(--accent); }
         .avatar { width: 50px; height: 50px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; }
-        
-        .badge-icon { font-size: 0.9rem; margin-right: 5px; }
-        .pro-badge { color: var(--pro-gold); }
-
-        .list-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #0f172a;
-            padding: 12px;
-            border-radius: 10px;
-            margin-bottom: 8px;
-        }
-
+        .list-item { display: flex; align-items: center; justify-content: space-between; background: #0f172a; padding: 12px; border-radius: 10px; margin-bottom: 8px; }
         .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-left: 8px; }
         .online { background: var(--success); box-shadow: 0 0 8px var(--success); }
         .offline { background: #64748b; }
-
         .btn { border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; color: white; transition: 0.2s; font-family: 'Cairo'; }
         .btn-add { background: var(--accent); }
         .btn-success { background: var(--success); }
         .btn-danger { background: var(--danger); }
-        .btn:disabled { background: #475569; cursor: not-allowed; }
-
         .empty-text { color: #64748b; font-size: 0.9rem; text-align: center; padding: 10px; }
     </style>
 </head>
@@ -123,19 +59,6 @@
 </div>
 
 <script>
-    // --- مساعدات العرض ---
-    function getBadgesHTML(userData) {
-        let html = '';
-        if (userData.proExpiryTime && userData.proExpiryTime > Date.now()) {
-            html += `<i class="fas fa-crown pro-badge badge-icon" title="Pro"></i>`;
-        }
-        if (userData.level >= 10) {
-            html += `<i class="fas fa-fire badge-icon" style="color:#fb923c" title="مخضرم"></i>`;
-        }
-        return html;
-    }
-
-    // --- دالة البحث ---
     async function handleSearch() {
         const query = document.getElementById('searchInput').value.trim().toUpperCase();
         const profileDiv = document.getElementById('searchProfile');
@@ -144,16 +67,14 @@
         profileDiv.innerHTML = '<p class="empty-text">جاري البحث...</p>';
 
         try {
-            // البحث عن طريق الـ publicUid في Firestore
-            const snap = await db.collection("users").where("publicUid", "==", query).get();
-            
+            const snap = await db.collection("users").where("publicUid", "==", query).limit(1).get();
             if (!snap.empty) {
                 const userDoc = snap.docs[0];
                 const user = userDoc.data();
                 const userId = userDoc.id;
 
                 if (userId === auth.currentUser.uid) {
-                    profileDiv.innerHTML = '<p class="empty-text">هذا هو حسابك الشخصي</p>';
+                    profileDiv.innerHTML = '<p class="empty-text">هذا حسابك</p>';
                     return;
                 }
 
@@ -161,46 +82,36 @@
                     <div class="profile-result">
                         <div class="avatar">${user.displayName ? user.displayName.charAt(0) : '?'}</div>
                         <div style="flex:1">
-                            <div style="font-weight:bold">${user.displayName || 'لاعب'} ${getBadgesHTML(user)}</div>
+                            <div style="font-weight:bold">${user.displayName || 'لاعب'}</div>
                             <div style="font-size:0.8rem; color:#94a3b8">${user.publicUid}</div>
                         </div>
-                        <button class="btn btn-add" id="sendBtn" onclick="sendReq('${userId}')">
-                            <i class="fas fa-user-plus"></i>
-                        </button>
+                        <button class="btn btn-add" onclick="processSend('${userId}')">إضافة</button>
                     </div>`;
             } else {
-                profileDiv.innerHTML = '<p class="empty-text">لم يتم العثور على اللاعب</p>';
+                profileDiv.innerHTML = '<p class="empty-text">لا يوجد لاعب بهذا الـ ID</p>';
             }
-        } catch (e) {
-            profileDiv.innerHTML = '<p class="empty-text">حدث خطأ أثناء البحث</p>';
-        }
+        } catch (e) { profileDiv.innerHTML = '<p class="empty-text">خطأ في البحث</p>'; }
     }
 
-    async function sendReq(targetUid) {
-        const btn = document.getElementById('sendBtn');
-        btn.disabled = true;
+    async function processSend(id) {
         try {
-            await sendFriendRequest(targetUid);
-            alert("تم إرسال الطلب!");
-            btn.innerHTML = '<i class="fas fa-check"></i>';
+            await sendFriendRequest(id);
+            alert("تم إرسال الطلب بنجاح!");
         } catch (e) {
-            alert("فشل الإرسال أو الطلب موجود مسبقاً");
-            btn.disabled = false;
+            alert(e.message);
         }
     }
 
-    // --- مراقب طلبات الصداقة ---
     function initRequestsListener() {
-        const myId = auth.currentUser.uid;
         db.collection("friendRequests")
-          .where("receiverId", "==", myId)
+          .where("receiverId", "==", auth.currentUser.uid)
           .where("status", "==", "pending")
           .onSnapshot(async (snapshot) => {
               const listDiv = document.getElementById('requestsList');
               const badge = document.getElementById('reqBadge');
               
               if (snapshot.empty) {
-                  listDiv.innerHTML = '<p class="empty-text">لا توجد طلبات معلقة</p>';
+                  listDiv.innerHTML = '<p class="empty-text">لا توجد طلبات</p>';
                   badge.style.display = 'none';
                   return;
               }
@@ -209,77 +120,53 @@
               badge.style.display = 'inline';
               listDiv.innerHTML = '';
 
-              const promises = snapshot.docs.map(async (doc) => {
+              for (const doc of snapshot.docs) {
                   const reqData = doc.data();
                   const uSnap = await db.collection("users").doc(reqData.senderId).get();
-                  if (uSnap.exists) {
-                      const uData = uSnap.data();
-                      return `
-                        <div class="list-item">
-                            <div><strong>${uData.displayName}</strong></div>
-                            <div style="display:flex; gap:8px">
-                                <button class="btn btn-success" onclick="acceptFriendRequest('${doc.id}', '${reqData.senderId}')"><i class="fas fa-check"></i></button>
-                                <button class="btn btn-danger" onclick="rejectFriendRequest('${doc.id}')"><i class="fas fa-times"></i></button>
-                            </div>
-                        </div>`;
-                  }
-                  return '';
-              });
-
-              const results = await Promise.all(promises);
-              listDiv.innerHTML = results.join('');
+                  const uData = uSnap.data();
+                  listDiv.innerHTML += `
+                    <div class="list-item">
+                        <div><strong>${uData.displayName}</strong></div>
+                        <div style="display:flex; gap:5px">
+                            <button class="btn btn-success" onclick="acceptFriendRequest('${doc.id}', '${reqData.senderId}')"><i class="fas fa-check"></i></button>
+                            <button class="btn btn-danger" onclick="rejectFriendRequest('${doc.id}')"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>`;
+              }
           });
     }
 
-    // --- مراقب قائمة الأصدقاء ---
     function initFriendsListener() {
-        const myId = auth.currentUser.uid;
-        db.collection("users").doc(myId).onSnapshot(async (doc) => {
-            const data = doc.data();
+        db.collection("users").doc(auth.currentUser.uid).onSnapshot(async (doc) => {
             const listDiv = document.getElementById('friendsList');
-            const friends = data.players || [];
+            const friends = doc.data().players || [];
 
             if (friends.length === 0) {
-                listDiv.innerHTML = '<p class="empty-text">قائمة الأصدقاء فارغة</p>';
+                listDiv.innerHTML = '<p class="empty-text">لا يوجد أصدقاء</p>';
                 return;
             }
 
-            listDiv.innerHTML = '<p class="empty-text">جاري تحديث الحالة...</p>';
-            
-            const promises = friends.map(async (fId) => {
+            listDiv.innerHTML = '';
+            for (const fId of friends) {
                 const fSnap = await db.collection("users").doc(fId).get();
                 if (fSnap.exists) {
                     const fData = fSnap.data();
                     const isOnline = fData.isOnline === true;
-                    return `
+                    listDiv.innerHTML += `
                         <div class="list-item">
-                            <div>
-                                <span class="status-dot ${isOnline ? 'online' : 'offline'}"></span>
-                                <strong>${fData.displayName}</strong> ${getBadgesHTML(fData)}
-                            </div>
-                            <div style="font-size:0.75rem; color:#94a3b8">
-                                ${isOnline ? '<span style="color:#22c55e">نشط</span>' : 'غير متصل'}
-                            </div>
+                            <div><span class="status-dot ${isOnline ? 'online' : 'offline'}"></span>${fData.displayName}</div>
+                            <div style="font-size:0.7rem; color:#94a3b8">${isOnline ? 'نشط' : 'أوفلاين'}</div>
                         </div>`;
                 }
-                return '';
-            });
-
-            const results = await Promise.all(promises);
-            listDiv.innerHTML = results.join('');
+            }
         });
     }
 
-    // الدخول للمنظومة
     firebase.auth().onAuthStateChanged(user => {
-        if (user) {
-            initRequestsListener();
-            initFriendsListener();
-        } else {
-            window.location.href = "auth.html";
-        }
+        if (user) { initRequestsListener(); initFriendsListener(); }
+        else { window.location.href = "auth.html"; }
     });
 </script>
-
 </body>
 </html>
+
