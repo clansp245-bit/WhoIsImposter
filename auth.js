@@ -1,6 +1,6 @@
 /**
  * @file: auth.js
- * @description: الملف البرمجي الكامل للمصادقة، الشارات، ونظام الصداقة.
+ * @description: الملف الشامل والنهائي (مصادقة + Firestore + شارات + صداقة)
  */
 
 const firebaseConfig = {
@@ -12,6 +12,7 @@ const firebaseConfig = {
     appId: "1:766002212710:web:02b56401e230faed09e2a7"
 };
 
+// تهيئة Firebase
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
@@ -19,12 +20,12 @@ if (!firebase.apps.length) {
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// --- نظام الشارات الذكي ---
+// --- نظام الشارات ---
 function getBadgesHTML(userData) {
     if (!userData) return '';
     let html = '';
     const OWNER_EMAIL = "clansp245@gmail.com"; 
-
+    
     if (userData.email === OWNER_EMAIL) {
         html += `<i class="fas fa-user-shield" style="color:#38bdf8; margin-left:5px;" title="المالك"></i>`;
     }
@@ -35,26 +36,25 @@ function getBadgesHTML(userData) {
     return html;
 }
 
-// --- إدارة حساب المستخدم وحفظ البيانات ---
+// --- إدارة بيانات المستخدم ---
 async function createFirestoreUserEntry(user) {
     const userRef = db.collection("users").doc(user.uid);
     const doc = await userRef.get();
 
     if (!doc.exists) {
-        // توليد Public ID تلقائي إذا لم يوجد
         const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
         const generateID = () => `IMP-${Array.from({length:4},()=>chars[Math.floor(Math.random()*chars.length)]).join('')}-${Array.from({length:4},()=>chars[Math.floor(Math.random()*chars.length)]).join('')}`;
-        
-        let newPublicUid = generateID();
         
         const initialData = {
             email: user.email,
             displayName: user.displayName || user.email.split("@")[0],
-            publicUid: newPublicUid,
+            publicUid: generateID(),
             players: [],
             isOnline: true,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            proExpiryTime: 0 // افتراضياً ليس برو
+            totalCoins: 0,
+            level: 1,
+            proExpiryTime: 0,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         await userRef.set(initialData);
         return initialData;
@@ -62,18 +62,27 @@ async function createFirestoreUserEntry(user) {
     return doc.data();
 }
 
-// --- وظائف تسجيل الدخول ---
+// --- دوال المصادقة (تم إصلاحها بالكامل) ---
 async function signUp(email, password) {
     const cred = await auth.createUserWithEmailAndPassword(email, password);
+    return await createFirestoreUserEntry(cred.user);
+}
+
+async function signIn(email, password) {
+    const cred = await auth.signInWithEmailAndPassword(email, password);
+    // تحديث حالة الاتصال عند الدخول
+    await db.collection("users").doc(cred.user.uid).update({ isOnline: true });
+    return cred;
+}
+
+async function signInWithGoogle() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const cred = await auth.signInWithPopup(provider);
     await createFirestoreUserEntry(cred.user);
     return cred;
 }
 
-async function signIn(email, password) {
-    return await auth.signInWithEmailAndPassword(email, password);
-}
-
-// --- نظام الصداقة والبحث ---
+// --- نظام الصداقة ---
 async function searchUsersByPublicId(publicId) {
     const query = publicId.toUpperCase().trim();
     const snap = await db.collection("users").where("publicUid", "==", query).limit(1).get();
@@ -90,7 +99,7 @@ async function sendFriendRequest(targetUid) {
         .where("receiverId", "in", [myId, targetUid])
         .get();
 
-    if (!check.empty) throw new Error("يوجد طلب سابق بالفعل");
+    if (!check.empty) throw new Error("الطلب موجود مسبقاً أو هناك علاقة فعلاً");
 
     return await db.collection("friendRequests").add({
         senderId: myId,
@@ -113,12 +122,14 @@ async function rejectFriendRequest(requestId) {
     return await db.collection("friendRequests").doc(requestId).delete();
 }
 
-// تحديث حالة الاتصال
+// مراقبة حالة الاتصال
 auth.onAuthStateChanged(user => {
     if (user) {
-        db.collection("users").doc(user.uid).update({ isOnline: true });
+        const userRef = db.collection("users").doc(user.uid);
+        userRef.update({ isOnline: true }).catch(() => {});
         window.addEventListener('beforeunload', () => {
-            db.collection("users").doc(user.uid).update({ isOnline: false });
+            userRef.update({ isOnline: false });
         });
     }
 });
+
