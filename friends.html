@@ -22,6 +22,7 @@
         input { flex: 1; background: #0f172a; border: 1px solid #334155; padding: 12px; border-radius: 8px; color: white; outline: none; }
         .profile-result { background: #334155; border-radius: 12px; padding: 15px; display: flex; align-items: center; gap: 15px; border-left: 4px solid var(--accent); }
         .avatar { width: 50px; height: 50px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; }
+        .badge-icon { margin-right: 5px; font-size: 0.9rem; }
         .list-item { display: flex; align-items: center; justify-content: space-between; background: #0f172a; padding: 12px; border-radius: 10px; margin-bottom: 8px; }
         .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-left: 8px; }
         .online { background: var(--success); box-shadow: 0 0 8px var(--success); }
@@ -67,11 +68,10 @@
         profileDiv.innerHTML = '<p class="empty-text">جاري البحث...</p>';
 
         try {
-            const snap = await db.collection("users").where("publicUid", "==", query).limit(1).get();
-            if (!snap.empty) {
-                const userDoc = snap.docs[0];
-                const user = userDoc.data();
-                const userId = userDoc.id;
+            const results = await searchUsersByDisplayName(query);
+            if (results.length > 0) {
+                const user = results[0];
+                const userId = user.uid;
 
                 if (userId === auth.currentUser.uid) {
                     profileDiv.innerHTML = '<p class="empty-text">هذا حسابك</p>';
@@ -82,7 +82,7 @@
                     <div class="profile-result">
                         <div class="avatar">${user.displayName ? user.displayName.charAt(0) : '?'}</div>
                         <div style="flex:1">
-                            <div style="font-weight:bold">${user.displayName || 'لاعب'}</div>
+                            <div style="font-weight:bold">${user.displayName || 'لاعب'} ${getBadgesHTML(user)}</div>
                             <div style="font-size:0.8rem; color:#94a3b8">${user.publicUid}</div>
                         </div>
                         <button class="btn btn-add" onclick="processSend('${userId}')">إضافة</button>
@@ -94,12 +94,7 @@
     }
 
     async function processSend(id) {
-        try {
-            await sendFriendRequest(id);
-            alert("تم إرسال الطلب بنجاح!");
-        } catch (e) {
-            alert(e.message);
-        }
+        try { await sendFriendRequest(id); alert("تم إرسال الطلب بنجاح!"); } catch (e) { alert(e.message); }
     }
 
     function initRequestsListener() {
@@ -109,24 +104,17 @@
           .onSnapshot(async (snapshot) => {
               const listDiv = document.getElementById('requestsList');
               const badge = document.getElementById('reqBadge');
-              
-              if (snapshot.empty) {
-                  listDiv.innerHTML = '<p class="empty-text">لا توجد طلبات</p>';
-                  badge.style.display = 'none';
-                  return;
-              }
-
+              if (snapshot.empty) { listDiv.innerHTML = '<p class="empty-text">لا توجد طلبات</p>'; badge.style.display = 'none'; return; }
               badge.innerText = snapshot.size;
               badge.style.display = 'inline';
               listDiv.innerHTML = '';
-
               for (const doc of snapshot.docs) {
                   const reqData = doc.data();
                   const uSnap = await db.collection("users").doc(reqData.senderId).get();
                   const uData = uSnap.data();
                   listDiv.innerHTML += `
                     <div class="list-item">
-                        <div><strong>${uData.displayName}</strong></div>
+                        <div><strong>${uData.displayName}</strong> ${getBadgesHTML(uData)}</div>
                         <div style="display:flex; gap:5px">
                             <button class="btn btn-success" onclick="acceptFriendRequest('${doc.id}', '${reqData.senderId}')"><i class="fas fa-check"></i></button>
                             <button class="btn btn-danger" onclick="rejectFriendRequest('${doc.id}')"><i class="fas fa-times"></i></button>
@@ -139,13 +127,9 @@
     function initFriendsListener() {
         db.collection("users").doc(auth.currentUser.uid).onSnapshot(async (doc) => {
             const listDiv = document.getElementById('friendsList');
-            const friends = doc.data().players || [];
-
-            if (friends.length === 0) {
-                listDiv.innerHTML = '<p class="empty-text">لا يوجد أصدقاء</p>';
-                return;
-            }
-
+            const data = doc.data();
+            const friends = data.players || [];
+            if (friends.length === 0) { listDiv.innerHTML = '<p class="empty-text">لا يوجد أصدقاء</p>'; return; }
             listDiv.innerHTML = '';
             for (const fId of friends) {
                 const fSnap = await db.collection("users").doc(fId).get();
@@ -154,7 +138,7 @@
                     const isOnline = fData.isOnline === true;
                     listDiv.innerHTML += `
                         <div class="list-item">
-                            <div><span class="status-dot ${isOnline ? 'online' : 'offline'}"></span>${fData.displayName}</div>
+                            <div><span class="status-dot ${isOnline ? 'online' : 'offline'}"></span>${fData.displayName} ${getBadgesHTML(fData)}</div>
                             <div style="font-size:0.7rem; color:#94a3b8">${isOnline ? 'نشط' : 'أوفلاين'}</div>
                         </div>`;
                 }
@@ -162,11 +146,7 @@
         });
     }
 
-    firebase.auth().onAuthStateChanged(user => {
-        if (user) { initRequestsListener(); initFriendsListener(); }
-        else { window.location.href = "auth.html"; }
-    });
+    firebase.auth().onAuthStateChanged(user => { if (user) { initRequestsListener(); initFriendsListener(); } else { window.location.href = "auth.html"; } });
 </script>
 </body>
 </html>
-
