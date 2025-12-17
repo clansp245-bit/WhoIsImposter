@@ -60,14 +60,14 @@ async function createFirestoreUserEntry(user) {
             proExpiryTime: 0,
             players: [],
             settings: {},
-            receivedGifts: {}, // 🚨 استخدام كائن بدلاً من مصفوفة لتخزين الهدايا (أفضل للأداء)
+            receivedGifts: {}, 
             level: 1,
             xp: 0,
             ownedPacksPermanent: [],
             ownedPacksTemporary: {},
             dailyDiscount: { date: null, percent: 0 }, 
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            publicUid: newPublicUid // 🚨 إضافة Public UID
+            publicUid: newPublicUid 
         };
         await userRef.set(initialData);
         return initialData;
@@ -200,10 +200,10 @@ async function loadUserData() {
             proExpiryTime: data.proExpiryTime || 0,
             players: data.players || [],
             settings: data.settings || {},
-            receivedGifts: data.receivedGifts || {}, // 🚨 تحميل الهدايا ككائن
+            receivedGifts: data.receivedGifts || {}, 
             level: data.level || 1,
             xp: data.xp || 0,
-            publicUid: data.publicUid || null, // 🚨 تحميل Public UID
+            publicUid: data.publicUid || null, 
             ownedPacksPermanent: data.ownedPacksPermanent || [],
             ownedPacksTemporary: data.ownedPacksTemporary || {},
             dailyDiscount: data.dailyDiscount && typeof data.dailyDiscount === 'object' ? data.dailyDiscount : { date: null, percent: 0 }
@@ -215,12 +215,12 @@ async function loadUserData() {
 }
 
 // ****************************************************
-// 6. حفظ بيانات المستخدم
+// 6. حفظ بيانات المستخدم 💥 (الإصلاح الحاسم)
 // ****************************************************
 /**
  * @function saveUserData
- * @description يحفظ بيانات المستخدم في Firestore. يمكنه قبول تحديثات جزئية.
- * @param {Object} updatedFields - كائن يحتوي على الحقول المراد تحديثها (مثل { totalCoins: 100, receivedGifts: {...} }).
+ * @description يحفظ بيانات المستخدم في Firestore باستخدام merge: true.
+ * @param {Object} updatedFields - كائن يحتوي على الحقول المراد تحديثها (مثل { totalCoins: 100, proExpiryTime: 123456789 }).
  * @returns {Promise<boolean>} True عند النجاح.
  */
 async function saveUserData(updatedFields = {}) {
@@ -237,12 +237,19 @@ async function saveUserData(updatedFields = {}) {
         await user.updateProfile({ displayName: dataToSave.displayName });
     }
     // التأكد من أن اسم العرض يتم حفظه في Firestore أيضاً إذا تم تحديثه عبر Auth
-    if (user.displayName) {
+    if (user.displayName && !dataToSave.displayName) {
+        // نستخدم displayName من Auth إذا لم يكن موجوداً في updatedFields
         dataToSave.displayName = user.displayName;
     }
 
-    await db.collection("users").doc(user.uid).set(dataToSave, { merge: true });
-    return true;
+    try {
+        // 💥 استخدام { merge: true } للكتابة الجزئية (تحديث حقول محددة دون حذف الأخرى)
+        await db.collection("users").doc(user.uid).set(dataToSave, { merge: true });
+        return true;
+    } catch (error) {
+        console.error("خطأ في حفظ بيانات المستخدم:", error);
+        return false;
+    }
 }
 
 // ****************************************************
@@ -254,7 +261,7 @@ function isPro(userData) {
 }
 
 // ****************************************************
-// 8. إدارة الأصدقاء والطلبات (البحث الآن يشمل Public UID)
+// 8. إدارة الأصدقاء والطلبات
 // ****************************************************
 async function searchUsersByDisplayName(searchTerm) {
     const user = auth.currentUser;
@@ -393,16 +400,13 @@ async function generateDailyProDiscount() {
 
 /**
  * @function getRequiredXPForLevel
- * @description دالة تحسب إجمالي الخبرة المطلوبة للوصول إلى المستوى التالي.
  */
 function getRequiredXPForLevel(level) {
-    // مثال: المستوى 1 يحتاج 20+20=40 XP، المستوى 2 يحتاج 20+40=60 XP، وهكذا
     return 20 + (level * 20); 
 }
 
 /**
  * @function getLevelUpCoinReward
- * @description تحدد مكافأة الكوينز لكل مستوى جديد.
  */
 function getLevelUpCoinReward(newLevel) {
     return newLevel * 50;
@@ -410,7 +414,6 @@ function getLevelUpCoinReward(newLevel) {
 
 /**
  * @function calculateTotalXPRequired
- * @description يحسب إجمالي XP المطلوب للوصول إلى المستوى الحالي.
  */
 function calculateTotalXPRequired(targetLevel) {
     let totalXp = 0;
@@ -422,49 +425,31 @@ function calculateTotalXPRequired(targetLevel) {
 
 /**
  * @function checkAndLevelUp
- * @description يتحقق مما إذا كان المستخدم مؤهلاً لرفع المستوى، ويرفع مستواه ويمنحه مكافأة.
  */
 async function checkAndLevelUp(userData) {
     let currentLevel = userData.level || 1;
     let currentXP = userData.xp || 0;
     let leveledUp = false;
     
-    // نبدأ من المستوى الحالي ونحسب XP المطلوب للمستوى الذي يليه
-    let xpRequiredForNextLevel = calculateTotalXPRequired(currentLevel + 1);
-    
     // عملية رفع المستوى المتكرر إذا تجاوز XP مستويات متعددة
-    if (currentXP >= xpRequiredForNextLevel) {
-        while (true) {
-            const xpNeeded = getRequiredXPForLevel(currentLevel);
+    if (currentXP >= calculateTotalXPRequired(currentLevel + 1)) {
+        let updatePayload = {};
+        
+        while (currentXP >= calculateTotalXPRequired(currentLevel + 1)) {
+            currentLevel++; 
+            const reward = getLevelUpCoinReward(currentLevel);
+            userData.totalCoins = (userData.totalCoins || 0) + reward; 
+            leveledUp = true;
             
-            // إذا كان XP أكبر من أو يساوي XP المطلوب للمستوى الحالي، ارفع المستوى
-            if (currentXP >= calculateTotalXPRequired(currentLevel + 1)) {
-                currentLevel++; 
-                const reward = getLevelUpCoinReward(currentLevel);
-                userData.totalCoins += reward; 
-                leveledUp = true;
-                
-                console.log(`🎉 رفع المستوى إلى ${currentLevel}! تمت إضافة ${reward} كوينز.`);
-                
-            } else {
-                break; // توقف إذا لم يكن مؤهلاً للمستوى التالي
-            }
+            console.log(`🎉 رفع المستوى إلى ${currentLevel}! تمت إضافة ${reward} كوينز.`);
         }
         
-        // حفظ البيانات بعد رفع المستوى (باستخدام الدالة الموحدة)
-        await saveUserData({
-            totalCoins: userData.totalCoins,
-            level: currentLevel,
-            xp: currentXP,
-            // تمرير جميع الحقول الأخرى لضمان عدم حذفها
-            proExpiryTime: userData.proExpiryTime || 0,
-            players: userData.players || [],
-            settings: userData.settings || {},
-            ownedPacksPermanent: userData.ownedPacksPermanent || [],
-            ownedPacksTemporary: userData.ownedPacksTemporary || {},
-            receivedGifts: userData.receivedGifts || {},
-            dailyDiscount: userData.dailyDiscount || { date: null, percent: 0 }
-        });
+        // حفظ البيانات بعد رفع المستوى باستخدام دالة saveUserData الموحدة
+        updatePayload.totalCoins = userData.totalCoins;
+        updatePayload.level = currentLevel;
+        updatePayload.xp = userData.xp;
+        
+        await saveUserData(updatePayload);
         
         userData.level = currentLevel;
         return true;
@@ -475,37 +460,23 @@ async function checkAndLevelUp(userData) {
 
 /**
  * @function addXPAndCoins
- * @description يمنح المستخدم الكوينز والخبرة (XP) مع بونص للـ Pro، ثم يتحقق من رفع المستوى.
  */
 async function addXPAndCoins(userData, baseCoins, baseXp) {
     const isUserPro = isPro(userData);
     const proMultiplier = isUserPro ? 1.5 : 1; 
 
-    // 1. حساب القيم النهائية
     const coinsEarned = Math.floor(baseCoins * proMultiplier);
     const xpEarned = Math.floor(baseXp * proMultiplier);
 
-    // 2. تحديث البيانات محلياً
     userData.totalCoins = (userData.totalCoins || 0) + coinsEarned;
     userData.xp = (userData.xp || 0) + xpEarned;
 
-    // 3. التحقق من رفع المستوى (سيتم حفظ البيانات داخل هذه الدالة إذا تم رفع المستوى)
     const leveledUp = await checkAndLevelUp(userData);
 
-    // 4. حفظ البيانات إذا لم يتم رفع المستوى (باستخدام الدالة الموحدة)
     if (!leveledUp) {
         await saveUserData({
             totalCoins: userData.totalCoins,
-            xp: userData.xp,
-            // تمرير جميع الحقول الأخرى لضمان عدم حذفها
-            proExpiryTime: userData.proExpiryTime || 0,
-            players: userData.players || [],
-            settings: userData.settings || {},
-            level: userData.level || 1,
-            ownedPacksPermanent: userData.ownedPacksPermanent || [],
-            ownedPacksTemporary: userData.ownedPacksTemporary || {},
-            receivedGifts: userData.receivedGifts || {},
-            dailyDiscount: userData.dailyDiscount || { date: null, percent: 0 }
+            xp: userData.xp
         });
     }
 
@@ -514,50 +485,5 @@ async function addXPAndCoins(userData, baseCoins, baseXp) {
         xp: xpEarned,
         isPro: isUserPro
     };
-}
-
-// ****************************************************
-// 11. تحديث الكوينز وعضوية Pro بشكل آمن
-// ****************************************************
-
-/**
- * @function updateCoinsAndProTime
- * @description تحديث الكوينز ومدة Pro في Firestore وAuth.js
- */
-async function updateCoinsAndProTime(userData, coinChange, daysToAdd) {
-    const newCoins = (userData.totalCoins || 0) + coinChange;
-    const now = Date.now();
-    let newProTime = userData.proExpiryTime || 0;
-    
-    if (daysToAdd > 0) {
-        const currentExpiry = (newProTime > now) ? newProTime : now;
-        newProTime = currentExpiry + (daysToAdd * 24 * 60 * 60 * 1000);
-    }
-    
-    // حفظ التغييرات باستخدام الدالة الموحدة
-    try {
-        await saveUserData({
-            totalCoins: newCoins,
-            proExpiryTime: newProTime,
-            // تمرير جميع الحقول الأخرى لضمان عدم حذفها
-            players: userData.players,
-            settings: userData.settings,
-            level: userData.level,
-            xp: userData.xp,
-            ownedPacksPermanent: userData.ownedPacksPermanent,
-            ownedPacksTemporary: userData.ownedPacksTemporary,
-            dailyDiscount: userData.dailyDiscount,
-            receivedGifts: userData.receivedGifts || {}
-        });
-        
-        // تحديث البيانات المحلية للمستخدم
-        userData.totalCoins = newCoins;
-        userData.proExpiryTime = newProTime;
-        return true;
-        
-    } catch (error) {
-        console.error("فشل تحديث الكوينز والمدة:", error);
-        return false;
-    }
 }
 
