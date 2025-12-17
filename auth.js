@@ -18,47 +18,42 @@ if (!firebase.apps.length) {
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// --- نظام الشارات الذكي ---
+// --- نظام الشارات ---
 function getBadgesHTML(userData) {
     let html = '';
-    const OWNER_EMAIL = "clansp245@gmail.com"; // إيميل المالك
+    const OWNER_EMAIL = "clansp245@gmail.com"; 
 
-    // 1. شارة المالك (تظهر فقط للمالك)
+    // شارة المالك
     if (userData.email === OWNER_EMAIL) {
-        html += `<i class="fas fa-user-shield badge-icon" style="color:#38bdf8" title="Owner / المطور"></i> `;
+        html += `<i class="fas fa-user-shield" style="color:#38bdf8; margin-right:5px;" title="المالك"></i>`;
     }
 
-    // 2. شارة البرو (تختفي إذا انتهى الوقت)
+    // شارة البرو (تعتمد على وجود وقت انتهاء في القاعدة)
     if (userData.proExpiryTime && userData.proExpiryTime > Date.now()) {
-        html += `<i class="fas fa-crown badge-icon" style="color:#ffd700" title="عضو برو"></i> `;
+        html += `<i class="fas fa-crown" style="color:#ffd700; margin-right:5px;" title="عضو برو"></i>`;
     }
-
-    // 3. شارة اللفل العالي (اختياري)
-    if (userData.level >= 50) {
-        html += `<i class="fas fa-fire badge-icon" style="color:#ef4444" title="لاعب أسطوري"></i> `;
-    }
-
     return html;
 }
 
-// --- بقية الدوال (البحث، الطلبات، الحالة) ---
+// --- الدوال الأساسية ---
 
-async function searchUsersByDisplayName(publicId) {
+async function searchUsersByPublicId(publicId) {
     const query = publicId.toUpperCase().trim();
     const snap = await db.collection("users").where("publicUid", "==", query).limit(1).get();
-    return snap.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
+    if (snap.empty) return null;
+    return { uid: snap.docs[0].id, ...snap.docs[0].data() };
 }
 
 async function sendFriendRequest(targetUid) {
     const myId = auth.currentUser.uid;
     if (myId === targetUid) throw new Error("لا يمكنك إضافة نفسك");
-    
-    const [sent, received] = await Promise.all([
-        db.collection("friendRequests").where("senderId", "==", myId).where("receiverId", "==", targetUid).get(),
-        db.collection("friendRequests").where("senderId", "==", targetUid).where("receiverId", "==", myId).get()
-    ]);
 
-    if (!sent.empty || !received.empty) throw new Error("يوجد طلب معلق بالفعل");
+    const check = await db.collection("friendRequests")
+        .where("senderId", "in", [myId, targetUid])
+        .where("receiverId", "in", [myId, targetUid])
+        .get();
+
+    if (!check.empty) throw new Error("يوجد طلب سابق بالفعل");
 
     return await db.collection("friendRequests").add({
         senderId: myId,
@@ -80,13 +75,3 @@ async function acceptFriendRequest(requestId, senderId) {
 async function rejectFriendRequest(requestId) {
     return await db.collection("friendRequests").doc(requestId).delete();
 }
-
-function monitorOnlineStatus() {
-    const user = auth.currentUser;
-    if (!user) return;
-    const userRef = db.collection("users").doc(user.uid);
-    userRef.update({ isOnline: true });
-    window.addEventListener('beforeunload', () => { userRef.update({ isOnline: false }); });
-}
-
-auth.onAuthStateChanged(user => { if (user) monitorOnlineStatus(); });
