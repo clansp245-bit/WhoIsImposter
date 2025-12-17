@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🕵️ توزيع الأدوار</title>
+<title>🕵️ توزيع الأدوار - النسخة المصلحة</title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -13,108 +13,66 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
-/* (نفس التنسيقات السابقة مع تعديل حجم المربع) */
-:root {
-    --primary: #6366f1;
-    --bg: #0f172a;
-    --card-bg: #1e293b;
-}
+:root { --primary: #6366f1; --bg: #0f172a; --card-bg: #1e293b; }
+body { font-family: 'Cairo', sans-serif; background-color: var(--bg); color: #f1f5f9; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow: hidden; }
 
-body {
-    font-family: 'Cairo', sans-serif;
-    background-color: var(--bg);
-    color: #f1f5f9;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-}
+.top-bar { width: 100%; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(10px); z-index: 10; }
+#coin-display { color: #fbbf24; font-weight: 800; font-size: 1.2rem; }
 
-.top-bar {
-    width: 100%;
-    padding: 15px 25px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(30, 41, 59, 0.5);
-    backdrop-filter: blur(10px);
-}
-
-#coin-display {
-    color: #fbbf24;
-    font-weight: 800;
-}
-
-/* --- المشكلة 1: تكبير المربع --- */
+/* تصميم المربع الكبير */
 .identity-card {
-    width: 90%;
-    max-width: 400px; /* تم تكبير العرض */
-    height: 300px;    /* تم تكبير الطول */
-    background: var(--card-bg);
-    border-radius: 30px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    border: 3px dashed rgba(148, 163, 184, 0.2);
-    transition: all 0.3s ease;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-    user-select: none; /* لمنع تحديد النص كنسخ */
-    -webkit-user-select: none;
+    width: 85vw; max-width: 450px; height: 350px;
+    background: var(--card-bg); border-radius: 35px;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    cursor: pointer; border: 4px dashed rgba(255, 255, 255, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    user-select: none; -webkit-user-select: none;
+    position: relative; overflow: hidden;
 }
 
-.identity-card.revealed {
-    border-style: solid;
-    border-color: var(--primary);
-    background: linear-gradient(145deg, #2563eb, #1e293b);
-    transform: translateY(-10px);
-}
+.identity-card.revealed { border-style: solid; border-color: var(--primary); background: #2563eb; transform: scale(1.02); }
 
-.card-icon { font-size: 4rem; margin-bottom: 20px; color: #475569; }
+.card-icon { font-size: 5rem; color: #475569; margin-bottom: 20px; }
 
 .action-btn {
-    margin-top: 30px;
-    width: 80%;
-    max-width: 300px;
-    padding: 18px;
-    border-radius: 15px;
-    background: var(--primary);
-    color: white;
-    font-weight: 800;
-    border: none;
-    cursor: pointer;
+    margin-top: 40px; width: 80%; max-width: 300px; padding: 20px;
+    border-radius: 20px; background: var(--primary); color: white;
+    font-weight: 800; font-size: 1.3rem; border: none; cursor: pointer;
+    box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
 }
 
-#timer-box { display: none; text-align: center; margin-top: 50px; }
-#timer-display { font-size: 5rem; color: #f59e0b; font-weight: 900; }
+#timer-box { display: none; text-align: center; margin-top: 50px; animation: fadeIn 0.5s; }
+#timer-display { font-size: 6rem; color: #f59e0b; font-weight: 900; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
 
-<body onload="loadGameData()">
+<body onload="initGame()">
 
 <div class="top-bar">
-    <div id="coin-display"><i class="fas fa-coins"></i> <span id="total-coins-value">0</span></div>
-    <a href="index.html" style="color:#94a3b8; font-size: 1.5rem;"><i class="fas fa-times"></i></a>
+    <div id="coin-display"><i class="fas fa-coins"></i> <span id="total-coins-value">...</span></div>
+    <a href="index.html" style="color:#94a3b8; font-size: 1.8rem;"><i class="fas fa-times-circle"></i></a>
 </div>
 
-<div id="setup-view" style="width: 100%; display: flex; flex-direction: column; align-items: center; margin-top: 40px;">
-    <h1 id="player-name" style="font-size: 2.5rem; margin-bottom: 20px;">جاري التحميل...</h1>
+<div id="setup-view" style="width: 100%; display: flex; flex-direction: column; align-items: center; margin-top: 30px;">
+    <div style="background: var(--primary); padding: 5px 20px; border-radius: 50px; margin-bottom: 10px; font-weight: bold;">دور اللاعب:</div>
+    <h1 id="player-name" style="font-size: 2.8rem; margin: 0 0 30px 0; text-shadow: 0 4px 10px rgba(0,0,0,0.3);">جاري التحميل...</h1>
 
     <div id="card" class="identity-card" 
          ontouchstart="showRole()" ontouchend="hideRole()" 
          onmousedown="showRole()" onmouseup="hideRole()">
         <i class="fas fa-fingerprint card-icon"></i>
-        <span style="font-size: 1.2rem; font-weight: 600;">اضغط مطولاً للكشف</span>
+        <span style="font-size: 1.3rem; opacity: 0.7;">اضغط مطولاً للكشف</span>
     </div>
 
-    <button id="nextBtn" class="action-btn" onclick="nextPlayer()">اللاعب التالي <i class="fas fa-arrow-left"></i></button>
+    <button id="nextBtn" class="action-btn" onclick="nextPlayer()">التالي <i class="fas fa-arrow-left"></i></button>
 </div>
 
 <div id="timer-box">
-    <h2 style="color: #10b981">🗣️ وقت النقاش!</h2>
+    <h1 style="color: #10b981; font-size: 2.5rem;">🗣️ ابدأوا النقاش!</h1>
     <div id="timer-display">00:00</div>
+    <p style="color: #94a3b8;">سيتم إضافة الجوائز تلقائياً عند انتهاء الوقت</p>
 </div>
 
 <script>
@@ -122,48 +80,46 @@ let players = [];
 let roles = [];
 let currentIndex = 0;
 let civilWord = "";
+let currentUserData = null;
 
-// نفس تصنيفات الكلمات السابقة
-const wordCategories = {
-    free: [{ id: 'objects', words: ["قلم", "كوب", "كرسي", "مفتاح", "هاتف", "ساعة", "مصباح"] }],
-    pro: [{ id: 'foods', words: ["تفاح", "موز", "برتقال", "أرز", "بيتزا"] }]
-};
+// الكلمات (تم التأكد من مساراتها)
+const wordsList = ["طائرة", "مستشفى", "مدرسة", "سوبر ماركت", "حديقة حيوان", "ملعب", "مطعم", "فندق", "سينما", "مكتبة"];
 
-async function loadGameData() {
+async function initGame() {
     auth.onAuthStateChanged(async (user) => {
         if (!user) { window.location.href = "auth.html"; return; }
-        const data = await loadUserData();
-        if (data) {
-            players = data.players || [];
-            document.getElementById("total-coins-value").innerText = data.totalCoins || 0;
-            if (players.length < 3) { alert("أضف 3 لاعبين على الأقل"); window.location.href = "index.html"; return; }
-            players.sort(() => Math.random() - 0.5);
-            setupRoles(data);
+        
+        currentUserData = await loadUserData();
+        if (currentUserData) {
+            players = currentUserData.players || [];
+            document.getElementById("total-coins-value").innerText = currentUserData.totalCoins;
+
+            if (players.length < 3) {
+                alert("يجب إضافة 3 لاعبين على الأقل في القائمة الرئيسية.");
+                window.location.href = "index.html";
+                return;
+            }
+
+            players = [...players].sort(() => Math.random() - 0.5);
+            setupGameLogic();
             updateUI();
         }
     });
 }
 
-function setupRoles(userData) {
-    let allWords = [];
-    const isUserPro = isPro(userData);
+function setupGameLogic() {
+    // 1. اختيار الكلمة بشكل عشوائي صحيح
+    civilWord = wordsList[Math.floor(Math.random() * wordsList.length)];
     
-    // جمع الكلمات (مثال بسيط: نجمع كل المتاح للمستخدم)
-    allWords = [...wordCategories.free[0].words];
-    if (isUserPro) allWords = [...allWords, ...wordCategories.pro[0].words];
-
-    civilWord = allWords[Math.floor(Math.random() * allWords.length)];
-    
-    // --- المشكلة 3: ضمان توزيع الأدوار بشكل سليم ---
+    // 2. توزيع الأدوار
     roles = Array(players.length).fill("CIVILIAN");
-    let impostorIndex = Math.floor(Math.random() * players.length);
+    const impostorIndex = Math.floor(Math.random() * players.length);
     roles[impostorIndex] = "IMPOSTOR";
 }
 
 function updateUI() {
     document.getElementById("player-name").innerText = players[currentIndex];
-    // --- المشكلة 2: إعادة ضبط شكل البطاقة عند كل لاعب جديد ---
-    hideRole(); 
+    hideRole(); // للتأكد من قلب البطاقة تلقائياً عند الانتقال
 }
 
 function showRole() {
@@ -171,20 +127,19 @@ function showRole() {
     card.classList.add("revealed");
     const role = roles[currentIndex];
     
-    // --- المشكلة 3: عرض الكلمة للمدني فقط وإخفائها عن المحتال ---
     if (role === "CIVILIAN") {
         card.innerHTML = `
-            <i class="fas fa-user-check" style="font-size:3rem; margin-bottom:10px;"></i>
-            <h2 style="margin:0;">أنت مدني</h2>
-            <div style="font-size:2rem; font-weight:900; margin-top:15px; background:white; color:var(--primary); padding:10px 30px; border-radius:15px;">
+            <i class="fas fa-user-check" style="font-size:3.5rem; margin-bottom:15px;"></i>
+            <h2 style="margin:0; font-size: 1.8rem;">أنت مدني</h2>
+            <div style="font-size:2.5rem; font-weight:900; margin-top:20px; background:white; color:#2563eb; padding:15px 40px; border-radius:20px; box-shadow: 0 10px 20px rgba(0,0,0,0.2);">
                 ${civilWord}
             </div>
         `;
     } else {
         card.innerHTML = `
-            <i class="fas fa-user-secret" style="font-size:4rem; margin-bottom:10px; color:#ff4f4f;"></i>
-            <h2 style="color:#ff4f4f; margin:0;">أنت المحتال 😈</h2>
-            <p style="font-weight:bold; color:#f1f5f9;">حاول خداع الجميع!</p>
+            <i class="fas fa-user-secret" style="font-size:5rem; margin-bottom:15px; color:#ff4f4f;"></i>
+            <h2 style="color:#ff4f4f; margin:0; font-size: 2.2rem;">أنت المحتال 😈</h2>
+            <p style="font-weight:bold; font-size: 1.1rem; margin-top: 10px;">حاول تخمين الكلمة!</p>
         `;
     }
 }
@@ -192,19 +147,19 @@ function showRole() {
 function hideRole() {
     const card = document.getElementById("card");
     card.classList.remove("revealed");
-    // إعادة الشكل الافتراضي
     card.innerHTML = `
         <i class="fas fa-fingerprint card-icon"></i>
-        <span style="font-size: 1.2rem; font-weight: 600;">اضغط مطولاً للكشف</span>
+        <span style="font-size: 1.3rem; opacity: 0.7;">اضغط مطولاً للكشف</span>
     `;
 }
 
 async function nextPlayer() {
     currentIndex++;
     if (currentIndex >= players.length) {
+        // انتهاء توزيع الأدوار
         document.getElementById("setup-view").style.display = "none";
         document.getElementById("timer-box").style.display = "block";
-        startDiscussion(60); // 60 ثانية نقاش
+        startDiscussion(60); 
     } else {
         updateUI();
     }
@@ -213,11 +168,23 @@ async function nextPlayer() {
 function startDiscussion(seconds) {
     let timeLeft = seconds;
     const display = document.getElementById("timer-display");
-    const interval = setInterval(() => {
+    
+    const interval = setInterval(async () => {
         let m = Math.floor(timeLeft / 60);
         let s = timeLeft % 60;
         display.innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-        if (timeLeft <= 0) { clearInterval(interval); alert("انتهى وقت النقاش!"); }
+        
+        if (timeLeft <= 0) {
+            clearInterval(interval);
+            display.innerText = "انتهى!";
+            
+            // --- إضافة الجوائز عند الانتهاء ---
+            if (currentUserData) {
+                const reward = await addXPAndCoins(currentUserData, 15, 30); // 15 كوينز و 30 خبرة
+                alert(`مبروك! حصلت على ${reward.coins} كوينز و ${reward.xp} XP`);
+                document.getElementById("total-coins-value").innerText = currentUserData.totalCoins + reward.coins;
+            }
+        }
         timeLeft--;
     }, 1000);
 }
