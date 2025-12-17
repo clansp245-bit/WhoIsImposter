@@ -207,7 +207,7 @@ async function loadProData() {
             return;
         }
         
-        const data = await loadUserData(); // دالة من auth.js تجلب كل شيء (بما في ذلك اللاعبين والإعدادات)
+        const data = await loadUserData(); // دالة من auth.js تجلب كل شيء
         if (data) {
             currentUserData = data;
             displayTotalCoins();
@@ -292,13 +292,11 @@ async function purchasePlan(durationDays, cost) {
     const expiryTime = currentProExpiry + extensionDurationMs;
     const newTotalCoins = currentCoins - cost;
     
-    // 🚨 استدعاء saveUserData بجميع الحقول الأربعة المطلوبة
-    const saveSuccessful = await saveUserData(
-        newTotalCoins, 
-        expiryTime, 
-        currentUserData.players || [], // الحفاظ على قائمة اللاعبين
-        currentUserData.settings || {} // الحفاظ على الإعدادات
-    );
+    // 💥 التعديل الحاسم: نمرر فقط الحقول المراد تحديثها إلى دالة saveUserData
+    const saveSuccessful = await saveUserData({
+        totalCoins: newTotalCoins,
+        proExpiryTime: expiryTime
+    });
 
     if (saveSuccessful) {
         // تحديث البيانات في الذاكرة
@@ -311,7 +309,7 @@ async function purchasePlan(durationDays, cost) {
         checkProStatus();
     } else {
         // هذا الخطأ يظهر عند فشل الاتصال بقاعدة البيانات أو عدم وجود مصادقة نشطة
-        alert("فشل الحفظ. تأكد من أنك مسجل الدخول ومن اتصالك بالإنترنت.");
+        alert("❌ فشل الحفظ. تأكد من أنك مسجل الدخول ومن اتصالك بالإنترنت.");
     }
 }
 </script>
