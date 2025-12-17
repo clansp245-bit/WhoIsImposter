@@ -1,6 +1,6 @@
 /**
  * @file: auth.js
- * @description: نسخة محسنة تدعم التحديث اللحظي للبيانات.
+ * @description: الإدارة الشاملة للمصادقة، Firestore، وحالة الاتصال.
  */
 
 const firebaseConfig = {
@@ -12,18 +12,20 @@ const firebaseConfig = {
     appId: "1:766002212710:web:02b56401e230faed09e2a7"
 };
 
-if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// دالة توليد الـ ID العام
+// --- وظائف مساعدة ---
 function generatePublicUid() {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     const part = () => Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
     return `IMP-${part()}-${part()}`;
 }
 
-// دالة إنشاء/تأمين بيانات المستخدم
 async function createFirestoreUserEntry(user) {
     const userRef = db.collection("users").doc(user.uid);
     const doc = await userRef.get();
@@ -44,8 +46,8 @@ async function createFirestoreUserEntry(user) {
             xp: 0,
             publicUid: newPublicUid,
             players: [],
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            isOnline: true
+            isOnline: true,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         await userRef.set(initialData);
         return initialData;
@@ -53,46 +55,45 @@ async function createFirestoreUserEntry(user) {
     return doc.data();
 }
 
-// *** الدالة الأهم: جلب البيانات مع ضمان وجودها ***
+// --- دوال المصادقة الرئيسية ---
+async function signUp(email, password) {
+    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+    // الانتظار حتى يتم إنشاء السجل في Firestore قبل العودة
+    await createFirestoreUserEntry(userCredential.user);
+    return userCredential;
+}
+
+async function signIn(email, password) {
+    return await auth.signInWithEmailAndPassword(email, password);
+}
+
+async function signInWithGoogle() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const userCredential = await auth.signInWithPopup(provider);
+    await createFirestoreUserEntry(userCredential.user);
+    return userCredential;
+}
+
 async function loadUserData() {
     const user = auth.currentUser;
     if (!user) return null;
-    try {
-        const doc = await db.collection("users").doc(user.uid).get();
-        if (doc.exists) return doc.data();
-        // إذا لم يوجد السجل (مشكلتك الحالية)، نقوم بإنشائه فوراً
-        return await createFirestoreUserEntry(user);
-    } catch (e) {
-        console.error("Error loading data:", e);
-        return null;
-    }
+    const doc = await db.collection("users").doc(user.uid).get();
+    return doc.exists ? doc.data() : await createFirestoreUserEntry(user);
 }
 
-// دالة حفظ البيانات الموحدة
-async function saveUserData(fields) {
+// --- مراقبة حالة الاتصال ---
+function monitorOnlineStatus() {
     const user = auth.currentUser;
-    if (!user) return false;
-    try {
-        await db.collection("users").doc(user.uid).set(fields, { merge: true });
-        return true;
-    } catch (e) { return false; }
+    if (!user) return;
+
+    const userRef = db.collection("users").doc(user.uid);
+    userRef.update({ isOnline: true });
+
+    window.addEventListener('beforeunload', () => {
+        userRef.update({ isOnline: false });
+    });
 }
 
-// دالة جلب أسماء العرض (للهدايا والأصدقاء)
-async function getDisplayNamesByUids(uids) {
-    if (!uids || uids.length === 0) return {};
-    const namesMap = {};
-    const snapshots = await db.collection("users").where(firebase.firestore.FieldPath.documentId(), 'in', uids.slice(0, 10)).get();
-    snapshots.forEach(doc => { namesMap[doc.id] = doc.data().displayName; });
-    return namesMap;
-}
-
-// مراقبة حالة الاتصال
 auth.onAuthStateChanged(user => {
-    if (user) {
-        db.collection("users").doc(user.uid).update({ 
-            isOnline: true, 
-            lastActive: firebase.firestore.FieldValue.serverTimestamp() 
-        }).catch(() => {});
-    }
+    if (user) monitorOnlineStatus();
 });
