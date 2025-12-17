@@ -1,5 +1,6 @@
 /**
  * @file: auth.js
+ * @description: الملف البرمجي الكامل للمصادقة، الشارات، ونظام الصداقة.
  */
 
 const firebaseConfig = {
@@ -18,25 +19,61 @@ if (!firebase.apps.length) {
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// --- نظام الشارات ---
+// --- نظام الشارات الذكي ---
 function getBadgesHTML(userData) {
+    if (!userData) return '';
     let html = '';
     const OWNER_EMAIL = "clansp245@gmail.com"; 
 
-    // شارة المالك
     if (userData.email === OWNER_EMAIL) {
-        html += `<i class="fas fa-user-shield" style="color:#38bdf8; margin-right:5px;" title="المالك"></i>`;
+        html += `<i class="fas fa-user-shield" style="color:#38bdf8; margin-left:5px;" title="المالك"></i>`;
     }
 
-    // شارة البرو (تعتمد على وجود وقت انتهاء في القاعدة)
     if (userData.proExpiryTime && userData.proExpiryTime > Date.now()) {
-        html += `<i class="fas fa-crown" style="color:#ffd700; margin-right:5px;" title="عضو برو"></i>`;
+        html += `<i class="fas fa-crown" style="color:#ffd700; margin-left:5px;" title="عضو برو"></i>`;
     }
     return html;
 }
 
-// --- الدوال الأساسية ---
+// --- إدارة حساب المستخدم وحفظ البيانات ---
+async function createFirestoreUserEntry(user) {
+    const userRef = db.collection("users").doc(user.uid);
+    const doc = await userRef.get();
 
+    if (!doc.exists) {
+        // توليد Public ID تلقائي إذا لم يوجد
+        const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        const generateID = () => `IMP-${Array.from({length:4},()=>chars[Math.floor(Math.random()*chars.length)]).join('')}-${Array.from({length:4},()=>chars[Math.floor(Math.random()*chars.length)]).join('')}`;
+        
+        let newPublicUid = generateID();
+        
+        const initialData = {
+            email: user.email,
+            displayName: user.displayName || user.email.split("@")[0],
+            publicUid: newPublicUid,
+            players: [],
+            isOnline: true,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            proExpiryTime: 0 // افتراضياً ليس برو
+        };
+        await userRef.set(initialData);
+        return initialData;
+    }
+    return doc.data();
+}
+
+// --- وظائف تسجيل الدخول ---
+async function signUp(email, password) {
+    const cred = await auth.createUserWithEmailAndPassword(email, password);
+    await createFirestoreUserEntry(cred.user);
+    return cred;
+}
+
+async function signIn(email, password) {
+    return await auth.signInWithEmailAndPassword(email, password);
+}
+
+// --- نظام الصداقة والبحث ---
 async function searchUsersByPublicId(publicId) {
     const query = publicId.toUpperCase().trim();
     const snap = await db.collection("users").where("publicUid", "==", query).limit(1).get();
@@ -75,3 +112,13 @@ async function acceptFriendRequest(requestId, senderId) {
 async function rejectFriendRequest(requestId) {
     return await db.collection("friendRequests").doc(requestId).delete();
 }
+
+// تحديث حالة الاتصال
+auth.onAuthStateChanged(user => {
+    if (user) {
+        db.collection("users").doc(user.uid).update({ isOnline: true });
+        window.addEventListener('beforeunload', () => {
+            db.collection("users").doc(user.uid).update({ isOnline: false });
+        });
+    }
+});
