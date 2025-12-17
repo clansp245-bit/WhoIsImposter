@@ -9,47 +9,44 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="auth.js"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
     <style>
-        :root { --bg-dark: #0f172a; --card-bg: #1e293b; --accent: #6366f1; --success: #22c55e; --danger: #ef4444; --pro-gold: #ffd700; }
-        body { font-family: 'Cairo', sans-serif; background-color: var(--bg-dark); color: #f1f5f9; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        :root { --bg-dark: #0f172a; --card-bg: #1e293b; --accent: #6366f1; --success: #22c55e; --danger: #ef4444; }
+        body { font-family: 'Cairo', sans-serif; background-color: var(--bg-dark); color: #f1f5f9; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 500px; }
-        .section-card { background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
-        h3 { margin-top: 0; color: #94a3b8; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center; }
+        .section-card { background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 20px; }
         .search-box { display: flex; gap: 10px; margin-bottom: 15px; }
-        input { flex: 1; background: #0f172a; border: 1px solid #334155; padding: 12px; border-radius: 8px; color: white; outline: none; }
+        input { flex: 1; background: #0f172a; border: 1px solid #334155; padding: 12px; border-radius: 8px; color: white; }
         .profile-result { background: #334155; border-radius: 12px; padding: 15px; display: flex; align-items: center; gap: 15px; border-left: 4px solid var(--accent); }
-        .avatar { width: 50px; height: 50px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; }
-        .badge-icon { margin-right: 5px; font-size: 0.9rem; }
+        .avatar { width: 50px; height: 50px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
         .list-item { display: flex; align-items: center; justify-content: space-between; background: #0f172a; padding: 12px; border-radius: 10px; margin-bottom: 8px; }
         .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-left: 8px; }
-        .online { background: var(--success); box-shadow: 0 0 8px var(--success); }
+        .online { background: var(--success); box-shadow: 0 0 5px var(--success); }
         .offline { background: #64748b; }
-        .btn { border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; color: white; transition: 0.2s; font-family: 'Cairo'; }
+        .btn { border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; color: white; font-family: 'Cairo'; }
         .btn-add { background: var(--accent); }
-        .btn-success { background: var(--success); }
-        .btn-danger { background: var(--danger); }
-        .empty-text { color: #64748b; font-size: 0.9rem; text-align: center; padding: 10px; }
+        .empty-text { color: #64748b; font-size: 0.9rem; text-align: center; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2 style="text-align: right; color: var(--accent);"><i class="fas fa-users"></i> المجتمع</h2>
+    <h2 style="text-align: right; color: var(--accent);">👥 المجتمع</h2>
 
     <div class="section-card">
-        <h3>🔍 البحث عن لاعب</h3>
+        <h3>🔍 البحث</h3>
         <div class="search-box">
-            <input type="text" id="searchInput" placeholder="أدخل الـ ID (مثال: IMP-XXXX-XXXX)">
-            <button class="btn btn-add" onclick="handleSearch()"><i class="fas fa-search"></i></button>
+            <input type="text" id="searchInput" placeholder="أدخل ID اللاعب">
+            <button class="btn btn-add" onclick="handleSearch()">بحث</button>
         </div>
         <div id="searchProfile"></div>
     </div>
 
     <div class="section-card">
-        <h3>📩 طلبات الصداقة <span id="reqBadge" style="background:var(--danger); color:white; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; display:none;">0</span></h3>
+        <h3>📩 الطلبات <span id="reqBadge" style="background:var(--danger); display:none; padding:2px 7px; border-radius:50%; font-size:12px;">0</span></h3>
         <div id="requestsList"></div>
     </div>
 
@@ -60,93 +57,86 @@
 </div>
 
 <script>
+    // دالة البحث
     async function handleSearch() {
-        const query = document.getElementById('searchInput').value.trim().toUpperCase();
-        const profileDiv = document.getElementById('searchProfile');
-        if(!query) return;
-
-        profileDiv.innerHTML = '<p class="empty-text">جاري البحث...</p>';
+        const val = document.getElementById('searchInput').value;
+        const resDiv = document.getElementById('searchProfile');
+        resDiv.innerHTML = "جاري البحث...";
 
         try {
-            const results = await searchUsersByDisplayName(query);
-            if (results.length > 0) {
-                const user = results[0];
-                const userId = user.uid;
-
-                if (userId === auth.currentUser.uid) {
-                    profileDiv.innerHTML = '<p class="empty-text">هذا حسابك</p>';
+            const user = await searchUsersByPublicId(val);
+            if (user) {
+                if (user.uid === auth.currentUser.uid) {
+                    resDiv.innerHTML = "هذا حسابك الشخصي";
                     return;
                 }
-
-                profileDiv.innerHTML = `
+                resDiv.innerHTML = `
                     <div class="profile-result">
-                        <div class="avatar">${user.displayName ? user.displayName.charAt(0) : '?'}</div>
+                        <div class="avatar">${user.displayName[0]}</div>
                         <div style="flex:1">
-                            <div style="font-weight:bold">${user.displayName || 'لاعب'} ${getBadgesHTML(user)}</div>
-                            <div style="font-size:0.8rem; color:#94a3b8">${user.publicUid}</div>
+                            <div>${user.displayName} ${getBadgesHTML(user)}</div>
+                            <small style="color:#94a3b8">${user.publicUid}</small>
                         </div>
-                        <button class="btn btn-add" onclick="processSend('${userId}')">إضافة</button>
+                        <button class="btn btn-add" onclick="executeSend('${user.uid}')">إضافة</button>
                     </div>`;
             } else {
-                profileDiv.innerHTML = '<p class="empty-text">لا يوجد لاعب بهذا الـ ID</p>';
+                resDiv.innerHTML = "لم يتم العثور على اللاعب";
             }
-        } catch (e) { profileDiv.innerHTML = '<p class="empty-text">خطأ في البحث</p>'; }
+        } catch(e) { resDiv.innerHTML = "خطأ في البحث"; }
     }
 
-    async function processSend(id) {
-        try { await sendFriendRequest(id); alert("تم إرسال الطلب بنجاح!"); } catch (e) { alert(e.message); }
+    // دالة الإرسال (تم تغيير اسمها لتجنب التعارض)
+    async function executeSend(id) {
+        try {
+            await sendFriendRequest(id);
+            alert("تم إرسال الطلب!");
+        } catch(e) { alert(e.message); }
     }
 
-    function initRequestsListener() {
-        db.collection("friendRequests")
-          .where("receiverId", "==", auth.currentUser.uid)
-          .where("status", "==", "pending")
-          .onSnapshot(async (snapshot) => {
-              const listDiv = document.getElementById('requestsList');
-              const badge = document.getElementById('reqBadge');
-              if (snapshot.empty) { listDiv.innerHTML = '<p class="empty-text">لا توجد طلبات</p>'; badge.style.display = 'none'; return; }
-              badge.innerText = snapshot.size;
-              badge.style.display = 'inline';
-              listDiv.innerHTML = '';
-              for (const doc of snapshot.docs) {
-                  const reqData = doc.data();
-                  const uSnap = await db.collection("users").doc(reqData.senderId).get();
-                  const uData = uSnap.data();
-                  listDiv.innerHTML += `
+    // مراقب الطلبات
+    function startListeners() {
+        const myId = auth.currentUser.uid;
+
+        // الطلبات
+        db.collection("friendRequests").where("receiverId", "==", myId).where("status", "==", "pending")
+        .onSnapshot(async snap => {
+            const list = document.getElementById('requestsList');
+            document.getElementById('reqBadge').innerText = snap.size;
+            document.getElementById('reqBadge').style.display = snap.empty ? 'none' : 'inline';
+            
+            list.innerHTML = snap.empty ? '<p class="empty-text">لا توجد طلبات</p>' : '';
+            for (const doc of snap.docs) {
+                const data = doc.data();
+                const u = await db.collection("users").doc(data.senderId).get();
+                const userData = u.data();
+                list.innerHTML += `
                     <div class="list-item">
-                        <div><strong>${uData.displayName}</strong> ${getBadgesHTML(uData)}</div>
-                        <div style="display:flex; gap:5px">
-                            <button class="btn btn-success" onclick="acceptFriendRequest('${doc.id}', '${reqData.senderId}')"><i class="fas fa-check"></i></button>
-                            <button class="btn btn-danger" onclick="rejectFriendRequest('${doc.id}')"><i class="fas fa-times"></i></button>
-                        </div>
+                        <div>${userData.displayName} ${getBadgesHTML(userData)}</div>
+                        <button class="btn" style="background:var(--success)" onclick="acceptFriendRequest('${doc.id}', '${data.senderId}')">✔</button>
                     </div>`;
-              }
-          });
-    }
+            }
+        });
 
-    function initFriendsListener() {
-        db.collection("users").doc(auth.currentUser.uid).onSnapshot(async (doc) => {
-            const listDiv = document.getElementById('friendsList');
-            const data = doc.data();
-            const friends = data.players || [];
-            if (friends.length === 0) { listDiv.innerHTML = '<p class="empty-text">لا يوجد أصدقاء</p>'; return; }
-            listDiv.innerHTML = '';
+        // الأصدقاء
+        db.collection("users").doc(myId).onSnapshot(async doc => {
+            const list = document.getElementById('friendsList');
+            const friends = doc.data().players || [];
+            list.innerHTML = friends.length === 0 ? '<p class="empty-text">لا يوجد أصدقاء</p>' : '';
+            
             for (const fId of friends) {
-                const fSnap = await db.collection("users").doc(fId).get();
-                if (fSnap.exists) {
-                    const fData = fSnap.data();
-                    const isOnline = fData.isOnline === true;
-                    listDiv.innerHTML += `
-                        <div class="list-item">
-                            <div><span class="status-dot ${isOnline ? 'online' : 'offline'}"></span>${fData.displayName} ${getBadgesHTML(fData)}</div>
-                            <div style="font-size:0.7rem; color:#94a3b8">${isOnline ? 'نشط' : 'أوفلاين'}</div>
-                        </div>`;
-                }
+                const fDoc = await db.collection("users").doc(fId).get();
+                const fData = fDoc.data();
+                list.innerHTML += `
+                    <div class="list-item">
+                        <div><span class="status-dot ${fData.isOnline ? 'online' : 'offline'}"></span> ${fData.displayName} ${getBadgesHTML(fData)}</div>
+                        <small>${fData.isOnline ? 'نشط' : 'أوفلاين'}</small>
+                    </div>`;
             }
         });
     }
 
-    firebase.auth().onAuthStateChanged(user => { if (user) { initRequestsListener(); initFriendsListener(); } else { window.location.href = "auth.html"; } });
+    auth.onAuthStateChanged(user => { if(user) startListeners(); else window.location.href="auth.html"; });
 </script>
 </body>
 </html>
+
