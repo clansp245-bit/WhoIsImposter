@@ -1,6 +1,6 @@
 /**
  * @file: auth.js
- * @description: الملف الشامل والنهائي (مصادقة + Firestore + شارات + صداقة)
+ * @description: المحرك الرئيسي لجلب البيانات، الشارات، المستويات، ونظام الأصدقاء.
  */
 
 const firebaseConfig = {
@@ -12,7 +12,6 @@ const firebaseConfig = {
     appId: "1:766002212710:web:02b56401e230faed09e2a7"
 };
 
-// تهيئة Firebase
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
@@ -20,88 +19,112 @@ if (!firebase.apps.length) {
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// --- نظام الشارات ---
+// --- 1. جلب بيانات المستخدم (الدالة المفقودة) ---
+async function loadUserData() {
+    const user = auth.currentUser;
+    if (!user) return null;
+    try {
+        const doc = await db.collection("users").doc(user.uid).get();
+        if (doc.exists) {
+            return doc.data();
+        } else {
+            // إذا لم يوجد سجل، قم بإنشائه
+            return await createFirestoreUserEntry(user);
+        }
+    } catch (e) {
+        console.error("Error loading user data:", e);
+        return null;
+    }
+}
+
+// --- 2. نظام الشارات ---
 function getBadgesHTML(userData) {
     if (!userData) return '';
     let html = '';
     const OWNER_EMAIL = "clansp245@gmail.com"; 
-    
     if (userData.email === OWNER_EMAIL) {
         html += `<i class="fas fa-user-shield" style="color:#38bdf8; margin-left:5px;" title="المالك"></i>`;
     }
-
     if (userData.proExpiryTime && userData.proExpiryTime > Date.now()) {
         html += `<i class="fas fa-crown" style="color:#ffd700; margin-left:5px;" title="عضو برو"></i>`;
     }
     return html;
 }
 
-// --- إدارة بيانات المستخدم ---
+// --- 3. نظام المستويات والـ XP ---
+function getRequiredXPForLevel(level) {
+    return level * 100; // مثال: لفل 1 يحتاج 100، لفل 2 يحتاج 200...
+}
+
+async function checkAndLevelUp(userData) {
+    let { xp, level } = userData;
+    let leveledUp = false;
+    
+    while (xp >= getRequiredXPForLevel(level)) {
+        xp -= getRequiredXPForLevel(level);
+        level++;
+        leveledUp = true;
+    }
+
+    if (leveledUp) {
+        await db.collection("users").doc(auth.currentUser.uid).update({
+            level: level,
+            xp: xp
+        });
+        userData.level = level;
+        userData.xp = xp;
+    }
+    return leveledUp;
+}
+
+// --- 4. جلب أسماء المرسلين (لصفحة البروفايل) ---
+async function getDisplayNamesByUids(uids) {
+    const namesMap = {};
+    if (!uids || uids.length === 0) return namesMap;
+
+    const promises = uids.map(uid => db.collection("users").doc(uid).get());
+    const docs = await Promise.all(promises);
+
+    docs.forEach(doc => {
+        if (doc.exists) {
+            namesMap[doc.id] = doc.data().displayName || "لاعب مجهول";
+        }
+    });
+    return namesMap;
+}
+
+// --- 5. إنشاء حساب جديد وتوليد Public UID ---
 async function createFirestoreUserEntry(user) {
     const userRef = db.collection("users").doc(user.uid);
-    const doc = await userRef.get();
-
-    if (!doc.exists) {
-        const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-        const generateID = () => `IMP-${Array.from({length:4},()=>chars[Math.floor(Math.random()*chars.length)]).join('')}-${Array.from({length:4},()=>chars[Math.floor(Math.random()*chars.length)]).join('')}`;
-        
-        const initialData = {
-            email: user.email,
-            displayName: user.displayName || user.email.split("@")[0],
-            publicUid: generateID(),
-            players: [],
-            isOnline: true,
-            totalCoins: 0,
-            level: 1,
-            proExpiryTime: 0,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        await userRef.set(initialData);
-        return initialData;
-    }
-    return doc.data();
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const generateID = () => `IMP-${Array.from({length:4},()=>chars[Math.floor(Math.random()*chars.length)]).join('')}-${Array.from({length:4},()=>chars[Math.floor(Math.random()*chars.length)]).join('')}`;
+    
+    const initialData = {
+        email: user.email,
+        displayName: user.displayName || user.email.split("@")[0],
+        publicUid: generateID(),
+        players: [],
+        totalCoins: 1000, // هدية بداية
+        level: 1,
+        xp: 0,
+        proExpiryTime: 0,
+        isOnline: true,
+        receivedGifts: {},
+        hasChangedNameBefore: false
+    };
+    await userRef.set(initialData);
+    return initialData;
 }
 
-// --- دوال المصادقة (تم إصلاحها بالكامل) ---
-async function signUp(email, password) {
-    const cred = await auth.createUserWithEmailAndPassword(email, password);
-    return await createFirestoreUserEntry(cred.user);
-}
-
-async function signIn(email, password) {
-    const cred = await auth.signInWithEmailAndPassword(email, password);
-    // تحديث حالة الاتصال عند الدخول
-    await db.collection("users").doc(cred.user.uid).update({ isOnline: true });
-    return cred;
-}
-
-async function signInWithGoogle() {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    const cred = await auth.signInWithPopup(provider);
-    await createFirestoreUserEntry(cred.user);
-    return cred;
-}
-
-// --- نظام الصداقة ---
+// --- 6. نظام الصداقة ---
 async function searchUsersByPublicId(publicId) {
-    const query = publicId.toUpperCase().trim();
-    const snap = await db.collection("users").where("publicUid", "==", query).limit(1).get();
-    if (snap.empty) return null;
-    return { uid: snap.docs[0].id, ...snap.docs[0].data() };
+    const snap = await db.collection("users").where("publicUid", "==", publicId.toUpperCase().trim()).get();
+    return snap.empty ? null : { uid: snap.docs[0].id, ...snap.docs[0].data() };
 }
 
 async function sendFriendRequest(targetUid) {
     const myId = auth.currentUser.uid;
-    if (myId === targetUid) throw new Error("لا يمكنك إضافة نفسك");
-
-    const check = await db.collection("friendRequests")
-        .where("senderId", "in", [myId, targetUid])
-        .where("receiverId", "in", [myId, targetUid])
-        .get();
-
-    if (!check.empty) throw new Error("الطلب موجود مسبقاً أو هناك علاقة فعلاً");
-
-    return await db.collection("friendRequests").add({
+    await db.collection("friendRequests").add({
         senderId: myId,
         receiverId: targetUid,
         status: "pending",
@@ -109,27 +132,9 @@ async function sendFriendRequest(targetUid) {
     });
 }
 
-async function acceptFriendRequest(requestId, senderId) {
-    const myId = auth.currentUser.uid;
-    const batch = db.batch();
-    batch.update(db.collection("users").doc(myId), { players: firebase.firestore.FieldValue.arrayUnion(senderId) });
-    batch.update(db.collection("users").doc(senderId), { players: firebase.firestore.FieldValue.arrayUnion(myId) });
-    batch.delete(db.collection("friendRequests").doc(requestId));
-    return await batch.commit();
-}
-
-async function rejectFriendRequest(requestId) {
-    return await db.collection("friendRequests").doc(requestId).delete();
-}
-
 // مراقبة حالة الاتصال
 auth.onAuthStateChanged(user => {
     if (user) {
-        const userRef = db.collection("users").doc(user.uid);
-        userRef.update({ isOnline: true }).catch(() => {});
-        window.addEventListener('beforeunload', () => {
-            userRef.update({ isOnline: false });
-        });
+        db.collection("users").doc(user.uid).update({ isOnline: true }).catch(()=>{});
     }
 });
-
