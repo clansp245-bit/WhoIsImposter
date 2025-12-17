@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🕵️ المحتال - اللعب</title>
+    <title>🕵️ المحتال - بدأ اللعب</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -12,9 +12,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
     <style>
-        /* التنسيقات (نفس التصميم الاحترافي السابق) */
         :root { --primary: #6366f1; --bg: #0f172a; --card-bg: #1e293b; }
-        body { font-family: 'Cairo', sans-serif; background-color: var(--bg); color: #f1f5f9; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
+        body { font-family: 'Cairo', sans-serif; background-color: var(--bg); color: #f1f5f9; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         .top-bar { width: 100%; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(10px); }
         .identity-card { width: 85vw; max-width: 450px; height: 350px; background: var(--card-bg); border-radius: 35px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; border: 4px dashed rgba(255, 255, 255, 0.1); transition: all 0.3s; user-select: none; -webkit-user-select: none; }
         .identity-card.revealed { border-style: solid; border-color: var(--primary); background: #2563eb; transform: scale(1.02); }
@@ -33,7 +32,7 @@
         <h1 id="player-name" style="font-size: 2.5rem; margin-bottom: 20px;">جاري التحميل...</h1>
         <div id="card" class="identity-card" onmousedown="showRole()" onmouseup="hideRole()" ontouchstart="showRole()" ontouchend="hideRole()">
             <i class="fas fa-fingerprint" style="font-size: 5rem; color: #475569; margin-bottom: 20px;"></i>
-            <span>اضغط مطولاً للكشف</span>
+            <span id="instruction-text">اضغط مطولاً للكشف</span>
         </div>
         <button id="nextBtn" class="action-btn" onclick="nextPlayer()">التالي</button>
     </div>
@@ -44,25 +43,24 @@
     </div>
 
 <script>
-// نأخذ مصفوفة الكلمات من كود الإعدادات الخاص بك لضمان التطابق
-const allCategories = {
+// نسخة مطابقة لقاعدة بيانات الكلمات في الإعدادات لضمان العمل
+const wordData = {
     free: [
-        { id: 'objects', words: ["قلم", "كوب", "كرسي", "مفتاح", "هاتف", "كتاب", "ساعة"] },
-        { id: 'nature', words: ["شجرة", "نهر", "جبل", "سماء", "بحر", "شمس", "قمر"] },
-        { id: 'jobs', words: ["طبيب", "معلم", "مهندس", "شرطي", "خباز", "مزارع"] }
+        { id: 'objects', words: ["قلم", "كوب", "كرسي", "مفتاح", "هاتف", "كتاب", "ساعة", "مصباح", "ملعقة", "حقيبة"] },
+        { id: 'nature', words: ["شجرة", "نهر", "جبل", "سماء", "بحر", "شمس", "قمر", "غيمة", "مطر", "ثلج"] },
+        { id: 'jobs', words: ["طبيب", "معلم", "مهندس", "شرطي", "خباز", "مزارع", "نجار", "طباخ", "رسام"] }
     ],
     pro: [
-        { id: 'foods', words: ["تفاح", "موز", "برتقال", "أرز", "بيتزا", "سلطة"] },
-        { id: 'animals', words: ["أسد", "نمر", "فيل", "زرافة", "قرد", "حصان"] }
+        { id: 'foods', words: ["تفاح", "موز", "برتقال", "أرز", "بيتزا", "لحم", "دجاج", "سمك", "عصير"] },
+        { id: 'animals', words: ["كلب", "قطة", "أسد", "نمر", "فيل", "زرافة", "قرد", "حصان", "جمل"] },
+        { id: 'places', words: ["مدرسة", "مستشفى", "منزل", "مسجد", "سوق", "مطار", "حديقة", "متحف"] }
     ]
 };
 
-let players = [];
-let roles = [];
+let gamePlayers = [];
 let currentIndex = 0;
 let civilWord = "";
-let impostorWord = "؟؟؟"; // للمود المتقدم
-let settings = {};
+let gameSettings = {};
 let userData = null;
 
 async function initGame() {
@@ -70,80 +68,76 @@ async function initGame() {
         if (!user) return window.location.href = "auth.html";
         
         userData = await loadUserData();
-        settings = userData.settings || { impostors: 1, discussionTimer: 60, selectedCategories: ['objects'] };
-        players = userData.players || [];
+        if(!userData) return;
+
+        gameSettings = userData.settings || {};
+        const playersList = userData.players || [];
         
         document.getElementById("total-coins-value").innerText = userData.totalCoins;
 
-        if (players.length < 3) {
-            alert("أضف 3 لاعبين على الأقل للعب.");
+        if (playersList.length < 3) {
+            alert("أضف 3 لاعبين على الأقل.");
             window.location.href = "index.html";
             return;
         }
 
-        prepareGameLogic();
+        // --- 1. اختيار الكلمة بناءً على الأقسام المختارة في الإعدادات ---
+        let pool = [];
+        const selectedCats = gameSettings.selectedCategories || ['objects'];
+        
+        [...wordData.free, ...wordData.pro].forEach(cat => {
+            if (selectedCats.includes(cat.id)) pool.push(...cat.words);
+        });
+
+        if (pool.length === 0) pool = wordData.free[0].words; // احتياطي
+        civilWord = pool[Math.floor(Math.random() * pool.length)];
+
+        // --- 2. توزيع الأدوار بناءً على الإعدادات ---
+        let roles = Array(playersList.length).fill("CIVILIAN");
+        
+        // حساب عدد المحتالين
+        let impostorCount = gameSettings.chaosMode ? playersList.length : (parseInt(gameSettings.impostors) || 1);
+        impostorCount = Math.min(impostorCount, playersList.length - (gameSettings.chaosMode ? 0 : 1));
+
+        let currentImpostors = 0;
+        while(currentImpostors < impostorCount) {
+            let r = Math.floor(Math.random() * playersList.length);
+            if(roles[r] === "CIVILIAN") { roles[r] = "IMPOSTOR"; currentImpostors++; }
+        }
+
+        // خلط اللاعبين مع أدوارهم
+        gamePlayers = playersList.map((p, i) => ({ name: p, role: roles[i] }))
+                                 .sort(() => Math.random() - 0.5);
+
         updateUI();
     });
 }
 
-function prepareGameLogic() {
-    // 1. تجميع الكلمات بناءً على الأقسام المختارة في الإعدادات
-    let selectedWords = [];
-    const chosenIds = settings.selectedCategories || ['objects'];
-    
-    [...allCategories.free, ...allCategories.pro].forEach(cat => {
-        if (chosenIds.includes(cat.id)) selectedWords.push(...cat.words);
-    });
-
-    // اختيار كلمة عشوائية
-    civilWord = selectedWords[Math.floor(Math.random() * selectedWords.words?.length)] || selectedWords[0] || "قلم";
-
-    // 2. توزيع الأدوار بناءً على عدد المحتالين في الإعدادات
-    roles = Array(players.length).fill("CIVILIAN");
-    
-    let impostorCount = settings.chaosMode ? players.length : (settings.impostors || 1);
-    // تأكد أن عدد المحتالين لا يتجاوز عدد اللاعبين
-    impostorCount = Math.min(impostorCount, players.length - 1);
-    if(settings.chaosMode) impostorCount = players.length; // في وضع الفوضى الكل ممكن يكون محتال
-
-    let count = 0;
-    while(count < impostorCount) {
-        let rand = Math.floor(Math.random() * players.length);
-        if(roles[rand] === "CIVILIAN") {
-            roles[rand] = "IMPOSTOR";
-            count++;
-        }
-    }
-
-    // خلط ترتيب اللاعبين
-    players = players.map((p, i) => ({name: p, role: roles[i]}))
-                     .sort(() => Math.random() - 0.5);
-}
-
 function updateUI() {
-    document.getElementById("player-name").innerText = players[currentIndex].name;
-    hideRole();
+    document.getElementById("player-name").innerText = gamePlayers[currentIndex].name;
+    hideRole(); // قلب البطاقة تلقائياً
 }
 
 function showRole() {
     const card = document.getElementById("card");
-    const player = players[currentIndex];
+    const player = gamePlayers[currentIndex];
     card.classList.add("revealed");
 
     if (player.role === "IMPOSTOR") {
-        card.innerHTML = `<i class="fas fa-user-secret" style="font-size:4rem; color:#ff4f4f;"></i>
+        card.innerHTML = `<i class="fas fa-user-secret" style="font-size:5rem; color:#ff4f4f;"></i>
                           <h2 style="color:#ff4f4f;">أنت المحتال 😈</h2>
-                          <p>خدع الجميع!</p>`;
+                          <p>حاول اكتشاف الكلمة!</p>`;
     } else {
-        // التحقق من خيار "بلا كلمة لك" من الإعدادات
-        if (settings.noWordRole && Math.random() > 0.7) {
+        // فحص ميزة "بلا كلمة لك"
+        const isNoWord = gameSettings.noWordRole && (Math.random() > 0.8); 
+        if(isNoWord) {
              card.innerHTML = `<i class="fas fa-comment-slash" style="font-size:4rem;"></i>
                               <h2>لا كلمة لك! 😶</h2>
-                              <p>حاول مسايرة البقية</p>`;
+                              <p>حاول التمويه كأنك تعرفها</p>`;
         } else {
              card.innerHTML = `<i class="fas fa-user-check" style="font-size:3rem;"></i>
                               <h2>أنت مدني</h2>
-                              <div style="font-size:2.2rem; background:white; color:#2563eb; padding:10px 25px; border-radius:15px; margin-top:10px;">${civilWord}</div>`;
+                              <div style="font-size:2.5rem; background:white; color:#2563eb; padding:15px 35px; border-radius:20px; margin-top:15px; font-weight:900;">${civilWord}</div>`;
         }
     }
 }
@@ -151,12 +145,13 @@ function showRole() {
 function hideRole() {
     const card = document.getElementById("card");
     card.classList.remove("revealed");
-    card.innerHTML = `<i class="fas fa-fingerprint" style="font-size: 5rem; color: #475569; margin-bottom: 20px;"></i><span>اضغط مطولاً للكشف</span>`;
+    card.innerHTML = `<i class="fas fa-fingerprint" style="font-size: 5rem; color: #475569; margin-bottom: 20px;"></i>
+                      <span>اضغط مطولاً للكشف</span>`;
 }
 
 function nextPlayer() {
     currentIndex++;
-    if (currentIndex >= players.length) {
+    if (currentIndex >= gamePlayers.length) {
         document.getElementById("setup-view").style.display = "none";
         document.getElementById("timer-box").style.display = "block";
         startDiscussion();
@@ -166,20 +161,27 @@ function nextPlayer() {
 }
 
 function startDiscussion() {
-    let timeLeft = settings.discussionTimer || 60;
-    if (timeLeft === 0) { // وضع اللعب بلا مؤقت
+    // --- 3. تشغيل المؤقت بناءً على الإعدادات ---
+    let timeLeft = parseInt(gameSettings.discussionTimer);
+    
+    // إذا كان المؤقت 0 أو مفعل خيار "بلا مؤقت"
+    if (isNaN(timeLeft) || timeLeft <= 0) {
         document.getElementById("timer-display").innerText = "∞";
-        giveRewards();
+        document.getElementById("status-msg").innerText = "لعب حر (بدون وقت)";
+        giveRewards(); // جوائز فورية في اللعب الحر
         return;
     }
 
-    const interval = setInterval(() => {
+    const display = document.getElementById("timer-display");
+    const timer = setInterval(() => {
         let m = Math.floor(timeLeft / 60);
         let s = timeLeft % 60;
-        document.getElementById("timer-display").innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        display.innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        
         if (timeLeft <= 0) {
-            clearInterval(interval);
-            document.getElementById("status-msg").innerText = "انتهى الوقت!";
+            clearInterval(timer);
+            display.innerText = "00:00";
+            document.getElementById("status-msg").innerText = "انتهى الوقت! صوتوا الآن";
             giveRewards();
         }
         timeLeft--;
@@ -187,10 +189,11 @@ function startDiscussion() {
 }
 
 async function giveRewards() {
-    const reward = await addXPAndCoins(userData, 10, 20);
-    alert(`حصلت على ${reward.coins} كوينز و ${reward.xp} XP!`);
+    if(userData) {
+        const reward = await addXPAndCoins(userData, 20, 40);
+        console.log("Rewards added:", reward);
+    }
 }
 </script>
 </body>
 </html>
-
