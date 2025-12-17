@@ -10,126 +10,270 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="auth.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
     <style>
-        :root { --bg-dark: #0f172a; --card-bg: #1e293b; --accent: #6366f1; --success: #22c55e; --danger: #ef4444; }
-        body { font-family: 'Cairo', sans-serif; background-color: var(--bg-dark); color: #f1f5f9; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { width: 100%; max-width: 500px; }
-        .section-card { background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 20px; }
-        .search-box { display: flex; gap: 10px; margin-bottom: 15px; }
-        input { flex: 1; background: #0f172a; border: 1px solid #334155; padding: 12px; border-radius: 8px; color: white; }
-        .profile-result { background: #334155; border-radius: 12px; padding: 15px; display: flex; align-items: center; gap: 15px; border-left: 4px solid var(--accent); }
-        .avatar { width: 50px; height: 50px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-        .list-item { display: flex; align-items: center; justify-content: space-between; background: #0f172a; padding: 12px; border-radius: 10px; margin-bottom: 8px; }
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-left: 8px; }
-        .online { background: var(--success); box-shadow: 0 0 5px var(--success); }
-        .offline { background: #64748b; }
-        .btn { border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; color: white; font-family: 'Cairo'; }
-        .btn-add { background: var(--accent); }
-        .empty-text { color: #64748b; font-size: 0.9rem; text-align: center; }
+        :root {
+            --bg-body: #0a0f1e;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-body);
+            background-image: radial-gradient(circle at top right, #1e1b4b, transparent), radial-gradient(circle at bottom left, #1e1b4b, transparent);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container { width: 100%; max-width: 480px; }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            width: 100%;
+        }
+
+        .header h2 { margin: 0; font-size: 1.8rem; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .section-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: var(--text-main);
+            font-weight: 700;
+        }
+
+        .search-box {
+            display: flex;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 14px;
+            padding: 5px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .search-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 12px 15px;
+            color: white;
+            outline: none;
+            font-family: 'Cairo';
+        }
+
+        .btn-search {
+            background: var(--accent-gradient);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            padding: 0 20px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: bold;
+        }
+
+        .btn-search:hover { opacity: 0.9; transform: scale(1.02); }
+
+        .profile-result {
+            margin-top: 15px;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 16px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .avatar {
+            width: 55px; height: 55px;
+            background: var(--accent-gradient);
+            border-radius: 18px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; color: white; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255,255,255,0.03);
+            padding: 12px 16px;
+            border-radius: 16px;
+            margin-bottom: 10px;
+            transition: 0.3s;
+        }
+
+        .list-item:hover { background: rgba(255,255,255,0.06); }
+
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-left: 8px; }
+        .online { background: var(--success); box-shadow: 0 0 8px var(--success); }
+        .offline { background: #475569; }
+
+        .badge-count {
+            background: var(--danger);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-right: auto;
+        }
+
+        .btn-action {
+            background: var(--accent-gradient);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-family: 'Cairo';
+            font-weight: 600;
+        }
+
+        .btn-accept { background: var(--success); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .empty-text { color: var(--text-dim); text-align: center; font-size: 0.85rem; padding: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2 style="text-align: right; color: var(--accent);">👥 المجتمع</h2>
+    <div class="header">
+        <h2>👥 المجتمع</h2>
+        <button class="btn-action" style="background: rgba(255,255,255,0.1);" onclick="location.href='index.html'"><i class="fas fa-home"></i></button>
+    </div>
 
     <div class="section-card">
-        <h3>🔍 البحث</h3>
+        <div class="section-title"><i class="fas fa-search"></i> العثور على لاعبين</div>
         <div class="search-box">
-            <input type="text" id="searchInput" placeholder="أدخل ID اللاعب">
-            <button class="btn btn-add" onclick="handleSearch()">بحث</button>
+            <input type="text" id="searchInput" placeholder="أدخل كود اللاعب (IMP-xxxx)">
+            <button class="btn-search" onclick="handleSearch()">بحث</button>
         </div>
         <div id="searchProfile"></div>
     </div>
 
     <div class="section-card">
-        <h3>📩 الطلبات <span id="reqBadge" style="background:var(--danger); display:none; padding:2px 7px; border-radius:50%; font-size:12px;">0</span></h3>
+        <div class="section-title">
+            <i class="fas fa-envelope-open-text"></i> طلبات الصداقة
+            <span id="reqBadge" class="badge-count" style="display:none;">0</span>
+        </div>
         <div id="requestsList"></div>
     </div>
 
     <div class="section-card">
-        <h3>🎮 الأصدقاء</h3>
+        <div class="section-title"><i class="fas fa-user-friends"></i> قائمة الأصدقاء</div>
         <div id="friendsList"></div>
     </div>
 </div>
 
 <script>
-    // دالة البحث
     async function handleSearch() {
-        const val = document.getElementById('searchInput').value;
+        const val = document.getElementById('searchInput').value.trim();
         const resDiv = document.getElementById('searchProfile');
-        resDiv.innerHTML = "جاري البحث...";
+        if(!val) return;
+        resDiv.innerHTML = "<p class='empty-text'>جاري البحث في السجلات...</p>";
 
         try {
             const user = await searchUsersByPublicId(val);
             if (user) {
                 if (user.uid === auth.currentUser.uid) {
-                    resDiv.innerHTML = "هذا حسابك الشخصي";
+                    resDiv.innerHTML = "<p class='empty-text'>هذا هو حسابك الشخصي!</p>";
                     return;
                 }
                 resDiv.innerHTML = `
                     <div class="profile-result">
-                        <div class="avatar">${user.displayName[0]}</div>
+                        <div class="avatar">${user.displayName[0].toUpperCase()}</div>
                         <div style="flex:1">
-                            <div>${user.displayName} ${getBadgesHTML(user)}</div>
-                            <small style="color:#94a3b8">${user.publicUid}</small>
+                            <div style="font-weight:700">${user.displayName} ${getBadgesHTML(user)}</div>
+                            <small style="color:var(--text-dim)">${user.publicUid}</small>
                         </div>
-                        <button class="btn btn-add" onclick="executeSend('${user.uid}')">إضافة</button>
+                        <button class="btn-action" onclick="executeSend('${user.uid}')">إضافة</button>
                     </div>`;
             } else {
-                resDiv.innerHTML = "لم يتم العثور على اللاعب";
+                resDiv.innerHTML = "<p class='empty-text'>لم يتم العثور على لاعب بهذا الكود</p>";
             }
-        } catch(e) { resDiv.innerHTML = "خطأ في البحث"; }
+        } catch(e) { resDiv.innerHTML = "<p class='empty-text' style='color:var(--danger)'>خطأ: تأكد من إعداد الفهرس في Firebase</p>"; }
     }
 
-    // دالة الإرسال (تم تغيير اسمها لتجنب التعارض)
     async function executeSend(id) {
         try {
             await sendFriendRequest(id);
-            alert("تم إرسال الطلب!");
-        } catch(e) { alert(e.message); }
+            alert("✅ تم إرسال طلب الصداقة بنجاح!");
+        } catch(e) { 
+            alert("❌ " + (e.message.includes("permission") ? "صلاحيات غير كافية - تأكد من القواعد" : e.message)); 
+        }
     }
 
-    // مراقب الطلبات
     function startListeners() {
         const myId = auth.currentUser.uid;
 
-        // الطلبات
+        // استماع للطلبات
         db.collection("friendRequests").where("receiverId", "==", myId).where("status", "==", "pending")
         .onSnapshot(async snap => {
             const list = document.getElementById('requestsList');
-            document.getElementById('reqBadge').innerText = snap.size;
-            document.getElementById('reqBadge').style.display = snap.empty ? 'none' : 'inline';
+            const badge = document.getElementById('reqBadge');
+            badge.innerText = snap.size;
+            badge.style.display = snap.empty ? 'none' : 'block';
             
-            list.innerHTML = snap.empty ? '<p class="empty-text">لا توجد طلبات</p>' : '';
+            list.innerHTML = snap.empty ? '<p class="empty-text">لا توجد طلبات واردة حالياً</p>' : '';
             for (const doc of snap.docs) {
                 const data = doc.data();
                 const u = await db.collection("users").doc(data.senderId).get();
-                const userData = u.data();
+                const uData = u.data();
                 list.innerHTML += `
                     <div class="list-item">
-                        <div>${userData.displayName} ${getBadgesHTML(userData)}</div>
-                        <button class="btn" style="background:var(--success)" onclick="acceptFriendRequest('${doc.id}', '${data.senderId}')">✔</button>
+                        <div><b style="color:var(--accent)">${uData.displayName}</b> يرغب في إضافتك</div>
+                        <button class="btn-action btn-accept" onclick="acceptFriendRequest('${doc.id}', '${data.senderId}')">قبول</button>
                     </div>`;
             }
         });
 
-        // الأصدقاء
+        // استماع للأصدقاء
         db.collection("users").doc(myId).onSnapshot(async doc => {
             const list = document.getElementById('friendsList');
             const friends = doc.data().players || [];
-            list.innerHTML = friends.length === 0 ? '<p class="empty-text">لا يوجد أصدقاء</p>' : '';
+            list.innerHTML = friends.length === 0 ? '<p class="empty-text">لم تقم بإضافة أصدقاء بعد</p>' : '';
             
             for (const fId of friends) {
                 const fDoc = await db.collection("users").doc(fId).get();
+                if(!fDoc.exists) continue;
                 const fData = fDoc.data();
                 list.innerHTML += `
                     <div class="list-item">
-                        <div><span class="status-dot ${fData.isOnline ? 'online' : 'offline'}"></span> ${fData.displayName} ${getBadgesHTML(fData)}</div>
-                        <small>${fData.isOnline ? 'نشط' : 'أوفلاين'}</small>
+                        <div>
+                            <span class="status-dot ${fData.isOnline ? 'online' : 'offline'}"></span>
+                            <span>${fData.displayName} ${getBadgesHTML(fData)}</span>
+                        </div>
+                        <small style="color:var(--text-dim)">${fData.isOnline ? 'نشط الآن' : 'غير متصل'}</small>
                     </div>`;
             }
         });
