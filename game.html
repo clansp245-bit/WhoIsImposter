@@ -13,47 +13,54 @@
 
     <style>
         :root { --primary: #6366f1; --bg: #0f172a; --card-bg: #1e293b; }
-        body { font-family: 'Cairo', sans-serif; background-color: var(--bg); color: #f1f5f9; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        body { font-family: 'Cairo', sans-serif; background-color: var(--bg); color: #f1f5f9; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow: hidden;}
         .top-bar { width: 100%; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(10px); }
+        #total-coins-value { color: #fbbf24; font-weight: bold; }
         .identity-card { width: 85vw; max-width: 450px; height: 350px; background: var(--card-bg); border-radius: 35px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; border: 4px dashed rgba(255, 255, 255, 0.1); transition: all 0.3s; user-select: none; -webkit-user-select: none; }
         .identity-card.revealed { border-style: solid; border-color: var(--primary); background: #2563eb; transform: scale(1.02); }
-        .action-btn { margin-top: 40px; width: 80%; max-width: 300px; padding: 20px; border-radius: 20px; background: var(--primary); color: white; font-weight: 800; border: none; cursor: pointer; }
-        #timer-display { font-size: 5rem; color: #f59e0b; font-weight: 900; }
+        .action-btn { margin-top: 40px; width: 80%; max-width: 300px; padding: 20px; border-radius: 20px; background: var(--primary); color: white; font-weight: 800; border: none; cursor: pointer; font-size: 1.2rem; }
+        #timer-display { font-size: 5rem; color: #f59e0b; font-weight: 900; margin: 20px 0; }
+        #status-msg { font-size: 1.5rem; color: #34d399; }
     </style>
 </head>
 
 <body onload="initGame()">
     <div class="top-bar">
-        <div id="coin-display"><i class="fas fa-coins"></i> <span id="total-coins-value">...</span></div>
+        <div id="coin-display"><i class="fas fa-coins"></i> <span id="total-coins-value">0</span></div>
         <a href="index.html" style="color:#94a3b8; font-size: 1.8rem;"><i class="fas fa-times-circle"></i></a>
     </div>
 
     <div id="setup-view" style="width: 100%; display: flex; flex-direction: column; align-items: center; margin-top: 30px;">
-        <h1 id="player-name" style="font-size: 2.5rem; margin-bottom: 20px;">جاري التحميل...</h1>
+        <div style="background: var(--primary); padding: 5px 20px; border-radius: 50px; margin-bottom: 10px; font-weight: bold;">دور اللاعب:</div>
+        <h1 id="player-name" style="font-size: 2.5rem; margin-bottom: 20px;">...</h1>
         <div id="card" class="identity-card" onmousedown="showRole()" onmouseup="hideRole()" ontouchstart="showRole()" ontouchend="hideRole()">
             <i class="fas fa-fingerprint" style="font-size: 5rem; color: #475569; margin-bottom: 20px;"></i>
             <span id="instruction-text">اضغط مطولاً للكشف</span>
         </div>
-        <button id="nextBtn" class="action-btn" onclick="nextPlayer()">التالي</button>
+        <button id="nextBtn" class="action-btn" onclick="nextPlayer()">التالي <i class="fas fa-arrow-left"></i></button>
     </div>
 
     <div id="timer-box" style="display:none; text-align:center; margin-top:50px;">
         <h1 id="status-msg">🗣️ وقت النقاش!</h1>
         <div id="timer-display">00:00</div>
+        <p style="color: #94a3b8;">سيتم إضافة الجوائز تلقائياً عند انتهاء الوقت</p>
     </div>
 
 <script>
-// نسخة مطابقة لقاعدة بيانات الكلمات في الإعدادات لضمان العمل
-const wordData = {
+// --- قاعدة بيانات الكلمات الكاملة (نفس الموجودة في الإعدادات) ---
+const wordCategories = {
     free: [
-        { id: 'objects', words: ["قلم", "كوب", "كرسي", "مفتاح", "هاتف", "كتاب", "ساعة", "مصباح", "ملعقة", "حقيبة"] },
-        { id: 'nature', words: ["شجرة", "نهر", "جبل", "سماء", "بحر", "شمس", "قمر", "غيمة", "مطر", "ثلج"] },
-        { id: 'jobs', words: ["طبيب", "معلم", "مهندس", "شرطي", "خباز", "مزارع", "نجار", "طباخ", "رسام"] }
+        { id: 'objects', words: ["قلم", "كوب", "كرسي", "مفتاح", "هاتف", "كتاب", "ساعة", "مصباح", "ملعقة", "حذاء", "حقيبة", "طاولة", "مرآة", "دفتر", "ممحاة", "جدار", "شباك", "باب", "سرير", "وسادة", "غطاء", "جرس", "مظلة", "لوحة", "مروحة", "صندوق", "فرشاة", "مشط", "مطرقة", "مسمار", "خيط", "إبرة", "خزانة", "حبل", "شريط", "كاميرا", "ماوس", "بطارية", "لمبة", "مقص", "منشفة", "صنبور", "قفل", "سلة", "سلك", "شاحن", "أريكة", "رف"] },
+        { id: 'nature', words: ["شجرة", "نهر", "جبل", "سماء", "بحر", "شمس", "قمر", "نجم", "غيمة", "مطر", "ثلج", "صخرة", "رمل", "عشب", "وردة", "نخلة", "شاطئ", "بركان", "صحراء", "وادي", "كهف", "بحيرة", "ضباب", "رياح", "صقيع", "تراب", "نبتة", "بذرة", "فضاء", "كوكب", "شهاب", "أفق", "جسر", "مزرعة", "عاصفة", "نسيم", "ظل", "ضوء", "محيط", "جزيرة", "شلال", "نبع", "جذع", "ورقة", "غابة", "أزهار", "سحابة", "بئر"] },
+        { id: 'jobs', words: ["طبيب", "معلم", "مهندس", "شرطي", "خباز", "مزارع", "نجار", "طباخ", "رسام", "مذيع", "قاضي", "كاتب", "جندي", "بحار", "طيار", "صيدلي", "ممرض", "مصور", "موسيقي", "خياط", "سائق", "محامي", "بائع", "مترجم", "ميكانيكي", "بناء", "كهربائي", "حداد", "جزار", "شاعر", "صحفي", "ناقد", "حارس", "رياضي", "عامل", "إطفائي", "مرشد", "خادم", "محاسب", "مدرب", "فنان", "صانع", "موزع", "مفتش", "عالم", "فلكي", "مراسل"] }
     ],
     pro: [
-        { id: 'foods', words: ["تفاح", "موز", "برتقال", "أرز", "بيتزا", "لحم", "دجاج", "سمك", "عصير"] },
-        { id: 'animals', words: ["كلب", "قطة", "أسد", "نمر", "فيل", "زرافة", "قرد", "حصان", "جمل"] },
-        { id: 'places', words: ["مدرسة", "مستشفى", "منزل", "مسجد", "سوق", "مطار", "حديقة", "متحف"] }
+        { id: 'foods', words: ["تفاح", "موز", "برتقال", "ماء", "قهوة", "شاي", "خبز", "أرز", "لحم", "دجاج", "سمك", "عصير", "حليب", "جبن", "بيض", "سكر", "ملح", "زيت", "زبدة", "عسل", "بطاطا", "طماطم", "بصل", "ثوم", "خس", "جزر", "كعكة", "مثلجات", "مكرونة", "بيتزا", "سلطة", "حساء", "توابل", "مشروب", "عنب", "مانجو", "فلفل", "ليمون", "بسكويت", "فول", "عدس", "فراولة", "زيتون", "مربى", "شوكولاتة", "فطر", "علكة"] },
+        { id: 'animals', words: ["كلب", "قطة", "أسد", "نمر", "فيل", "زرافة", "قرد", "حصان", "جمل", "ضفدع", "ثعلب", "ذئب", "دب", "أرنب", "سنجاب", "طائر", "حمامة", "صقر", "بومة", "نسر", "بطة", "ديك", "دجاجة", "بقرة", "غزال", "تمساح", "ثعبان", "سمكة", "قرش", "دولفين", "حوت", "نحلة", "نملة", "عنكبوت", "فراشة", "يربوع", "سلحفاة", "خروف", "ماعز", "فأر", "ببغاء", "كنغر", "بطريق", "ضبع", "نورس", "عقاب", "سعدان"] },
+        { id: 'clothes', words: ["قميص", "بنطال", "فستان", "تنورة", "معطف", "سترة", "حجاب", "وشاح", "قبعة", "جورب", "قفاز", "حذاء", "صندل", "حقيبة", "نظارة", "حزام", "ساعة يد", "خاتم", "قلادة", "سوار", "جيب", "زر", "سحاب", "قماش", "حرير", "جلد", "قطن", "صوف", "عباءة", "بيجامة", "ربطة عنق", "مريول", "كبك", "فرو", "شال", "صدرية", "منشفة", "منامة", "قبعة شمس", "مشد", "زي", "باروكة", "بوت", "لباس", "رداء", "مئزر", "سروال"] },
+        { id: 'places', words: ["مدرسة", "مستشفى", "منزل", "مسجد", "كنيسة", "سوق", "مكتبة", "مطار", "محطة", "حديقة", "متحف", "مصنع", "مقهى", "مطعم", "فندق", "مبنى", "جسر", "طريق", "شارع", "ساحة", "قصر", "قلعة", "برج", "بوابة", "بئر", "ملعب", "نادي", "جامعة", "وزارة", "سفارة", "كراج", "نفق", "ممر", "قبو", "سطح", "شرفة", "مخزن", "موقف", "غرفة", "قاعة", "بهو", "مستودع", "مجلس", "خيمة", "مخبز", "مغسلة", "دكان"] },
+        { id: 'activities', words: ["جري", "سباحة", "قراءة", "كتابة", "رسم", "غناء", "رقص", "لعب", "نوم", "أكل", "شرب", "ضحك", "بكاء", "صراخ", "مشاهدة", "استماع", "حديث", "سفر", "صيد", "طبخ", "تنظيف", "عمل", "دراسة", "قيادة", "بناء", "هدم", "زرع", "حصاد", "إصلاح", "كسر", "فتح", "إغلاق", "قفز", "صعود", "هبوط", "انتظار", "تفكير", "حلم", "بقاء", "تأمل", "تجول", "استراحة", "اجتماع", "إشارة", "إرسال", "استقبال", "سؤال"] },
+        { id: 'adjectives', words: ["سريع", "بطيء", "كبير", "صغير", "طويل", "قصير", "جميل", "قبيح", "سعيد", "حزين", "غاضب", "هادئ", "صاخب", "نظيف", "متسخ", "قوي", "ضعيف", "بارد", "حار", "مشرق", "مظلم", "جديد", "قديم", "صعب", "سهل", "خفيف", "ثقيل", "جائع", "عطشان", "مريض", "سليم", "بعيد", "قريب", "حقيقي", "وهمي", "شجاع", "جبان", "مضحك", "جدي", "مألوف", "غريب", "حكيم", "أحمق", "ناجح", "فاشل"] }
     ]
 };
 
@@ -72,7 +79,6 @@ async function initGame() {
 
         gameSettings = userData.settings || {};
         const playersList = userData.players || [];
-        
         document.getElementById("total-coins-value").innerText = userData.totalCoins;
 
         if (playersList.length < 3) {
@@ -81,31 +87,33 @@ async function initGame() {
             return;
         }
 
-        // --- 1. اختيار الكلمة بناءً على الأقسام المختارة في الإعدادات ---
+        // 1. اختيار الكلمة بناءً على الأقسام المختارة
         let pool = [];
-        const selectedCats = gameSettings.selectedCategories || ['objects'];
+        const selectedIds = gameSettings.selectedCategories || ['objects'];
         
-        [...wordData.free, ...wordData.pro].forEach(cat => {
-            if (selectedCats.includes(cat.id)) pool.push(...cat.words);
+        // تجميع الكلمات من الأقسام المجانية والمدفوعة
+        [...wordCategories.free, ...wordCategories.pro].forEach(cat => {
+            if (selectedIds.includes(cat.id)) pool.push(...cat.words);
         });
 
-        if (pool.length === 0) pool = wordData.free[0].words; // احتياطي
+        // إذا لم يتم اختيار أي قسم أو حدث خطأ، نستخدم 'أشياء' كافتراضي
+        if (pool.length === 0) pool = wordCategories.free[0].words;
+        
         civilWord = pool[Math.floor(Math.random() * pool.length)];
 
-        // --- 2. توزيع الأدوار بناءً على الإعدادات ---
+        // 2. توزيع الأدوار
         let roles = Array(playersList.length).fill("CIVILIAN");
-        
-        // حساب عدد المحتالين
         let impostorCount = gameSettings.chaosMode ? playersList.length : (parseInt(gameSettings.impostors) || 1);
-        impostorCount = Math.min(impostorCount, playersList.length - (gameSettings.chaosMode ? 0 : 1));
+        
+        // منع جعل الجميع محتالين إلا في وضع الفوضى
+        if(!gameSettings.chaosMode) impostorCount = Math.min(impostorCount, playersList.length - 1);
 
-        let currentImpostors = 0;
-        while(currentImpostors < impostorCount) {
+        let currentI = 0;
+        while(currentI < impostorCount) {
             let r = Math.floor(Math.random() * playersList.length);
-            if(roles[r] === "CIVILIAN") { roles[r] = "IMPOSTOR"; currentImpostors++; }
+            if(roles[r] === "CIVILIAN") { roles[r] = "IMPOSTOR"; currentI++; }
         }
 
-        // خلط اللاعبين مع أدوارهم
         gamePlayers = playersList.map((p, i) => ({ name: p, role: roles[i] }))
                                  .sort(() => Math.random() - 0.5);
 
@@ -115,7 +123,7 @@ async function initGame() {
 
 function updateUI() {
     document.getElementById("player-name").innerText = gamePlayers[currentIndex].name;
-    hideRole(); // قلب البطاقة تلقائياً
+    hideRole();
 }
 
 function showRole() {
@@ -125,19 +133,18 @@ function showRole() {
 
     if (player.role === "IMPOSTOR") {
         card.innerHTML = `<i class="fas fa-user-secret" style="font-size:5rem; color:#ff4f4f;"></i>
-                          <h2 style="color:#ff4f4f;">أنت المحتال 😈</h2>
-                          <p>حاول اكتشاف الكلمة!</p>`;
+                          <h2 style="color:#ff4f4f; margin:10px 0;">أنت المحتال 😈</h2>
+                          <p>حاول تخمين الكلمة والتمويه!</p>`;
     } else {
         // فحص ميزة "بلا كلمة لك"
-        const isNoWord = gameSettings.noWordRole && (Math.random() > 0.8); 
-        if(isNoWord) {
-             card.innerHTML = `<i class="fas fa-comment-slash" style="font-size:4rem;"></i>
-                              <h2>لا كلمة لك! 😶</h2>
-                              <p>حاول التمويه كأنك تعرفها</p>`;
+        if(gameSettings.noWordRole && (Math.random() > 0.85)) {
+            card.innerHTML = `<i class="fas fa-comment-slash" style="font-size:4rem;"></i>
+                              <h2 style="margin:10px 0;">لا كلمة لك! 😶</h2>
+                              <p>راقب الآخرين بذكاء</p>`;
         } else {
-             card.innerHTML = `<i class="fas fa-user-check" style="font-size:3rem;"></i>
-                              <h2>أنت مدني</h2>
-                              <div style="font-size:2.5rem; background:white; color:#2563eb; padding:15px 35px; border-radius:20px; margin-top:15px; font-weight:900;">${civilWord}</div>`;
+            card.innerHTML = `<i class="fas fa-user-check" style="font-size:3rem;"></i>
+                              <h2 style="margin:5px 0;">أنت مدني</h2>
+                              <div style="font-size:2.8rem; background:white; color:#2563eb; padding:15px 40px; border-radius:20px; margin-top:15px; font-weight:900; box-shadow: 0 10px 20px rgba(0,0,0,0.2);">${civilWord}</div>`;
         }
     }
 }
@@ -146,7 +153,7 @@ function hideRole() {
     const card = document.getElementById("card");
     card.classList.remove("revealed");
     card.innerHTML = `<i class="fas fa-fingerprint" style="font-size: 5rem; color: #475569; margin-bottom: 20px;"></i>
-                      <span>اضغط مطولاً للكشف</span>`;
+                      <span style="font-size:1.2rem; opacity:0.7;">اضغط مطولاً للكشف</span>`;
 }
 
 function nextPlayer() {
@@ -161,28 +168,27 @@ function nextPlayer() {
 }
 
 function startDiscussion() {
-    // --- 3. تشغيل المؤقت بناءً على الإعدادات ---
     let timeLeft = parseInt(gameSettings.discussionTimer);
     
-    // إذا كان المؤقت 0 أو مفعل خيار "بلا مؤقت"
+    // وضع اللعب بلا مؤقت (0)
     if (isNaN(timeLeft) || timeLeft <= 0) {
         document.getElementById("timer-display").innerText = "∞";
-        document.getElementById("status-msg").innerText = "لعب حر (بدون وقت)";
-        giveRewards(); // جوائز فورية في اللعب الحر
+        document.getElementById("status-msg").innerText = "لعب حر - لا يوجد وقت محدد";
+        giveRewards(); 
         return;
     }
 
     const display = document.getElementById("timer-display");
-    const timer = setInterval(() => {
+    const timer = setInterval(async () => {
         let m = Math.floor(timeLeft / 60);
         let s = timeLeft % 60;
         display.innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
         
         if (timeLeft <= 0) {
             clearInterval(timer);
-            display.innerText = "00:00";
-            document.getElementById("status-msg").innerText = "انتهى الوقت! صوتوا الآن";
-            giveRewards();
+            display.style.color = "#ef4444";
+            document.getElementById("status-msg").innerText = "انتهى الوقت! ابدأوا التصويت";
+            await giveRewards();
         }
         timeLeft--;
     }, 1000);
@@ -190,8 +196,10 @@ function startDiscussion() {
 
 async function giveRewards() {
     if(userData) {
-        const reward = await addXPAndCoins(userData, 20, 40);
-        console.log("Rewards added:", reward);
+        // إضافة 15 كوينز و 30 XP
+        const result = await addXPAndCoins(userData, 15, 30);
+        alert(`مبروك! انتهت الجولة وحصلت على ${result.coins} كوينز و ${result.xp} XP`);
+        document.getElementById("total-coins-value").innerText = userData.totalCoins + result.coins;
     }
 }
 </script>
