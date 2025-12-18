@@ -15,20 +15,18 @@
 <style>  
     :root {
         --primary: #6366f1;
-        --primary-dark: #4f46e5;
         --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
         --bg-body: #0a0f1e;
         --card-bg: rgba(30, 41, 59, 0.7);
         --text-main: #f1f5f9;
         --text-dim: #94a3b8;
+        --gold: #ffd700;
     }
 
     body {  
         font-family: 'Cairo', sans-serif;  
         background-color: var(--bg-body);
-        background-image: 
-            radial-gradient(circle at top right, #1e1b4b, transparent),
-            radial-gradient(circle at bottom left, #1e1b4b, transparent);
+        background-image: radial-gradient(circle at top right, #1e1b4b, transparent), radial-gradient(circle at bottom left, #1e1b4b, transparent);
         color: var(--text-main);  
         text-align: center;  
         margin: 0;  
@@ -38,173 +36,70 @@
         align-items: center;  
     }  
 
-    /* الشريط العلوي متناسق مع صفحة اللعب */
     .top-bar { 
-        width: 100%; 
-        padding: 15px 25px; 
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center; 
-        background: rgba(30, 41, 59, 0.5); 
-        backdrop-filter: blur(10px);
-        box-sizing: border-box;
+        width: 100%; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; 
+        background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(10px); box-sizing: border-box;
     }
 
     .top-icons { display: flex; gap: 20px; font-size: 1.3rem; }
-    #pro-link { color: #ffd700; text-decoration: none; }
+    #pro-link { color: var(--gold); text-decoration: none; }
     #gift-link { color: #34d399; text-decoration: none; }
     #coin-display { color: #fbbf24; font-weight: bold; }
 
     /* بروفايل المستخدم */
-    .profile-section {
-        margin-top: 20px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-    }
-
+    .profile-section { margin-top: 20px; width: 100%; display: flex; flex-direction: column; align-items: center; }
     #user-name-display { 
-        font-size: 1.8rem; 
-        font-weight: 900; 
-        background: var(--accent-gradient); 
-        -webkit-background-clip: text; 
-        -webkit-text-fill-color: transparent;
-        text-decoration: none;
-        margin-bottom: 5px;
+        font-size: 1.8rem; font-weight: 900; color: white; text-decoration: none; display: flex; align-items: center; gap: 8px;
     }
+    .crown-icon { color: var(--gold); text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); font-size: 1.4rem; }
 
-    .level-container {
-        font-weight: 700;
-        color: var(--text-dim);
-        font-size: 0.9rem;
-    }
-
-    #xp-bar-container { 
-        width: 250px; 
-        height: 8px; 
-        background: rgba(255,255,255,0.1); 
-        border-radius: 10px; 
-        margin: 10px auto; 
-        overflow: hidden; 
-    }
-    #xp-bar { 
-        height: 100%; 
-        width: 0%; 
-        background: var(--accent-gradient); 
-        transition: width 0.5s ease; 
-    }
-
-    h1 { font-weight: 900; letter-spacing: -1px; margin: 20px 0; font-size: 2.2rem; }
-
-    /* الكارت الزجاجي */
-    .main-card { 
-        background: var(--card-bg); 
-        backdrop-filter: blur(15px);
-        padding: 30px; 
-        border-radius: 30px; 
-        width: 90%; 
-        max-width: 450px; 
-        border: 1px solid rgba(255,255,255,0.1);
-        box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-        box-sizing: border-box;
-    }
-
-    /* شبكة الأزرار */
-    .action-grid { 
-        display: grid; 
-        grid-template-columns: 1fr 1fr; 
-        gap: 12px; 
-        margin-bottom: 25px; 
-    }
+    .level-container { font-weight: 700; color: var(--text-dim); font-size: 0.9rem; margin-top: 5px; }
     
+    #xp-bar-container { width: 250px; height: 8px; background: rgba(255,255,255,0.1); border-radius: 10px; margin: 8px auto 4px auto; overflow: hidden; }
+    #xp-bar { height: 100%; width: 0%; background: var(--accent-gradient); transition: width 0.8s ease; }
+    #xp-remaining { font-size: 0.75rem; color: var(--text-dim); font-weight: 600; }
+
+    h1 { font-weight: 900; margin: 25px 0 15px 0; font-size: 2.2rem; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+    /* الكارت الرئيسي */
+    .main-card { 
+        background: var(--card-bg); backdrop-filter: blur(15px); padding: 25px; border-radius: 30px; 
+        width: 90%; max-width: 450px; border: 1px solid rgba(255,255,255,0.1); box-sizing: border-box;
+    }
+
+    .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; }
     .nav-btn { 
-        padding: 15px 10px; 
-        border-radius: 18px; 
-        border: none; 
-        color: white; 
-        font-weight: 700; 
-        cursor: pointer; 
-        transition: 0.3s; 
-        display: flex; 
-        flex-direction: column; 
-        align-items: center; 
-        gap: 8px;
-        font-size: 0.9rem;
-        background: rgba(255,255,255,0.05);
+        padding: 15px 10px; border-radius: 18px; border: none; color: white; font-weight: 700; cursor: pointer; transition: 0.3s; 
+        display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 0.85rem; background: rgba(255,255,255,0.05);
     }
     .nav-btn i { font-size: 1.4rem; }
-    .nav-btn:hover { background: var(--primary); transform: translateY(-3px); }
+    .nav-btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-3px); }
 
-    /* المدخلات */
-    .input-group { text-align: right; margin-top: 20px; }
+    /* المدخلات وقائمة اللاعبين */
     #player-input { 
-        width: 100%; 
-        padding: 15px; 
-        border-radius: 15px; 
-        border: 1px solid rgba(255,255,255,0.1); 
-        background: rgba(15, 23, 42, 0.6); 
-        color: white; 
-        font-family: 'Cairo';
-        box-sizing: border-box;
-        margin-bottom: 10px;
+        width: 100%; padding: 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); 
+        background: rgba(15, 23, 42, 0.6); color: white; font-family: 'Cairo'; box-sizing: border-box; margin-bottom: 10px;
     }
+    #add-player-btn { width: 100%; padding: 12px; border-radius: 15px; background: var(--primary); color: white; border: none; font-weight: 700; cursor: pointer; }
 
-    #add-player-btn { 
-        width: 100%; 
-        padding: 12px; 
-        border-radius: 15px; 
-        background: var(--primary); 
-        color: white; 
-        border: none; 
-        font-weight: 700;
-        cursor: pointer;
-    }
-
-    /* قائمة اللاعبين */
-    #player-list { 
-        list-style: none; padding: 0; margin-top: 15px; 
-        max-height: 180px; overflow-y: auto;
-    }
+    #player-list { list-style: none; padding: 0; margin-top: 15px; max-height: 160px; overflow-y: auto; }
     #player-list li { 
-        background: rgba(255,255,255,0.03); 
-        margin-bottom: 8px; 
-        padding: 12px 15px; 
-        border-radius: 12px; 
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center;
+        background: rgba(255,255,255,0.03); margin-bottom: 8px; padding: 10px 15px; border-radius: 12px; 
+        display: flex; justify-content: space-between; align-items: center;
     }
-    .player-name-text { font-weight: 700; color: var(--text-main); }
     .delete-btn { color: #ef4444; cursor: pointer; border: none; background: none; }
 
-    /* زر البداية الكبير */
     #start-game-btn { 
-        margin-top: 20px; 
-        width: 100%; 
-        padding: 20px; 
-        border-radius: 20px; 
-        background: var(--accent-gradient); 
-        color: white; 
-        font-weight: 900; 
-        font-size: 1.3rem;
-        border: none; 
-        cursor: pointer;
-        box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        margin-top: 20px; width: 100%; padding: 18px; border-radius: 20px; background: var(--accent-gradient); 
+        color: white; font-weight: 900; font-size: 1.2rem; border: none; cursor: pointer;
     }
-    #start-game-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; box-shadow: none; }
+    #start-game-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
     #sign-out-btn { margin: 30px 0; color: #ef4444; background: none; border: none; cursor: pointer; font-family: 'Cairo'; }
-
-    /* الهدايا الواردة */
-    #incoming-gifts-overlay { 
-        position: fixed; inset: 0; background: rgba(0,0,0,0.8); 
-        display: none; justify-content: center; align-items: center; z-index: 100; 
-    }
-    .gift-modal { 
-        background: #1e293b; padding: 30px; border-radius: 30px; 
-        width: 320px; border: 2px solid var(--primary);
-    }
+    
+    /* الهدايا */
+    #incoming-gifts-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; }
+    .gift-modal { background: #1e293b; padding: 30px; border-radius: 30px; width: 320px; border: 2px solid var(--primary); text-align: center;}
 </style>
 </head>  
 
@@ -220,10 +115,9 @@
 
 <div class="profile-section">
     <a href="profile.html" id="user-name-display">جاري التحميل...</a>
-    <div class="level-container">
-        المستوى <span id="user-level">1</span> • <span id="user-xp">0</span> XP
-    </div>
+    <div class="level-container">المستوى <span id="user-level">1</span></div>
     <div id="xp-bar-container"><div id="xp-bar"></div></div>
+    <div id="xp-remaining">متبقي -- XP للمستوى التالي</div>
 </div>
 
 <h1>المـدني المحتـال</h1>  
@@ -236,16 +130,15 @@
         <button class="nav-btn" onclick="location.href='online.html'"><i class="fas fa-globe" style="color:#6366f1"></i>أونلاين</button>
     </div>
 
-    <div class="input-group">
-        <label style="font-weight: 700; margin-right: 5px;">إضافة لاعبين محليين:</label>  
+    <div style="text-align: right;">
         <input type="text" id="player-input" placeholder="اكتب اسم اللاعب هنا...">  
-        <button id="add-player-btn" onclick="addPlayer()">إضافة للقائمة <i class="fas fa-user-plus"></i></button>  
+        <button id="add-player-btn" onclick="addPlayer()">إضافة لاعب <i class="fas fa-plus-circle"></i></button>  
     </div>
 
     <ul id="player-list"></ul>  
-    <div id="player-count-alert" style="color:#ef4444; font-size:0.85rem; margin-top:10px; display:none; font-weight:700;">⚠️ نحتاج 3 لاعبين على الأقل للبدء</div>
+    <div id="player-count-alert" style="color:#ef4444; font-size:0.8rem; margin-top:10px; display:none; font-weight:700;">⚠️ أضف 3 لاعبين على الأقل للبدء</div>
 
-    <button id="start-game-btn" disabled onclick="saveAndStartGame()">إبدأ اللعب الآن <i class="fas fa-play-circle"></i></button>  
+    <button id="start-game-btn" disabled onclick="saveAndStartGame()">إبدأ اللعب الآن <i class="fas fa-play"></i></button>  
 </div>  
   
 <button id="sign-out-btn" onclick="signOutUser()"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</button>
@@ -253,8 +146,8 @@
 <div id="incoming-gifts-overlay">
     <div class="gift-modal">
         <h2 style="color:#fbbf24">🎉 هدايا جديدة!</h2>
-        <div id="new-gifts-list"></div>
-        <button id="add-player-btn" style="margin-top:20px" onclick="clearNewGifts()">فتح الهدايا</button>
+        <div id="new-gifts-list" style="margin:15px 0;"></div>
+        <button id="add-player-btn" onclick="clearNewGifts()">استلام</button>
     </div>
 </div>
 
@@ -269,15 +162,15 @@
                 if (data) {  
                     currentUserData = data;
                     document.getElementById("total-coins-value").innerText = data.totalCoins || 0;
-                    document.getElementById("user-name-display").innerText = data.displayName || "لاعب";
                     
-                    // تحديث المستويات
-                    const level = data.level || 1;
-                    const xp = data.xp || 0;
-                    const required = level * 100; 
-                    document.getElementById("user-level").innerText = level;
-                    document.getElementById("user-xp").innerText = xp;
-                    document.getElementById("xp-bar").style.width = Math.min((xp/required)*100, 100) + "%";
+                    // منطق اسم المستخدم مع شارة التاج
+                    const isPro = data.proExpiryTime > Date.now();
+                    const nameToDisplay = data.displayName || "لاعب";
+                    document.getElementById("user-name-display").innerHTML = 
+                        `${isPro ? '<i class="fas fa-crown crown-icon"></i>' : ''} ${nameToDisplay}`;
+
+                    // تحديث المستويات والاكسبي
+                    updateXPUI(data);
 
                     if (data.newGifts?.length > 0) displayIncomingGifts(data.newGifts);
                     
@@ -288,11 +181,24 @@
         });  
     }  
 
+    function updateXPUI(data) {
+        const level = data.level || 1;
+        const currentXP = data.xp || 0;
+        // حساب الـ XP المطلوب للمستوى الحالي (بناءً على دالة auth.js المفترضة)
+        const requiredXP = (level * 100); 
+        const remaining = requiredXP - currentXP;
+        const percent = Math.min((currentXP / requiredXP) * 100, 100);
+
+        document.getElementById("user-level").innerText = level;
+        document.getElementById("xp-bar").style.width = percent + "%";
+        document.getElementById("xp-remaining").innerText = `متبقي ${remaining} XP للمستوى التالي`;
+    }
+
     function renderPlayers() {  
         const list = document.getElementById("player-list");
         list.innerHTML = '';  
         players.forEach((p, i) => {  
-            list.innerHTML += `<li><span class="player-name-text">${p}</span><i class="fas fa-times delete-btn" onclick="removePlayer(${i})"></i></li>`;
+            list.innerHTML += `<li><span style="font-weight:700;">${p}</span><i class="fas fa-trash delete-btn" onclick="removePlayer(${i})"></i></li>`;
         });  
         const canStart = players.length >= 3;
         document.getElementById("start-game-btn").disabled = !canStart;
@@ -327,12 +233,12 @@
     }  
 
     function signOutUser() {  
-        if (confirm("هل تريد تسجيل الخروج؟")) firebase.auth().signOut().then(() => location.href = "auth.html");  
+        if (confirm("هل تريد الخروج؟")) firebase.auth().signOut().then(() => location.href = "auth.html");  
     }
 
     function displayIncomingGifts(gifts) {
         const list = document.getElementById("new-gifts-list");
-        list.innerHTML = gifts.map(g => `<div style="margin-bottom:10px; font-size:0.9rem;">🎁 ${g.giftName} من <b>${g.senderName}</b></div>`).join('');
+        list.innerHTML = gifts.map(g => `<div style="padding:8px; background:rgba(255,255,255,0.05); border-radius:10px; margin-bottom:5px;">🎁 ${g.giftName} من <b>${g.senderName}</b></div>`).join('');
         document.getElementById("incoming-gifts-overlay").style.display = 'flex';
     }
 
@@ -344,3 +250,4 @@
 </script>  
 </body>  
 </html>
+
