@@ -1,25 +1,36 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>👑 خطط العضوية Pro</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👑 خطط العضوية Pro</title>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="auth.js"></script>
 
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-<style>
-/* (تنسيقات CSS التي قمت بتوفيرها) */
+    <style>
+        :root {
+            --primary: #6366f1;
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --bg-body: #0a0f1e;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8;
+            --gold: #ffd700;
+            --error: #ef4444;
+            --success: #10b981;
+        }
+
         body {
             font-family: 'Cairo', sans-serif;
-            background-color: #0f172a; 
-            color: #f1f5f9; 
-            text-align: center;
+            background-color: var(--bg-body);
+            background-image: radial-gradient(circle at top right, #1e1b4b, transparent), radial-gradient(circle at bottom left, #1e1b4b, transparent);
+            color: var(--text-main);
             padding: 20px;
             min-height: 100vh;
             margin: 0;
@@ -27,187 +38,240 @@
             flex-direction: column;
             align-items: center;
         }
-        h2 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 25px;
-            color: #34d399;
-        }
-        .home-icon {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            font-size: 24px;
-            color: #94a3b8;
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-        #coin-display {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #ffd700; 
-        }
-        .plans-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
+
+        /* شريط الرجوع والعملات */
+        .nav-header {
+            width: 100%;
             max-width: 900px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 30px;
         }
-        .plan-card {
-            background-color: #1e293b;
-            padding: 25px;
+
+        .home-btn {
+            color: var(--text-main);
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 15px;
             border-radius: 12px;
-            width: 200px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 10px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: 0.3s;
+        }
+
+        .coin-box {
+            background: rgba(255, 215, 0, 0.1);
+            padding: 10px 15px;
+            border-radius: 12px;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            font-weight: 900;
+        }
+
+        h2 {
+            font-weight: 900;
+            font-size: 2.2rem;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .status-banner {
+            background: rgba(99, 102, 241, 0.1);
+            padding: 12px 25px;
+            border-radius: 50px;
+            border: 1px solid var(--primary);
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        /* الحاويات والبطاقات */
+        .plans-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 950px;
+            margin-bottom: 40px;
+        }
+
+        .plan-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            padding: 30px 20px;
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+            transition: 0.3s;
             position: relative;
-            border: 2px solid transparent;
-            transition: border-color 0.3s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
+
+        .plan-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+        }
+
         .plan-card.best-deal {
-            border-color: #ffd700;
-            transform: scale(1.05);
+            border: 2px solid var(--gold);
+            background: rgba(255, 215, 0, 0.05);
         }
+
         .plan-card h3 {
-            color: #34d399;
-            margin-top: 0;
-            font-size: 1.5rem;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: var(--text-main);
         }
+
         .price {
             font-size: 2.5rem;
-            font-weight: 700;
-            color: #6366f1;
-            margin: 15px 0;
+            font-weight: 900;
+            color: var(--text-main);
+            margin: 10px 0;
         }
+
         .price span {
-            font-size: 1rem;
-            font-weight: 400;
-            color: #94a3b8;
+            font-size: 0.9rem;
+            color: var(--text-dim);
             display: block;
+            font-weight: normal;
         }
+
         .buy-button {
-            margin-top: 15px; 
-            padding: 10px 20px;
-            font-size: 16px;
-            font-weight: 700;
-            border: none;
-            border-radius: 8px; 
-            cursor: pointer;
             width: 100%;
-            transition: background-color 0.3s;
-            background-color: #6366f1;
-            color: #ffffff;
+            padding: 12px;
+            border-radius: 12px;
+            border: none;
+            background: var(--accent-gradient);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 20px;
         }
-        .buy-button:hover:not(:disabled) {
-            background-color: #4f46e5;
-        }
+
         .buy-button:disabled {
-            background-color: #475569 !important; /* لضمان التغيير */
+            background: #334155;
             cursor: not-allowed;
-            color: #ccc; /* لجعل النص أفتح */
+            opacity: 0.6;
         }
+
         .discount-badge {
             position: absolute;
-            top: -15px;
-            right: -15px;
-            background-color: #ff4f4f;
-            color: #ffffff;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 0.9rem;
-            font-weight: 700;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--error);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            white-space: nowrap;
         }
-        .card {
-            background-color: #1e293b; 
+
+        /* مميزات برو */
+        .features-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
             padding: 30px;
-            border-radius: 12px;
-            max-width: 450px;
-            width: 90%;
-            margin: 10px auto;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 10px 15px rgba(0, 0, 0, 0.2);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid rgba(255,255,255,0.1);
             text-align: right;
         }
-        .features {
+
+        .features-list {
             list-style: none;
             padding: 0;
-            margin-top: 15px;
+            margin-top: 20px;
         }
-        .features li {
-            margin-bottom: 10px;
-            color: #94a3b8;
-            font-size: 1rem;
+
+        .features-list li {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-dim);
         }
-        .features li i {
-            color: #34d399;
-            margin-left: 10px;
+
+        .features-list li i {
+            color: var(--success);
+            font-size: 1.1rem;
         }
+
     </style>
 </head>
 
 <body onload="loadProData()">
 
-<h2 style="margin-top: 50px;">👑 خطط العضوية Pro</h2>
-
-<a href="index.html" class="home-icon" title="العودة للصفحة الرئيسية">
-    <i class="fas fa-home"></i>
-</a>
-<div id="coin-display">
-    <i class="fas fa-coins"></i> كوينزاتك الحالية: <span id="current-coins-value">0</span>
+<div class="nav-header">
+    <div class="coin-box">
+        <i class="fas fa-coins"></i> <span id="current-coins-value">0</span>
+    </div>
+    <a href="index.html" class="home-btn">
+        <i class="fas fa-home"></i> الرئيسية
+    </a>
 </div>
-<div id="pro-status" style="color: #ffd700; margin-bottom: 20px; font-weight: 700;"></div>
+
+<h2>👑 عضوية برو (PRO)</h2>
+<div id="pro-status" class="status-banner">جاري التحقق من الاشتراك...</div>
 
 <div class="plans-container">
     <div class="plan-card" data-duration-days="7" data-cost="150">
         <h3>الخطة الأسبوعية</h3>
         <p class="price">150 <span>كوينز</span></p>
-        <button class="buy-button" onclick="purchasePlan(7, 150)">اشتراك أسبوع</button>
+        <button class="buy-button" onclick="purchasePlan(7, 150)">اشترك الآن</button>
     </div>
+
     <div class="plan-card" data-duration-days="30" data-cost="450">
         <h3>الخطة الشهرية</h3>
         <p class="price">450 <span>كوينز</span></p>
-        <button class="buy-button" onclick="purchasePlan(30, 450)">اشتراك شهر</button>
+        <button class="buy-button" onclick="purchasePlan(30, 450)">اشترك الآن</button>
     </div>
+
     <div class="plan-card" data-duration-days="90" data-cost="1080">
-        <h3>3 أشهر (خصم 20%)</h3>
-        <div class="discount-badge">توفير!</div>
+        <div class="discount-badge">خصم 20%</div>
+        <h3>3 أشهر</h3>
         <p class="price">1080 <span>كوينز</span></p>
-        <button class="buy-button" onclick="purchasePlan(90, 1080)">اشتراك 3 أشهر</button>
+        <button class="buy-button" onclick="purchasePlan(90, 1080)">اشترك الآن</button>
     </div>
+
     <div class="plan-card best-deal" data-duration-days="365" data-cost="2414">
-        <h3>الخطة السنوية (أفضل صفقة)</h3>
-        <div class="discount-badge">خصم 29%</div>
+        <div class="discount-badge" style="background: var(--gold); color: #000;">أفضل توفير 29%</div>
+        <h3>الخطة السنوية</h3>
         <p class="price">2414 <span>كوينز</span></p>
-        <button class="buy-button" onclick="purchasePlan(365, 2414)">اشتراك سنة</button>
+        <button class="buy-button" onclick="purchasePlan(365, 2414)">اشترك الآن</button>
     </div>
 </div>
 
-<div class="card" style="margin-top: 30px; text-align: right; width: 90%; max-width: 450px; background-color: #334155; padding: 20px;">
-    <h3>مميزات العضوية المتميزة (Pro):</h3>
-    <ul class="features">
-        <li><i class="fas fa-check-circle"></i> تفعيل وضع الفوضى (Chaos Mode).</li>
-        <li><i class="fas fa-check-circle"></i> تعيين الأدوار يدويًا (اختيار المحتال/بلا كلمة).</li>
-        <li><i class="fas fa-check-circle"></i> كلمات سرية إضافية وحصرية (للمدني والمحتال).</li>
-        <li><i class="fas fa-check-circle"></i> ميزات قادمة حصرية للمحترفين!</li>
+<div class="features-card">
+    <h3 style="color: var(--gold);"><i class="fas fa-star"></i> مزايا المشتركين:</h3>
+    <ul class="features-list">
+        <li><i class="fas fa-check-circle"></i> تفعيل وضع الفوضى (Chaos Mode) للغرف.</li>
+        <li><i class="fas fa-check-circle"></i> التحكم الكامل في تعيين الأدوار يدوياً.</li>
+        <li><i class="fas fa-check-circle"></i> الوصول لمكتبة الكلمات السرية الحصرية.</li>
+        <li><i class="fas fa-check-circle"></i> شارة التاج الذهبية بجانب اسمك في الغرف.</li>
+        <li><i class="fas fa-check-circle"></i> إزالة الإعلانات (ميزة قادمة).</li>
     </ul>
 </div>
 
 <script>
-
-let currentUserData = { totalCoins: 0, proExpiryTime: 0, players: [], settings: {} }; 
+let currentUserData = { totalCoins: 0, proExpiryTime: 0 }; 
 
 async function loadProData() {
     firebase.auth().onAuthStateChanged(async (user) => {
         if (!user) {
-            // إذا لم يكن المستخدم مسجلاً، قم بتوجيهه لصفحة المصادقة
             window.location.href = "auth.html";
             return;
         }
         
-        const data = await loadUserData(); // دالة من auth.js تجلب كل شيء
+        const data = await loadUserData(); 
         if (data) {
             currentUserData = data;
             displayTotalCoins();
@@ -216,36 +280,20 @@ async function loadProData() {
     });
 }
 
-function getTotalCoins() {
-    return currentUserData.totalCoins || 0;
-}
-
-/**
- * @function displayTotalCoins
- * @description عرض الكوينزات وتحديث حالة أزرار الشراء.
- */
 function displayTotalCoins() {
-    document.getElementById("current-coins-value").innerText = getTotalCoins();
+    const coinsValue = currentUserData.totalCoins || 0;
+    document.getElementById("current-coins-value").innerText = coinsValue;
     
     document.querySelectorAll('.plan-card').forEach(card => {
         const cost = Number(card.getAttribute('data-cost'));
         const button = card.querySelector('.buy-button');
-        const durationDays = card.getAttribute('data-duration-days');
         
-        let defaultText = `اشتراك ${durationDays} يوم`;
-        if (durationDays === '7') defaultText = 'اشتراك أسبوع';
-        if (durationDays === '30') defaultText = 'اشتراك شهر';
-        if (durationDays === '90') defaultText = 'اشتراك 3 أشهر';
-        if (durationDays === '365') defaultText = 'اشتراك سنة';
-
-        const isDisabled = getTotalCoins() < cost;
-        button.disabled = isDisabled;
-        
-        if (isDisabled) {
-            button.innerText = 'الكوينزات غير كافية';
+        if (coinsValue < cost) {
+            button.disabled = true;
+            button.innerText = 'رصيد غير كافٍ';
         } else {
-            button.innerText = defaultText;
-            button.style.backgroundColor = '#6366f1'; 
+            button.disabled = false;
+            button.innerText = 'اشترك الآن';
         }
     });
 }
@@ -256,64 +304,42 @@ function checkProStatus() {
     const statusDisplay = document.getElementById("pro-status");
 
     if (proExpiryTime > now) {
-        // حساب الأيام المتبقية
         const remainingDays = Math.ceil((proExpiryTime - now) / (1000 * 60 * 60 * 24));
-        statusDisplay.innerHTML = `<i class="fas fa-crown"></i> أنت مشترك Pro! يتبقى: ${remainingDays} يومًا.`;
+        statusDisplay.style.color = "var(--gold)";
+        statusDisplay.innerHTML = `<i class="fas fa-crown"></i> اشتراكك فعال! ينتهي بعد: ${remainingDays} يوم.`;
     } else {
-        statusDisplay.innerHTML = '👑 أنت مشترك عادي. اشترك الآن للحصول على الميزات!';
+        statusDisplay.style.color = "var(--text-dim)";
+        statusDisplay.innerHTML = '👑 اشترك في PRO لفتح ميزات التحكم الكاملة';
     }
 }
 
-/**
- * @function purchasePlan
- * @description شراء خطة Pro وتمديد المدة إذا كان الاشتراك ساريًا.
- * @param {number} durationDays - مدة الاشتراك الجديدة بالأيام.
- * @param {number} cost - تكلفة الاشتراك بالكوينز.
- */
 async function purchasePlan(durationDays, cost) {
-    const currentCoins = getTotalCoins();
-
-    if (currentCoins < cost) {
-        alert("لا تملك ما يكفي من الكوينزات لشراء هذه الخطة!");
-        return;
-    }
+    if (currentUserData.totalCoins < cost) return;
     
-    if (!confirm(`هل أنت متأكد من شراء خطة ${durationDays} يومًا مقابل ${cost} كوينز؟`)) {
-        return;
-    }
+    if (!confirm(`شراء اشتراك لمدة ${durationDays} يوم مقابل ${cost} كوينز؟`)) return;
 
     const now = new Date().getTime();
-    
-    // 🚨 منطق التمديد: إذا كان الاشتراك الحالي ساري المفعول، يتم التمديد من تاريخ انتهائه
     const currentProExpiry = currentUserData.proExpiryTime > now ? currentUserData.proExpiryTime : now;
-
-    // حساب تاريخ الانتهاء الجديد
     const extensionDurationMs = durationDays * 24 * 60 * 60 * 1000;
     const expiryTime = currentProExpiry + extensionDurationMs;
-    const newTotalCoins = currentCoins - cost;
+    const newTotalCoins = currentUserData.totalCoins - cost;
     
-    // 💥 التعديل الحاسم: نمرر فقط الحقول المراد تحديثها إلى دالة saveUserData
     const saveSuccessful = await saveUserData({
         totalCoins: newTotalCoins,
         proExpiryTime: expiryTime
     });
 
     if (saveSuccessful) {
-        // تحديث البيانات في الذاكرة
         currentUserData.totalCoins = newTotalCoins;
         currentUserData.proExpiryTime = expiryTime;
-        
-        alert(`تهانينا! تم تمديد أو تفعيل عضوية Pro لمدة ${durationDays} يومًا.`);
-        
+        alert(`تم التفعيل بنجاح! شكراً لدعمك.`);
         displayTotalCoins();
         checkProStatus();
     } else {
-        // هذا الخطأ يظهر عند فشل الاتصال بقاعدة البيانات أو عدم وجود مصادقة نشطة
-        alert("❌ فشل الحفظ. تأكد من أنك مسجل الدخول ومن اتصالك بالإنترنت.");
+        alert("حدث خطأ أثناء المعالجة، يرجى المحاولة لاحقاً.");
     }
 }
 </script>
 
 </body>
 </html>
-
