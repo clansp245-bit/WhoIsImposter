@@ -3,45 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل الدخول / الاشتراك</title>
+    <title>تسجيل الدخول |</title>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="auth.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
     <style>
-        body { font-family: 'Cairo', sans-serif; background-color: #0f172a; color: #f1f5f9; text-align: center; padding: 20px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0; }
-        .card { background-color: #1e293b; padding: 30px; border-radius: 12px; max-width: 400px; width: 90%; box-shadow: 0 10px 15px rgba(0,0,0,0.3); text-align: right; }
-        label { display: block; margin-top: 15px; color: #94a3b8; font-size: 0.9rem; }
-        input { width: 100%; margin: 8px 0; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #334155; color: white; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        #email-sign-in-btn { background: #6366f1; color: white; }
-        #email-sign-up-btn { background: #34d399; color: white; }
-        #google-sign-in-btn { background: #db4437; color: white; margin-top: 15px; }
-        .error-message { color: #ff4f4f; font-size: 0.85rem; margin-top: 10px; display: none; }
+        :root {
+            --primary: #6366f1;
+            --accent: #34d399;
+            --bg-body: #0a0f1e;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-body);
+            background-image: radial-gradient(circle at top right, #1e1b4b, transparent), 
+                              radial-gradient(circle at bottom left, #1e1b4b, transparent);
+            color: #f1f5f9;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* التصميم الزجاجي للبطاقة */
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 40px;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            box-sizing: border-box;
+            z-index: 10;
+        }
+
+        h2 { font-weight: 900; margin-bottom: 25px; color: var(--accent); text-align: center; }
+
+        label { display: block; margin-top: 15px; color: #94a3b8; font-size: 0.85rem; font-weight: bold; }
+
+        input {
+            width: 100%;
+            margin: 8px 0;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            background: rgba(15, 23, 42, 0.6);
+            color: white;
+            box-sizing: border-box;
+            font-family: 'Cairo';
+            transition: 0.3s;
+        }
+
+        input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 12px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Cairo';
+        }
+
+        button:active { transform: scale(0.98); }
+
+        #email-sign-in-btn { background: var(--primary); color: white; }
+        #email-sign-in-btn:hover { background: #4f46e5; box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4); }
+
+        #email-sign-up-btn { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+        #email-sign-up-btn:hover { background: var(--accent); color: #0a0f1e; }
+
+        #google-sign-in-btn { background: #fff; color: #334155; margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+
+        /* هل نسيت كلمة المرور */
+        .forgot-password {
+            text-align: left;
+            margin-top: 10px;
+        }
+        .forgot-password a {
+            color: #94a3b8;
+            font-size: 0.8rem;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+        .forgot-password a:hover { color: var(--primary); text-decoration: underline; }
+
+        .error-message { color: #ef4444; font-size: 0.85rem; margin-top: 15px; text-align: center; display: none; padding: 10px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; }
+
+        /* النافذة المنبثقة لإعادة التعيين */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 350px;
+            text-align: center;
+        }
     </style>
 </head>
 <body onload="checkActiveUser()">
 
     <div class="card">
-        <h2 style="text-align:center; color:#34d399;">مرحباً بك</h2>
+        <h2><i class="fas fa-user-lock"></i> الدخول للغرفة</h2>
+        
         <label>البريد الإلكتروني</label>
         <input type="email" id="email" placeholder="example@mail.com">
+        
         <label>كلمة المرور</label>
         <input type="password" id="password" placeholder="******">
         
+        <div class="forgot-password">
+            <a href="#" onclick="openResetModal()">هل نسيت كلمة المرور؟</a>
+        </div>
+        
         <p id="error-msg" class="error-message"></p>
 
-        <button id="email-sign-in-btn" onclick="handleSignIn()">تسجيل الدخول</button>
-        <button id="email-sign-up-btn" onclick="handleSignUp()">إنشاء حساب جديد</button>
-        <button id="google-sign-in-btn" onclick="handleGoogleSignIn()"><i class="fab fa-google"></i> Google</button>
+        <button id="email-sign-in-btn" onclick="handleSignIn()">دخول</button>
+        <button id="email-sign-up-btn" onclick="handleSignUp()">إنشاء حساب</button>
+        
+        <div style="margin: 20px 0; color: #475569; font-size: 0.7rem;">أو عبر</div>
+        
+        <button id="google-sign-in-btn" onclick="handleGoogleSignIn()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="18">
+            بواسطة Google
+        </button>
+    </div>
+
+    <div id="resetModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color: var(--accent);">إعادة تعيين كلمة المرور</h3>
+            <p style="font-size: 0.8rem; color: #94a3b8;">سيتم إرسال رابط تغيير كلمة السر لبريدك:</p>
+            <input type="email" id="resetEmail" placeholder="أدخل إيميلك المسجل">
+            <button onclick="handleResetPassword()" style="background: var(--accent); color: #0a0f1e;">إرسال الرابط</button>
+            <button onclick="closeResetModal()" style="background: transparent; color: #94a3b8; font-size: 0.8rem;">إلغاء</button>
+            <p id="reset-msg" style="font-size: 0.8rem; margin-top: 10px;"></p>
+        </div>
     </div>
 
 <script>
     const emailInput = document.getElementById("email");
     const passwordInput = document.getElementById("password");
     const errorMsg = document.getElementById("error-msg");
+    const resetModal = document.getElementById("resetModal");
 
     function checkActiveUser() {
         firebase.auth().onAuthStateChanged(user => {
@@ -52,39 +182,56 @@
     function displayError(msg) {
         errorMsg.innerText = msg;
         errorMsg.style.display = 'block';
+        setTimeout(() => { errorMsg.style.display = 'none'; }, 4000);
     }
 
+    // --- وظائف كلمة المرور ---
+    function openResetModal() { resetModal.style.display = 'flex'; }
+    function closeResetModal() { resetModal.style.display = 'none'; }
+
+    async function handleResetPassword() {
+        const email = document.getElementById("resetEmail").value.trim();
+        const msg = document.getElementById("reset-msg");
+        if (!email) { msg.innerText = "أدخل الإيميل أولاً"; msg.style.color = "#ef4444"; return; }
+
+        try {
+            await firebase.auth().sendPasswordResetEmail(email);
+            msg.innerText = "✅ تم إرسال رابط التغيير! تفقد إيميلك (والبريد العشوائي).";
+            msg.style.color = "#34d399";
+            setTimeout(closeResetModal, 5000);
+        } catch (e) {
+            msg.innerText = "❌ حدث خطأ: تأكد من صحة الإيميل";
+            msg.style.color = "#ef4444";
+        }
+    }
+
+    // --- وظائف الدخول ---
     async function handleSignUp() {
         const email = emailInput.value.trim();
         const password = passwordInput.value;
-        if (!email || password.length < 6) return displayError("البيانات غير مكتملة");
-
+        if (!email || password.length < 6) return displayError("كلمة السر يجب أن تكون 6 خانات فأكثر");
         try {
-            await signUp(email, password); // سينتظر حتى يتم إنشاء سجل Firestore أيضاً
+            await signUp(email, password);
             window.location.href = "index.html";
-        } catch (e) {
-            displayError(e.message);
-        }
+        } catch (e) { displayError(e.message); }
     }
 
     async function handleSignIn() {
+        const email = emailInput.value.trim();
+        const pass = passwordInput.value;
+        if(!email || !pass) return displayError("أدخل البيانات");
         try {
-            await signIn(emailInput.value.trim(), passwordInput.value);
+            await signIn(email, pass);
             window.location.href = "index.html";
-        } catch (e) {
-            displayError("خطأ في البيانات");
-        }
+        } catch (e) { displayError("فشل الدخول: تأكد من الإيميل وكلمة السر"); }
     }
 
     async function handleGoogleSignIn() {
         try {
             await signInWithGoogle();
             window.location.href = "index.html";
-        } catch (e) {
-            displayError("فشل الدخول عبر Google");
-        }
+        } catch (e) { displayError("فشل الدخول عبر Google"); }
     }
 </script>
 </body>
 </html>
-
