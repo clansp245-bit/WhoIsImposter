@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏆 سيزون النخبة - الموسم 1</title>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="auth.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+    <style>
+        :root {
+            --bg: #030712;
+            --primary: #6366f1;
+            --gold: #fbbf24;
+            --gem: #22d3ee;
+            --glass: rgba(255,255,255,0.05);
+            --elite-bg: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(0, 0, 0, 0) 100%);
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: var(--bg); color: #fff; margin: 0;
+            background-image: radial-gradient(circle at 50% -20%, #312e81, transparent);
+            padding-bottom: 110px; min-height: 100vh;
+        }
+
+        .top-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 20px; background: rgba(0,0,0,0.7); backdrop-filter: blur(15px);
+            position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--glass);
+        }
+
+        .currency-item { display: flex; align-items: center; gap: 8px; background: var(--glass); padding: 6px 15px; border-radius: 30px; border: 1px solid var(--glass); font-weight: 900; font-size: 0.9rem; }
+
+        .tabs-nav { display: flex; padding: 5px; gap: 5px; background: #000; margin: 15px; border-radius: 15px; }
+        .tab-btn {
+            flex: 1; padding: 12px; border: none; background: none;
+            color: #94a3b8; font-weight: 900; cursor: pointer; border-radius: 12px; transition: 0.3s;
+        }
+        .tab-btn.active { background: var(--primary); color: #fff; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); }
+
+        .container { padding: 0 15px; max-width: 600px; margin: auto; }
+
+        .task-card {
+            background: var(--glass); border-radius: 20px; padding: 18px;
+            margin-bottom: 12px; border: 1px solid var(--glass);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .task-card.ready { border-color: #22c55e; background: rgba(34, 197, 94, 0.05); }
+        .elite-badge { background: var(--gold); color: #000; font-size: 0.6rem; padding: 2px 8px; border-radius: 5px; font-weight: 900; margin-right: 5px; }
+
+        .lvl-row { display: grid; grid-template-columns: 50px 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        .lvl-num { 
+            background: #0f172a; border-radius: 15px; display: flex; align-items: center; 
+            justify-content: center; font-weight: 900; border: 2px solid var(--primary); font-size: 1rem; color: var(--primary);
+        }
+        .reward-box {
+            background: var(--glass); border-radius: 18px; padding: 12px; text-align: center;
+            border: 1px solid var(--glass); min-height: 110px;
+            display: flex; flex-direction: column; justify-content: space-between; transition: 0.3s;
+        }
+        .reward-box.premium { border-color: rgba(251, 191, 36, 0.2); background: var(--elite-bg); }
+        .reward-box i { font-size: 1.8rem; margin: 10px 0; }
+        
+        .btn-claim {
+            width: 100%; padding: 6px; border-radius: 10px; border: none; cursor: pointer; font-weight: 900;
+            background: var(--primary); color: white; font-size: 0.75rem;
+        }
+        .btn-claim.locked { background: #1e293b; color: #64748b; cursor: not-allowed; }
+        .btn-claim.done { background: none; border: 1.5px solid #22c55e; color: #22c55e; cursor: default; }
+
+        .footer-nav {
+            position: fixed; bottom: 0; left: 0; right: 0; padding: 20px;
+            background: rgba(3, 7, 18, 0.9); backdrop-filter: blur(20px);
+            border-top: 1px solid var(--glass); z-index: 1000;
+        }
+        .buy-btn {
+            width: 100%; background: linear-gradient(90deg, #fbbf24, #f59e0b); 
+            border: none; padding: 18px; border-radius: 20px; font-weight: 900; 
+            font-size: 1.1rem; color: #451a03; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+            box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
+        }
+    </style>
+</head>
+<body onload="initApp()">
+
+    <div class="top-bar">
+        <div class="currency-info">
+            <div class="currency-item"><i class="fas fa-coins" style="color:var(--gold)"></i> <span id="u-coins">0</span></div>
+            <div class="currency-item"><i class="fas fa-gem" style="color:var(--gem)"></i> <span id="u-gems">0</span></div>
+        </div>
+        <div onclick="openSkipModal()" style="cursor:pointer; color: var(--primary); font-weight: 900;">
+            تخطي ليفل <i class="fas fa-bolt"></i>
+        </div>
+    </div>
+
+    <div class="tabs-nav">
+        <button class="tab-btn active" id="btn-pass" onclick="showTab('pass')">جوائز النخبة</button>
+        <button class="tab-btn" id="btn-tasks" onclick="showTab('tasks')">المهام اليومية</button>
+    </div>
+
+    <div id="pass-tab" class="container">
+        <div style="background: var(--glass); padding: 20px; border-radius: 25px; margin-bottom: 20px; border: 1px solid var(--glass);">
+            <div style="display:flex; justify-content: space-between; margin-bottom: 10px;">
+                <span style="font-weight: 900;">مستوى السيزون: <span id="txt-lvl" style="color:var(--primary)">1</span></span>
+                <span id="xp-text" style="font-size: 0.8rem; opacity: 0.7;">0 / 1000</span>
+            </div>
+            <div style="height: 12px; background: #000; border-radius: 10px; overflow: hidden;">
+                <div id="xp-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--primary), #a855f7); transition: 0.5s; box-shadow: 0 0 15px var(--primary);"></div>
+            </div>
+            <button onclick="collectAllRewards()" style="margin-top: 15px; width: 100%; background: #22c55e; border: none; padding: 10px; border-radius: 12px; color: #fff; font-weight: 900; cursor: pointer;">جمع كافة الجوائز المتاحة</button>
+        </div>
+        <div id="rewards-list"></div>
+    </div>
+
+    <div id="tasks-tab" class="container" style="display: none; flex-direction: column;">
+        <div id="tasks-list"></div>
+    </div>
+
+    <div class="footer-nav" id="footer-buy">
+        <button class="buy-btn" onclick="buySeason()">
+            <i class="fas fa-crown"></i> تفعيل السيزون بريميوم (3 جواهر)
+        </button>
+    </div>
+
+<script>
+    let uData = null;
+    const XP_PER_LVL = 1000;
+
+    const rewards = [];
+    for(let i=1; i<=30; i++) {
+        // جوائز المسار المجاني (إجمالي 2000 XP و 1800 كوينز كحد أقصى)
+        let fReward = { id: `f${i}`, n: `60 كوينز`, i: "fa-coins", v: 60, t: 'coins' };
+        if(i === 15) fReward = { id: `f${i}`, n: `شارة الموسم`, i: "fa-medal", v: "s1_free_badge", t: 'badge' };
+        if(i % 3 === 0 && i !== 15) fReward = { id: `f${i}`, n: `+200 XP حساب`, i: "fa-arrow-up", v: 200, t: 'account_xp' };
+        
+        // جوائز المسار البريميوم (إجمالي 10,000 XP وأشياء رهيبة)
+        let pReward = { id: `p${i}`, n: `+333 XP حساب`, i: "fa-bolt", v: 333, t: 'account_xp' };
+        if(i % 5 === 0 && i !== 30 && i !== 15) pReward = { id: `p${i}`, n: `1 جوهرة`, i: "fa-gem", v: 1, t: 'gems' };
+        if(i === 15) pReward = { id: `p${i}`, n: `2 جوهرة`, i: "fa-gem", v: 2, t: 'gems' };
+        if(i === 25) pReward = { id: `p${i}`, n: `PRO (3 أيام)`, i: "fa-shield-halved", v: 3, t: 'pro' };
+        if(i === 30) pReward = { id: `p${i}`, n: `بطاقة اسم + شارة ذهبية`, i: "fa-id-card", v: "elite_pack", t: 'rename_badge' };
+
+        rewards.push({ lvl: i, free: fReward, prem: pReward });
+    }
+
+    const tasksList = [
+        { id: 'tk1', title: 'تجميع 5,000 كوينز', goal: 5000, xp: 400, key: 'totalCoins', elite: false },
+        { id: 'tk2', title: 'الوصول لمستوى 15', goal: 15, xp: 1000, key: 'level', elite: false },
+        { id: 'tk3', title: 'الفوز في 5 مباريات (نخبة)', goal: 5, xp: 2500, key: 'wins', elite: true },
+        { id: 'tk4', title: 'إرسال 10 هدايا (نخبة)', goal: 10, xp: 3000, key: 'gifts_sent', elite: true },
+        { id: 'tk5', title: 'لعب 20 مباراة أونلاين', goal: 20, xp: 1500, key: 'online_matches', elite: false }
+    ];
+
+    async function initApp() {
+        auth.onAuthStateChanged(user => {
+            if(!user) return;
+            db.collection('users').doc(user.uid).onSnapshot(doc => {
+                uData = doc.data();
+                renderUI();
+            });
+        });
+    }
+
+    function renderUI() {
+        const xp = uData.s_xp || 0;
+        const currentLvl = Math.min(30, Math.floor(xp / XP_PER_LVL) + 1);
+        
+        document.getElementById('u-coins').innerText = (uData.totalCoins || 0).toLocaleString();
+        document.getElementById('u-gems').innerText = uData.s_gems || 0;
+        document.getElementById('txt-lvl').innerText = currentLvl;
+        document.getElementById('xp-text').innerText = `${xp % XP_PER_LVL} / ${XP_PER_LVL}`;
+        document.getElementById('xp-fill').style.width = (xp % XP_PER_LVL) / 10 + '%';
+        
+        document.getElementById('footer-buy').style.display = uData.s_premium ? 'none' : 'block';
+
+        const rList = document.getElementById('rewards-list');
+        rList.innerHTML = '';
+        rewards.forEach(r => {
+            const row = document.createElement('div');
+            row.className = 'lvl-row';
+            row.innerHTML = `<div class="lvl-num">${r.lvl}</div>` + createBox(r.lvl, r.free, false) + createBox(r.lvl, r.prem, true);
+            rList.appendChild(row);
+        });
+
+        const tList = document.getElementById('tasks-list');
+        tList.innerHTML = '';
+        tasksList.forEach(t => {
+            const prog = uData[t.key] || 0;
+            const isReady = prog >= t.goal && !uData.s_claimed.includes(t.id);
+            const canClaim = t.elite ? uData.s_premium : true;
+
+            tList.innerHTML += `
+                <div class="task-card ${isReady && canClaim ? 'ready' : ''}">
+                    <div>
+                        <h4 style="margin:0">${t.elite ? '<span class="elite-badge">نخبة</span>' : ''}${t.title}</h4>
+                        <small style="color:#22c55e; font-weight:bold">+${t.xp} XP سيزون</small> | <small>${prog}/${t.goal}</small>
+                    </div>
+                    <button class="btn-claim" style="width:80px" ${(!isReady || !canClaim) ? 'disabled' : ''} onclick="claimTaskXP('${t.id}', ${t.xp})">
+                        ${uData.s_claimed.includes(t.id) ? 'تم' : (isReady ? (canClaim ? 'استلام' : 'اشحن') : 'قيد')}
+                    </button>
+                </div>`;
+        });
+    }
+
+    function createBox(lvl, item, isPrem) {
+        const uLvl = Math.floor((uData.s_xp || 0) / XP_PER_LVL) + 1;
+        const isClaimed = uData.s_claimed.includes(item.id);
+        const canClaim = lvl <= uLvl && (!isPrem || uData.s_premium);
+        
+        let btn = `<button class="btn-claim locked">مقفل</button>`;
+        if(isClaimed) btn = `<button class="btn-claim done"><i class="fas fa-check"></i></button>`;
+        else if(canClaim) btn = `<button class="btn-claim animate__animated animate__pulse animate__infinite" onclick="claimReward('${item.id}','${item.t}',${JSON.stringify(item.v)})">استلام</button>`;
+        
+        return `<div class="reward-box ${isPrem ? 'premium' : ''}">
+                    <small style="font-size:0.6rem; opacity:0.6">${isPrem ? 'بريميوم' : 'مجاني'}</small>
+                    <i class="fas ${item.i}" style="color:${isPrem ? 'var(--gold)' : '#fff'}"></i>
+                    <small style="font-size:0.65rem; font-weight:900">${item.n}</small>
+                    ${btn}
+                </div>`;
+    }
+
+    async function claimReward(id, type, val) {
+        const ref = db.collection('users').doc(auth.currentUser.uid);
+        let up = { s_claimed: firebase.firestore.FieldValue.arrayUnion(id) };
+        
+        if(type === 'coins') up.totalCoins = firebase.firestore.FieldValue.increment(val);
+        if(type === 'gems') up.s_gems = firebase.firestore.FieldValue.increment(val);
+        if(type === 'account_xp') up.xp = firebase.firestore.FieldValue.increment(val);
+        if(type === 'badge') up.badges = firebase.firestore.FieldValue.arrayUnion(val);
+        if(type === 'rename_badge') { up.hasRenameCard = true; up.s_premium_badge = true; } // شارة النخبة
+        if(type === 'pro') {
+            let base = uData.proExpiryTime > Date.now() ? uData.proExpiryTime : Date.now();
+            up.proExpiryTime = base + (val * 24 * 60 * 60 * 1000);
+        }
+        await ref.update(up);
+    }
+
+    async function claimTaskXP(id, xp) {
+        await db.collection('users').doc(auth.currentUser.uid).update({
+            s_xp: firebase.firestore.FieldValue.increment(xp),
+            s_claimed: firebase.firestore.FieldValue.arrayUnion(id)
+        });
+    }
+
+    async function buySeason() {
+        if((uData.s_gems || 0) < 3) return alert("تحتاج إلى 3 جواهر لتفعيل السيزون!");
+        if(confirm("تأكيد تفعيل السيزون بريميوم مقابل 3 جواهر؟")) {
+            await db.collection('users').doc(auth.currentUser.uid).update({
+                s_gems: firebase.firestore.FieldValue.increment(-3),
+                s_premium: true
+            });
+        }
+    }
+
+    async function collectAllRewards() {
+        const uLvl = Math.floor((uData.s_xp || 0) / XP_PER_LVL) + 1;
+        for (let r of rewards) {
+            if(r.lvl <= uLvl) {
+                if(!uData.s_claimed.includes(r.free.id)) await claimReward(r.free.id, r.free.t, r.free.v);
+                if(uData.s_premium && !uData.s_claimed.includes(r.prem.id)) await claimReward(r.prem.id, r.prem.t, r.prem.v);
+            }
+        }
+    }
+
+    function showTab(t) {
+        document.getElementById('pass-tab').style.display = t === 'pass' ? 'block' : 'none';
+        document.getElementById('tasks-tab').style.display = t === 'tasks' ? 'flex' : 'none';
+        document.getElementById('btn-pass').classList.toggle('active', t==='pass');
+        document.getElementById('btn-tasks').classList.toggle('active', t==='tasks');
+    }
+</script>
+</body>
+</html>
