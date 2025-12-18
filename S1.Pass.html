@@ -48,7 +48,6 @@
 
         .container { padding: 0 15px; max-width: 600px; margin: auto; }
 
-        /* ستايل المهام الجديد */
         .task-card {
             background: var(--glass); border-radius: 20px; padding: 15px;
             margin-bottom: 12px; border: 1px solid var(--glass);
@@ -56,16 +55,7 @@
             position: relative; overflow: hidden;
         }
         .task-card.ready { border-color: #22c55e; background: rgba(34, 197, 94, 0.05); }
-        .elite-badge { background: var(--gold); color: #000; font-size: 0.6rem; padding: 2px 8px; border-radius: 5px; font-weight: 900; margin-left: 5px; }
 
-        .change-task-btn {
-            background: rgba(255,255,255,0.1); border: none; color: #fff;
-            padding: 4px 8px; border-radius: 8px; font-size: 0.7rem; cursor: pointer;
-            margin-top: 5px; transition: 0.3s;
-        }
-        .change-task-btn:hover { background: #ef4444; }
-
-        /* ستايل الجوائز */
         .lvl-row { display: grid; grid-template-columns: 50px 1fr 1fr; gap: 10px; margin-bottom: 12px; }
         .lvl-num { 
             background: #0f172a; border-radius: 15px; display: flex; align-items: center; 
@@ -85,7 +75,6 @@
         }
         .btn-claim.done { background: none; border: 1px solid #22c55e; color: #22c55e; cursor: default; }
 
-        /* المودال */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
         .modal-content { background: #111827; padding: 25px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center; border: 1px solid var(--primary); }
 
@@ -97,6 +86,9 @@
         .buy-btn {
             width: 100%; background: linear-gradient(90deg, var(--gold), #f59e0b); 
             border: none; padding: 15px; border-radius: 15px; font-weight: 900; color: #000; cursor: pointer;
+        }
+        .reset-btn {
+            background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 900; cursor: pointer; margin-top: 20px;
         }
     </style>
 </head>
@@ -128,6 +120,11 @@
             </div>
         </div>
         <div id="rewards-list"></div>
+        
+        <div id="reset-section" style="display:none; text-align: center; padding: 20px;">
+            <p>تهانينا! لقد أنهيت السيزون.</p>
+            <button class="reset-btn" onclick="resetSeason()">إعادة السيزون (5000 كوينز) 🔄</button>
+        </div>
     </div>
 
     <div id="tasks-tab" class="container" style="display: none;">
@@ -150,121 +147,103 @@
     </div>
 
 <script>
-       let uData = null;
+    let uData = null;
     const XP_PER_LVL = 1000;
+    const MAX_LVL = 30;
 
-    // 1. إعداد الجوائز (2000 كوينز للعادي، 10000 كوينز للبريميوم + الجوائز الإضافية)
+    // --- إعداد الجوائز بناءً على طلبك ---
     const rewards = [];
-    for(let i=1; i<=30; i++) {
-        // توزيع 2000 كوينز على 30 لفل (66 كوينز تقريباً)
-        let freeVal = (i === 30) ? 80 : 66; 
-        let fReward = { id: `f${i}`, n: `${freeVal} كوينز`, i: "fa-coins", v: freeVal, t: 'coins' };
-        
-        // شارة سيلفر برقم 1 في لفل 30 للمجاني
-        if(i === 30) fReward = { id: `f${i}`, n: `درع سيلفر 1`, i: "fa-shield-halved", v: "silver_shield_1", t: 'badge' };
+    for(let i=1; i<=MAX_LVL; i++) {
+        // عادي: 2000 كوينز إجمالي (على 30 ليفل = ~66 كوينز)
+        let fVal = 66;
+        let fType = 'coins';
+        let fIcon = 'fa-coins';
+        let fName = `66 كوينز`;
 
-        // توزيع 10000 كوينز على 30 لفل للبريميوم (333 كوينز تقريباً)
-        let premVal = (i === 30) ? 343 : 333;
-        let pReward = { id: `p${i}`, n: `${premVal} كوينز`, i: "fa-coins", v: premVal, t: 'coins' };
+        if (i === 29) { fName = "1 يوم برو"; fIcon = "fa-stopwatch"; fType = "pro_day"; fVal = 1; }
+        if (i === MAX_LVL) { fName = "شارة سلفر"; fIcon = "fa-shield-halved"; fType = "badge"; fVal = "silver_s1"; }
 
-        // إضافة 5 جواهر موزعة (كل 6 ليفلات جوهرة)
-        if(i % 6 === 0 && i <= 30) {
-            pReward = { id: `p${i}`, n: `1 جوهرة`, i: "fa-gem", v: 1, t: 'gems' };
-        }
-        // إضافة شارتين في البريميوم (لفل 15 و 30)
-        if(i === 15) pReward = { id: `p${i}`, n: `شارة النخبة 1`, i: "fa-crown", v: "elite_1", t: 'badge' };
-        if(i === 30) pReward = { id: `p${i}`, n: `شارة النخبة 2`, i: "fa-trophy", v: "elite_2", t: 'badge' };
-        
-        // يومين برو (في لفل 10 و لفل 20)
-        if(i === 10 || i === 20) pReward = { id: `p${i}`, n: `1 يوم برو`, i: "fa-bolt", v: 1, t: 'pro_day' };
+        // بريميوم: 10000 كوينز إجمالي (على 30 ليفل = ~333 كوينز)
+        let pVal = 333;
+        let pType = 'coins';
+        let pIcon = 'fa-coins';
+        let pName = `333 كوينز`;
 
-        rewards.push({ lvl: i, free: fReward, prem: pReward });
+        if (i % 6 === 0) { pName = "1 جوهرة"; pIcon = "fa-gem"; pType = "gems"; pVal = 1; }
+        if (i === 15) { pName = "شارة النخبة 1"; pIcon = "fa-crown"; pType = "badge"; pVal = "elite_b1"; }
+        if (i === MAX_LVL) { pName = "شارة النخبة 2"; pIcon = "fa-trophy"; pType = "badge"; pVal = "elite_b2"; }
+        if (i === 10 || i === 25) { pName = "1 يوم برو"; pIcon = "fa-stopwatch"; pType = "pro_day"; pVal = 1; }
+
+        rewards.push({
+            lvl: i,
+            free: { id: `f${i}`, n: fName, i: fIcon, v: fVal, t: fType },
+            prem: { id: `p${i}`, n: pName, i: pIcon, v: pVal, t: pType }
+        });
     }
 
-    // 2. بنك المهام مقسم لـ 5 أقسام
+    // --- بنك المهام (2000 XP للعادي / 10000 XP للبريميوم) ---
+    // تم تقسيم الـ XP بحيث تضمن إكمال السيزون
     const TASK_CATEGORIES = {
-        COINS: [
-            { title: 'جمع 1000 كوينز', goal: 1000, xp: 200, key: 'totalCoins', cat: 'COINS' },
-            { title: 'جمع 5000 كوينز', goal: 5000, xp: 500, key: 'totalCoins', cat: 'COINS' }
-        ],
-        LEVELS: [
-            { title: 'زيادة لفل الحساب', goal: 1, xp: 300, key: 'level', cat: 'LEVELS' }
-        ],
-        GIFTS: [
-            { title: 'إرسال هدايا', goal: 3, xp: 400, key: 's_gifts_sent', cat: 'GIFTS' }
-        ],
-        PLAY: [
-            { title: 'لعب مباريات', goal: 5, xp: 500, key: 's_games_played', cat: 'PLAY' }
-        ],
-        TIME: [
-            { title: 'وقت في الموقع', goal: 30, xp: 200, key: 's_online_minutes', cat: 'TIME' }
-        ]
+        COINS: [{ title: 'جمع 1000 كوينز', goal: 1000, xp: 400, key: 'totalCoins', cat: 'COINS' }],
+        LEVELS: [{ title: 'زيادة لفل الحساب', goal: 1, xp: 600, key: 'level', cat: 'LEVELS' }],
+        GIFTS: [{ title: 'إرسال 3 هدايا', goal: 3, xp: 800, key: 's_gifts_sent', cat: 'GIFTS' }],
+        PLAY: [{ title: 'لعب 5 مباريات', goal: 5, xp: 700, key: 's_games_played', cat: 'PLAY' }],
+        TIME: [{ title: '30 دقيقة نشاط', goal: 30, xp: 500, key: 's_online_minutes', cat: 'TIME' }]
     };
 
     async function initApp() {
         auth.onAuthStateChanged(user => {
             if(!user) return;
-            // تتبع وقت الموقع (كل دقيقة)
-            setInterval(() => {
-                db.collection('users').doc(user.uid).update({
-                    s_online_minutes: firebase.firestore.FieldValue.increment(1)
-                });
-            }, 60000);
-
             db.collection('users').doc(user.uid).onSnapshot(doc => {
                 uData = doc.data();
-                if(!uData.active_tasks || uData.active_tasks.length === 0) {
-                    generateInitialTasks(user.uid);
-                } else {
-                    renderUI();
-                }
+                if(!uData.active_tasks) generateInitialTasks(user.uid);
+                renderUI();
             });
         });
     }
 
-    // توليد مهمة واحدة من كل قسم (5 أقسام)
     async function generateInitialTasks(uid) {
-        const initialTasks = [
-            TASK_CATEGORIES.COINS[0],
-            TASK_CATEGORIES.LEVELS[0],
-            TASK_CATEGORIES.GIFTS[0],
-            TASK_CATEGORIES.PLAY[0],
-            TASK_CATEGORIES.TIME[0]
-        ];
-        await db.collection('users').doc(uid).update({ active_tasks: initialTasks, s_claimed: uData.s_claimed || [] });
+        const tasks = [TASK_CATEGORIES.COINS[0], TASK_CATEGORIES.LEVELS[0], TASK_CATEGORIES.GIFTS[0], TASK_CATEGORIES.PLAY[0], TASK_CATEGORIES.TIME[0]];
+        await db.collection('users').doc(uid).update({ active_tasks: tasks, s_claimed: uData?.s_claimed || [] });
     }
 
     function renderUI() {
         const xp = uData.s_xp || 0;
-        const currentLvl = Math.min(30, Math.floor(xp / XP_PER_LVL) + 1);
+        const currentLvl = Math.min(MAX_LVL, Math.floor(xp / XP_PER_LVL) + 1);
         
         document.getElementById('u-coins').innerText = (uData.totalCoins || 0).toLocaleString();
         document.getElementById('u-gems').innerText = uData.s_gems || 0;
         document.getElementById('txt-lvl').innerText = currentLvl;
         document.getElementById('xp-text').innerText = `${xp % XP_PER_LVL} / ${XP_PER_LVL}`;
-        document.getElementById('xp-fill').style.width = (xp % XP_PER_LVL) / 10 + '%';
+        document.getElementById('xp-fill').style.width = Math.min(100, (xp % XP_PER_LVL) / 10) + '%';
+        
         document.getElementById('footer-buy').style.display = uData.s_premium ? 'none' : 'block';
+        document.getElementById('reset-section').style.display = (currentLvl >= MAX_LVL) ? 'block' : 'none';
 
-        renderRewards(currentLvl);
-        renderTasks();
-    }
+        const rList = document.getElementById('rewards-list');
+        rList.innerHTML = '';
+        rewards.forEach(r => {
+            const row = document.createElement('div');
+            row.className = 'lvl-row';
+            row.innerHTML = `<div class="lvl-num">${r.lvl}</div>` + createBox(r.lvl, r.free, false) + createBox(r.lvl, r.prem, true);
+            rList.appendChild(row);
+        });
 
-    function renderTasks() {
         const tList = document.getElementById('tasks-list');
         tList.innerHTML = '';
         uData.active_tasks.forEach((t, index) => {
             const prog = uData[t.key] || 0;
             const isReady = prog >= t.goal;
-            const isClaimed = uData.s_claimed && uData.s_claimed.includes(`task_${index}_${t.title}`);
+            const isClaimed = uData.s_claimed?.includes(`task_${index}_${t.title}`);
 
             tList.innerHTML += `
                 <div class="task-card ${isReady && !isClaimed ? 'ready' : ''}">
                     <div style="flex:1">
                         <h4 style="margin:0; font-size:0.85rem;">${t.title}</h4>
-                        <small style="color:#22c55e;">+${t.xp} XP</small> | <small>${prog}/${t.goal}</small>
+                        <small style="color:#22c55e;">+${uData.s_premium ? t.xp * 5 : t.xp} XP</small> | <small>${prog}/${t.goal}</small>
                     </div>
                     ${isClaimed ? 
-                        `<button class="change-task-btn" style="background:#22c55e" onclick="replaceTask(${index}, '${t.cat}')">مهمة جديدة مجاناً</button>` :
+                        `<button class="change-task-btn" style="background:#22c55e; color:white;" onclick="replaceTask(${index}, '${t.cat}')">مهمة جديدة مجاناً</button>` :
                         `<button class="btn-claim" style="width:70px" ${!isReady ? 'disabled' : ''} onclick="claimTaskXP(${index}, ${t.xp}, '${t.title}')">
                             ${isReady ? 'استلام' : 'قيد'}
                         </button>`
@@ -273,47 +252,9 @@
         });
     }
 
-    // استبدال المهمة بمهمة جديدة من نفس النوع مجاناً
-    async function replaceTask(index, category) {
-        const pool = TASK_CATEGORIES[category];
-        const newTask = pool[Math.floor(Math.random() * pool.length)];
-        
-        let newActiveTasks = [...uData.active_tasks];
-        newActiveTasks[index] = newTask;
-
-        // تصفير التقدم للمهمة الجديدة إذا كان يعتمد على عداد تراكمي (اختياري)
-        // هنا نتركها تعتمد على إحصائيات الحساب الكلية كما طلبت
-        
-        await db.collection('users').doc(auth.currentUser.uid).update({
-            active_tasks: newActiveTasks
-        });
-    }
-
-    async function claimTaskXP(index, xp, title) {
-        const taskId = `task_${index}_${title}`;
-        await db.collection('users').doc(auth.currentUser.uid).update({
-            s_xp: firebase.firestore.FieldValue.increment(xp),
-            s_claimed: firebase.firestore.FieldValue.arrayUnion(taskId)
-        });
-    }
-
-    // منطق توزيع الجوائز
-    function renderRewards(uLvl) {
-        const rList = document.getElementById('rewards-list');
-        rList.innerHTML = '';
-        rewards.forEach(r => {
-            const row = document.createElement('div');
-            row.className = 'lvl-row';
-            row.innerHTML = `<div class="lvl-num">${r.lvl}</div>` + 
-                            createBox(r.lvl, r.free, false) + 
-                            createBox(r.lvl, r.prem, true);
-            rList.appendChild(row);
-        });
-    }
-
     function createBox(lvl, item, isPrem) {
         const uLvl = Math.floor((uData.s_xp || 0) / XP_PER_LVL) + 1;
-        const isClaimed = uData.s_claimed && uData.s_claimed.includes(item.id);
+        const isClaimed = uData.s_claimed?.includes(item.id);
         const canClaim = lvl <= uLvl && (!isPrem || uData.s_premium);
         
         let btn = `<button class="btn-claim locked" style="background:#1e293b; color:#4b5563">قفل</button>`;
@@ -327,10 +268,29 @@
                 </div>`;
     }
 
+    async function claimTaskXP(index, xp, title) {
+        const finalXP = uData.s_premium ? xp * 5 : xp; // ضرب الإكسبي في 5 للبريميوم ليصل لـ 10K
+        await db.collection('users').doc(auth.currentUser.uid).update({
+            s_xp: firebase.firestore.FieldValue.increment(finalXP),
+            s_claimed: firebase.firestore.FieldValue.arrayUnion(`task_${index}_${title}`)
+        });
+    }
+
+    async function replaceTask(index, category) {
+        const pool = TASK_CATEGORIES[category];
+        const newTask = pool[0]; // في هذا المثال نستخدم نفس المهمة للتجديد أو يمكنك إضافة مهام أخرى للبنك
+        
+        let newActiveTasks = [...uData.active_tasks];
+        newActiveTasks[index] = {...newTask, title: newTask.title + " (مكررة)"};
+
+        await db.collection('users').doc(auth.currentUser.uid).update({
+            active_tasks: newActiveTasks
+        });
+    }
+
     async function claimReward(id, type, val) {
         const ref = db.collection('users').doc(auth.currentUser.uid);
         let up = { s_claimed: firebase.firestore.FieldValue.arrayUnion(id) };
-        
         if(type === 'coins') up.totalCoins = firebase.firestore.FieldValue.increment(val);
         if(type === 'gems') up.s_gems = firebase.firestore.FieldValue.increment(val);
         if(type === 'badge') up.badges = firebase.firestore.FieldValue.arrayUnion(val);
@@ -340,6 +300,20 @@
             up.proExpiryTime = (currentPro > now ? currentPro : now) + (val * 24 * 60 * 60 * 1000);
         }
         await ref.update(up);
+    }
+
+    async function resetSeason() {
+        if(uData.totalCoins < 5000) return alert("تحتاج 5000 كوينز لإعادة السيزون!");
+        if(!confirm("هل أنت متأكد؟ سيتم تصفير التقدم ويجب شحن البريميوم مجدداً.")) return;
+
+        await db.collection('users').doc(auth.currentUser.uid).update({
+            totalCoins: firebase.firestore.FieldValue.increment(-5000),
+            s_xp: 0,
+            s_premium: false,
+            s_claimed: [],
+            active_tasks: firebase.firestore.FieldValue.delete() // سيقوم initApp بتوليد مهام جديدة
+        });
+        alert("تم إعادة السيزون بنجاح!");
     }
 
     async function buySeason() {
@@ -368,7 +342,6 @@
         });
         closeSkipModal();
     }
-
 </script>
 </body>
 </html>
