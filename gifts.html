@@ -1,151 +1,108 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎁 متجر الهدايا</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎁 متجر الهدايا الاحترافي</title>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="auth.js"></script> 
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="auth.js"></script> 
 
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-<style>
-    :root {
-        --primary: #6366f1;
-        --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-        --bg-body: #0a0f1e;
-        --card-bg: rgba(30, 41, 59, 0.7);
-        --text-main: #f1f5f9;
-        --text-dim: #94a3b8;
-        --gold: #ffd700;
-        --pro-blue: #3b82f6;
-    }
+    <style>
+        :root {
+            --primary: #6366f1;
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --bg-body: #0a0f1e;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8;
+            --gold: #ffd700;
+        }
 
-    body {
-        font-family: 'Cairo', sans-serif;
-        background-color: var(--bg-body);
-        background-image: radial-gradient(circle at top right, #1e1b4b, transparent), radial-gradient(circle at bottom left, #1e1b4b, transparent);
-        color: var(--text-main);
-        padding: 20px;
-        min-height: 100vh;
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-body);
+            background-image: radial-gradient(circle at top right, #1e1b4b, transparent), radial-gradient(circle at bottom left, #1e1b4b, transparent);
+            color: var(--text-main);
+            padding: 20px;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-    /* شريط الكوينز العلوي */
-    .top-info-bar {
-        width: 100%;
-        max-width: 500px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-    }
+        .top-info-bar {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
 
-    #home-link { color: var(--text-dim); text-decoration: none; font-size: 1.2rem; }
-    #coins-display { background: rgba(251, 191, 36, 0.1); padding: 8px 15px; border-radius: 20px; color: var(--gold); font-weight: 900; border: 1px solid rgba(251, 191, 36, 0.2); }
+        #coins-display { background: rgba(251, 191, 36, 0.1); padding: 8px 15px; border-radius: 20px; color: var(--gold); font-weight: 900; border: 1px solid rgba(251, 191, 36, 0.2); }
 
-    h2 { font-size: 2.2rem; font-weight: 900; margin-bottom: 20px; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        h2 { font-size: 2.2rem; font-weight: 900; margin-bottom: 20px; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-    .card {
-        background: var(--card-bg);
-        backdrop-filter: blur(15px);
-        padding: 20px;
-        border-radius: 24px;
-        width: 100%;
-        max-width: 500px;
-        border: 1px solid rgba(255,255,255,0.1);
-        text-align: right;
-        box-sizing: border-box;
-        margin-bottom: 15px;
-    }
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            padding: 20px;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid rgba(255,255,255,0.1);
+            text-align: right;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+        }
 
-    /* اختيار المستلم */
-    .recipient-box { display: flex; gap: 10px; margin-bottom: 15px; }
-    #self-gift-btn { 
-        background: var(--primary); color: white; border: none; padding: 10px 20px; 
-        border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s;
-    }
-    input[type="text"] {
-        flex-grow: 1; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.1);
-        padding: 12px; border-radius: 12px; color: white; font-family: 'Cairo';
-    }
+        .recipient-box { display: flex; gap: 10px; margin-bottom: 15px; }
+        #self-gift-btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+        input[type="text"] { flex-grow: 1; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; color: white; font-family: 'Cairo'; }
 
-    .recipient-alert { 
-        background: rgba(99, 102, 241, 0.1); padding: 10px; border-radius: 12px; 
-        text-align: center; font-weight: 700; font-size: 0.9rem; color: var(--primary);
-    }
+        .recipient-alert { background: rgba(99, 102, 241, 0.1); padding: 10px; border-radius: 12px; text-align: center; font-weight: 700; font-size: 0.9rem; color: var(--primary); }
 
-    /* عناصر الهدايا */
-    .gift-item { 
-        display: flex; align-items: center; justify-content: space-between;
-        background: rgba(255, 255, 255, 0.03); 
-        padding: 12px; border-radius: 15px; margin-bottom: 10px; 
-        border: 1px solid rgba(255,255,255,0.05);
-        transition: 0.3s;
-    }
-    .gift-item:hover { background: rgba(255, 255, 255, 0.07); }
+        .gift-item { 
+            display: flex; align-items: center; justify-content: space-between;
+            background: rgba(255, 255, 255, 0.03); padding: 12px; border-radius: 15px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.05);
+        }
 
-    .gift-info { flex-grow: 1; margin-right: 12px; }
-    .gift-name { font-weight: 900; font-size: 1.1rem; }
-    .gift-meta { font-size: 0.8rem; color: var(--text-dim); }
-    .gift-cost { color: #34d399; font-weight: 700; }
+        .qty-controls { display: flex; align-items: center; background: rgba(0,0,0,0.2); border-radius: 10px; padding: 5px; }
+        .qty-btn { width: 30px; height: 30px; border: none; background: var(--primary); color: white; border-radius: 8px; cursor: pointer; font-weight: 900; }
+        .qty-num { width: 35px; text-align: center; font-weight: 900; }
 
-    /* التحكم بالكمية */
-    .qty-controls { display: flex; align-items: center; background: rgba(0,0,0,0.2); border-radius: 10px; padding: 5px; }
-    .qty-btn { 
-        width: 30px; height: 30px; border: none; background: var(--primary); 
-        color: white; border-radius: 8px; cursor: pointer; font-weight: 900;
-    }
-    .qty-num { width: 35px; text-align: center; font-weight: 900; font-size: 1rem; }
+        #cart-summary { background: rgba(0, 0, 0, 0.2); padding: 15px; border-radius: 18px; margin-top: 20px; border: 1px dashed rgba(255,255,255,0.1); }
+        .total-price { font-size: 1.3rem; color: var(--gold); font-weight: 900; margin-top: 10px; }
 
-    /* ملخص السلة */
-    #cart-summary {
-        background: rgba(0, 0, 0, 0.2); padding: 15px; border-radius: 18px; 
-        margin-top: 20px; border: 1px dashed rgba(255,255,255,0.1);
-    }
-    .summary-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
-    .total-price { font-size: 1.3rem; color: var(--gold); font-weight: 900; margin-top: 10px; }
+        .send-btn {
+            width: 100%; padding: 18px; border-radius: 18px; border: none;
+            background: var(--accent-gradient); color: white; font-weight: 900;
+            font-size: 1.2rem; cursor: pointer; margin-top: 15px; transition: 0.3s;
+        }
+        .send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-    .send-btn {
-        width: 100%; padding: 18px; border-radius: 18px; border: none;
-        background: var(--accent-gradient); color: white; font-weight: 900;
-        font-size: 1.2rem; cursor: pointer; margin-top: 15px;
-        box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
-        transition: 0.3s;
-    }
-    .send-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: scale(0.98); }
-
-    /* تأثيرات الأنيميشن (نفس فكرة السابقة لكن بلمسات زجاجية) */
-    #purchase-animation-overlay {
-        position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
-        display: none; justify-content: center; align-items: center; z-index: 1000;
-    }
-    .anim-card {
-        background: var(--card-bg); padding: 40px; border-radius: 30px;
-        border: 2px solid var(--primary); text-align: center; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-    @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-    .search-result-item {
-        padding: 10px; background: rgba(255,255,255,0.05); margin-top: 5px;
-        border-radius: 10px; cursor: pointer; transition: 0.2s;
-    }
-    .search-result-item:hover { background: var(--primary); }
-
-</style>
+        #purchase-animation-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .anim-card { background: var(--card-bg); padding: 40px; border-radius: 30px; border: 2px solid var(--primary); text-align: center; }
+        
+        .search-result-item { padding: 10px; background: rgba(255,255,255,0.05); margin-top: 5px; border-radius: 10px; cursor: pointer; }
+        .search-result-item:hover { background: var(--primary); }
+    </style>
 </head>
 
 <body onload="initGiftPage()">
 
 <div class="top-info-bar">
-    <a href="index.html" id="home-link"><i class="fas fa-chevron-right"></i> رجوع</a>
+    <a href="index.html" style="color: var(--text-dim); text-decoration: none;"><i class="fas fa-chevron-right"></i> رجوع</a>
     <div id="coins-display"><i class="fas fa-coins"></i> <span id="user-coins">0</span></div>
 </div>
 
@@ -154,19 +111,19 @@
 <div class="card">
     <div class="recipient-box">
         <button id="self-gift-btn" onclick="selectSelf()">لنفسي</button>
-        <input type="text" id="player-search" placeholder="ابحث عن لاعب (اسم العرض)...">
+        <input type="text" id="player-search" placeholder="ابحث عن لاعب باسم العرض...">
     </div>
     <div id="search-results"></div>
     <div class="recipient-alert" id="recipient-alert">المستلم: (أنت)</div>
 </div>
 
 <div class="card">
-    <h3 style="margin-top:0;"><i class="fas fa-shopping-basket"></i> اختر الهدايا</h3>
+    <h3 style="margin:0 0 15px 0;"><i class="fas fa-shopping-basket"></i> الهدايا المتوفرة</h3>
     <div id="gifts-container"></div>
     
     <div id="cart-summary">
-        <div class="summary-row"><span>إجمالي الـ XP للمستلم:</span> <span id="total-xp-display">0</span></div>
-        <div class="summary-row"><span>إجمالي أيام الـ Pro:</span> <span id="total-pro-days">0</span></div>
+        <div style="display:flex; justify-content: space-between;"><span>إجمالي الـ XP:</span> <span id="total-xp-display">0</span></div>
+        <div style="display:flex; justify-content: space-between;"><span>إجمالي أيام Pro:</span> <span id="total-pro-days">0</span></div>
         <div class="total-price">التكلفة: <span id="total-cost-display">0</span> كوينز</div>
     </div>
 
@@ -174,29 +131,27 @@
 </div>
 
 <div id="purchase-animation-overlay">
-    <div class="anim-card" id="anim-box">
-        <div id="animation-icon" style="font-size: 5rem; margin-bottom: 20px;">🎁</div>
-        <h3 id="animation-text" style="margin:0; font-size: 1.5rem;">تم الإرسال بنجاح!</h3>
+    <div class="anim-card">
+        <div style="font-size: 5rem; margin-bottom: 20px;">🎉</div>
+        <h3 id="animation-text">تمت العملية بنجاح!</h3>
     </div>
 </div>
 
 <script>
-// نفس منطق الكود البرمجي الذي أرسلته سابقاً مع ربطه بالعناصر الجديدة
 let currentUserData = {};
 let selectedPlayer = { uid: null, displayName: null }; 
 let giftCart = {}; 
 let currentUserId = null;
 
 const gifts = [
-    {name:"وردة بسيطة", cost:50, xp:10, rarity:"عادي", icon:"🌹", type: 'xp'},
-    {name:"كتاب سحري", cost:100, xp:20, rarity:"عادي", icon:"📖", type: 'xp'},
-    {name:"قلم ذهبي", cost:200, xp:50, rarity:"غالي", icon:"🖋️", type: 'xp'},
-    {name:"يخت فاخر", cost:3000, xp:800, rarity:"غالي", icon:"🛥️", type: 'xp'},
-    {name:"سيارة سباق", cost:1500, xp:450, rarity:"أسطوري", icon:"🏎️", type: 'xp'},
-    {name:"تاج ملكي", cost:10000, xp:2500, rarity:"أسطوري", icon:"👑", type: 'xp'},
-    {name:"اشتراك Pro (أسبوع)", cost:150, days: 7, rarity:"Pro", icon:"⭐", type: 'pro'},
-    {name:"اشتراك Pro (شهر)", cost:450, days: 30, rarity:"Pro", icon:"🏆", type: 'pro'},
-    {name:"اشتراك Pro (سنة)", cost:2414, days: 365, rarity:"Pro", icon:"👑", type: 'pro'},
+    {name:"وردة بسيطة", cost:50, xp:10, icon:"🌹", type: 'xp'},
+    {name:"كتاب سحري", cost:100, xp:20, icon:"📖", type: 'xp'},
+    {name:"قلم ذهبي", cost:200, xp:50, icon:"🖋️", type: 'xp'},
+    {name:"يخت فاخر", cost:3000, xp:800, icon:"🛥️", type: 'xp'},
+    {name:"تاج ملكي", cost:10000, xp:2500, icon:"👑", type: 'xp'},
+    {name:"اشتراك Pro (أسبوع)", cost:150, days: 7, icon:"⭐", type: 'pro'},
+    {name:"اشتراك Pro (شهر)", cost:450, days: 30, icon:"🏆", type: 'pro'},
+    {name:"اشتراك Pro (سنة)", cost:2414, days: 365, icon:"👑", type: 'pro'},
 ];
 
 async function initGiftPage() {
@@ -208,9 +163,9 @@ async function initGiftPage() {
         if(data) {
             currentUserData = data;
             document.getElementById("user-coins").innerText = data.totalCoins || 0;
+            selectSelf();
+            setupSearch();
         }
-        selectSelf();
-        setupSearch();
     });
 }
 
@@ -221,12 +176,9 @@ function populateGifts() {
         const div = document.createElement("div");
         div.className = "gift-item";
         div.innerHTML = `
-            <div class="gift-info">
-                <div class="gift-name">${g.icon} ${g.name}</div>
-                <div class="gift-meta">
-                    <span class="gift-cost">${g.cost} كوينز</span> | 
-                    <span>${g.type === 'xp' ? g.xp + ' XP' : g.days + ' يوم Pro'}</span>
-                </div>
+            <div>
+                <div style="font-weight:900;">${g.icon} ${g.name}</div>
+                <div style="font-size:0.8rem; color:var(--text-dim);">${g.cost} كوينز | ${g.type === 'xp' ? g.xp + ' XP' : g.days + ' يوم'}</div>
             </div>
             <div class="qty-controls">
                 <button class="qty-btn" onclick="updateQty(${i}, 1)">+</button>
@@ -241,37 +193,29 @@ function populateGifts() {
 function updateQty(index, change) {
     let current = giftCart[index] || 0;
     let newVal = Math.max(0, current + change);
-    
-    // قيد Pro
     if (gifts[index].type === 'pro' && newVal > 1) newVal = 1;
-
     if (newVal === 0) delete giftCart[index];
     else giftCart[index] = newVal;
-
     document.getElementById(`qty-${index}`).innerText = newVal;
     calculateTotal();
 }
 
 function calculateTotal() {
-    let totalCost = 0, totalXP = 0, totalDays = 0;
+    let cost = 0, xp = 0, days = 0;
     for (const i in giftCart) {
-        const g = gifts[i], q = giftCart[i];
-        totalCost += g.cost * q;
-        if (g.type === 'xp') totalXP += g.xp * q;
-        else totalDays += g.days * q;
+        cost += gifts[i].cost * giftCart[i];
+        if (gifts[i].type === 'xp') xp += gifts[i].xp * giftCart[i];
+        else days += gifts[i].days * giftCart[i];
     }
-    document.getElementById("total-cost-display").innerText = totalCost;
-    document.getElementById("total-xp-display").innerText = totalXP;
-    document.getElementById("total-pro-days").innerText = totalDays;
-    
-    const canAfford = (currentUserData.totalCoins || 0) >= totalCost;
-    document.getElementById("send-gift-btn").disabled = totalCost === 0 || !selectedPlayer.uid || !canAfford;
+    document.getElementById("total-cost-display").innerText = cost;
+    document.getElementById("total-xp-display").innerText = xp;
+    document.getElementById("total-pro-days").innerText = days;
+    document.getElementById("send-gift-btn").disabled = cost === 0 || !selectedPlayer.uid || (currentUserData.totalCoins < cost);
 }
 
 function selectSelf() {
-    selectedPlayer = { uid: currentUserId, displayName: "أنت" };
+    selectedPlayer = { uid: currentUserId, displayName: "نفسك" };
     document.getElementById("recipient-alert").innerText = "المستلم: (أنت)";
-    document.getElementById("recipient-alert").style.color = "var(--primary)";
     calculateTotal();
 }
 
@@ -281,18 +225,17 @@ function setupSearch() {
         const q = input.value.trim();
         const results = document.getElementById("search-results");
         if (q.length < 3) { results.innerHTML = ""; return; }
-        
-        const users = await searchUsersByDisplayName(q); 
+        // دالة البحث من auth.js (تأكد من وجودها)
+        const snap = await firebase.firestore().collection("users").where("displayName", ">=", q).where("displayName", "<=", q + '\uf8ff').limit(5).get();
         results.innerHTML = "";
-        users.forEach(u => {
-            if (u.uid === currentUserId) return;
+        snap.forEach(doc => {
+            if (doc.id === currentUserId) return;
             const d = document.createElement("div");
             d.className = "search-result-item";
-            d.innerText = u.displayName;
+            d.innerText = doc.data().displayName;
             d.onclick = () => {
-                selectedPlayer = { uid: u.uid, displayName: u.displayName };
-                document.getElementById("recipient-alert").innerText = `المستلم: ${u.displayName}`;
-                document.getElementById("recipient-alert").style.color = "#34d399";
+                selectedPlayer = { uid: doc.id, displayName: doc.data().displayName };
+                document.getElementById("recipient-alert").innerText = `المستلم: ${doc.data().displayName}`;
                 results.innerHTML = "";
                 input.value = "";
                 calculateTotal();
@@ -302,19 +245,61 @@ function setupSearch() {
     });
 }
 
+// الدالة الأهم: تنفيذ عملية الشراء والخصم الحقيقية
 async function sendGifts() {
-    // استخدم منطق Transaction الذي أرسلته سابقاً هنا
-    // مع إضافة استدعاء الأنيميشن التالي عند النجاح:
-    showAnim();
+    const btn = document.getElementById("send-gift-btn");
+    let totalCost = parseInt(document.getElementById("total-cost-display").innerText);
+    let totalXP = parseInt(document.getElementById("total-xp-display").innerText);
+    let totalDays = parseInt(document.getElementById("total-pro-days").innerText);
+
+    if (currentUserData.totalCoins < totalCost) return alert("رصيدك غير كافٍ");
+
+    btn.disabled = true;
+    btn.innerText = "جاري الإرسال...";
+
+    try {
+        const db = firebase.firestore();
+        const senderRef = db.collection("users").doc(currentUserId);
+        const recipientRef = db.collection("users").doc(selectedPlayer.uid);
+
+        await db.runTransaction(async (transaction) => {
+            const senderDoc = await transaction.get(senderRef);
+            if (senderDoc.data().totalCoins < totalCost) throw "رصيد غير كافٍ";
+
+            // 1. خصم الكوينز من المرسل
+            transaction.update(senderRef, { 
+                totalCoins: firebase.firestore.FieldValue.increment(-totalCost) 
+            });
+
+            // 2. تحديث المستلم
+            let updateData = {};
+            if (totalXP > 0) updateData.xp = firebase.firestore.FieldValue.increment(totalXP);
+            
+            if (totalDays > 0) {
+                const recipientDoc = await transaction.get(recipientRef);
+                const currentExpiry = recipientDoc.data().proExpiryTime || 0;
+                const now = Date.now();
+                const base = currentExpiry > now ? currentExpiry : now;
+                updateData.proExpiryTime = base + (totalDays * 24 * 60 * 60 * 1000);
+            }
+
+            transaction.update(recipientRef, updateData);
+        });
+
+        // نجاح العملية
+        currentUserData.totalCoins -= totalCost;
+        document.getElementById("user-coins").innerText = currentUserData.totalCoins;
+        showAnim();
+    } catch (e) {
+        alert("فشلت العملية: " + e);
+        btn.disabled = false;
+        btn.innerText = "إرسال الهدايا";
+    }
 }
 
 function showAnim() {
-    const overlay = document.getElementById("purchase-animation-overlay");
-    overlay.style.display = 'flex';
-    setTimeout(() => {
-        overlay.style.display = 'none';
-        location.reload(); 
-    }, 2500);
+    document.getElementById("purchase-animation-overlay").style.display = 'flex';
+    setTimeout(() => { location.reload(); }, 2000);
 }
 </script>
 </body>
