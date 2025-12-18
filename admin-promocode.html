@@ -22,6 +22,7 @@
             --text-main: #f1f5f9;
             --text-dim: #94a3b8;
             --gold: #ffd700;
+            --gem: #22d3ee; /* لون الجواهر */
             --error: #ef4444;
             --success: #10b981;
             --warning: #f59e0b;
@@ -158,10 +159,11 @@
 
         .msg { margin-top: 15px; font-size: 0.9rem; font-weight: bold; }
 
-        .grid-3 {
+        /* تم التعديل لعرض خانتين في الصف لترتيب أفضل */
+        .grid-2 {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
         }
     </style>
 </head>
@@ -204,11 +206,17 @@
             <input id="codeName" placeholder="مثال: RAMADAN2024">
         </div>
 
-        <div class="grid-3">
+        <div class="grid-2">
             <div class="input-group">
-                <label>كوينز</label>
+                <label>كوينز (Coins)</label>
                 <input type="number" id="coins" value="100">
             </div>
+            
+            <div class="input-group">
+                <label style="color: var(--gem);">جواهر (Gems)</label>
+                <input type="number" id="gems" value="0" style="border-color: var(--gem);">
+            </div>
+
             <div class="input-group">
                 <label>أيام PRO</label>
                 <input type="number" id="proDays" value="0">
@@ -231,7 +239,7 @@
     </div>
 
 <script>
-// --- منطق Firebase (نفس المنطق الوظيفي الخاص بك مع تحسين العرض) ---
+// --- منطق Firebase ---
 firebase.auth().onAuthStateChanged(user => {
     if(!user || user.email !== "clansp245@gmail.com"){ 
         document.body.innerHTML = `
@@ -254,6 +262,7 @@ firebase.auth().onAuthStateChanged(user => {
         try {
             await dbRef.doc(code).set({
                 coins: Number(document.getElementById("coins").value),
+                gems: Number(document.getElementById("gems").value), // إضافة الجواهر للداتابيس
                 durationDays: Number(document.getElementById("proDays").value),
                 maxUses: Number(document.getElementById("maxUses").value),
                 redeemedBy: [],
@@ -262,7 +271,10 @@ firebase.auth().onAuthStateChanged(user => {
             });
             document.getElementById("codeMsg").innerHTML = `<span style="color:var(--success)">✅ تم إنشاء الكود ${code}</span>`;
             loadCodes();
-        } catch(e) { alert("خطأ في الإنشاء"); }
+        } catch(e) { 
+            console.error(e);
+            alert("خطأ في الإنشاء"); 
+        }
     };
 
     // وظيفة جلب الأكواد
@@ -274,6 +286,9 @@ firebase.auth().onAuthStateChanged(user => {
         
         snapshot.forEach(doc => {
             const data = doc.data();
+            // عرض الجواهر إذا كانت أكبر من 0
+            const gemsDisplay = data.gems > 0 ? `<span style="color:var(--gem); font-weight:bold;">💎 ${data.gems}</span> | ` : '';
+
             const div = document.createElement("div");
             div.className = "code-item";
             div.innerHTML = `
@@ -281,7 +296,7 @@ firebase.auth().onAuthStateChanged(user => {
                     <div>
                         <span class="code-badge">${doc.id}</span>
                         <div style="font-size:0.8rem; color:var(--text-dim); margin-top:5px;">
-                            ${data.coins} كوينز | ${data.durationDays} يوم برو | (${(data.redeemedBy || []).length}/${data.maxUses || '∞'})
+                            💰 ${data.coins} | ${gemsDisplay} ⏳ ${data.durationDays} يوم | (${(data.redeemedBy || []).length}/${data.maxUses || '∞'})
                         </div>
                     </div>
                     <div style="display:flex; gap:8px;">
@@ -298,21 +313,38 @@ firebase.auth().onAuthStateChanged(user => {
         });
     }
 
-    // وظيفة البحث عن مستخدم
+    // وظيفة البحث عن مستخدم وتعديل الـ UID (بقيت كما هي)
     document.getElementById("findUserBtn").onclick = async () => {
         const tid = document.getElementById("targetUidInput").value.trim();
         const display = document.getElementById("userInfoDisplay");
         if(!tid) return;
 
-        const doc = await db.collection("users").doc(tid).get();
-        if(doc.exists) {
-            const data = doc.data();
-            document.getElementById("currentName").innerText = data.displayName || "لاعب";
-            document.getElementById("currentPublicUid").innerText = data.publicUid || "لا يوجد";
-            display.style.display = "block";
-        } else {
-            alert("المستخدم غير موجود");
-        }
+        try {
+            const doc = await db.collection("users").doc(tid).get();
+            if(doc.exists) {
+                const data = doc.data();
+                document.getElementById("currentName").innerText = data.displayName || "لاعب";
+                document.getElementById("currentPublicUid").innerText = data.publicUid || "لا يوجد";
+                display.style.display = "block";
+                
+                // تفعيل زر التحديث
+                document.getElementById("updateUidBtn").onclick = async () => {
+                    const newUid = document.getElementById("newPublicUidInput").value.trim().toUpperCase();
+                    if(!newUid) return alert("أدخل المعرف الجديد");
+                    
+                    // التحقق من التكرار
+                    const check = await db.collection("users").where("publicUid", "==", newUid).get();
+                    if(!check.empty) return alert("هذا المعرف مستخدم بالفعل!");
+
+                    await db.collection("users").doc(tid).update({ publicUid: newUid });
+                    document.getElementById("uidMsg").innerHTML = `<span style="color:var(--success)">✅ تم تحديث المعرف إلى ${newUid}</span>`;
+                    document.getElementById("currentPublicUid").innerText = newUid;
+                };
+
+            } else {
+                alert("المستخدم غير موجود");
+            }
+        } catch(e) { console.error(e); }
     };
 
     window.toggleActive = async (id, status) => {
@@ -332,4 +364,3 @@ firebase.auth().onAuthStateChanged(user => {
 </script>
 </body>
 </html>
-
