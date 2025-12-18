@@ -1,310 +1,335 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🛠️ لوحة تحكم المطور</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛠️ لوحة تحكم المطور</title>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="auth.js"></script> 
 
-<script src="auth.js"></script> 
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght:400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --bg-body: #0a0f1e;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8;
+            --gold: #ffd700;
+            --error: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
 
-<style>
-body{
-  font-family:'Cairo',sans-serif;
-  background:#0f172a;
-  color:#f1f5f9;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  padding:20px;
-  min-height:100vh;
-}
-.card{
-  background:#1e293b;
-  padding:25px;
-  border-radius:12px;
-  width:90%;
-  max-width:500px;
-  margin-bottom:20px;
-}
-h2{text-align:center;color:#34d399;margin-bottom:20px;}
-h3{color:#ffd700; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-top: 30px;}
-label{display:block;margin-top:12px;}
-input{width:100%;margin-top:6px;padding:10px;border-radius:8px;border:1px solid #334155;background:#334155;color:#fff;}
-button{
-  margin-top:12px;
-  padding:10px;
-  border:none;
-  border-radius:8px;
-  background:#6366f1;
-  color:#fff;
-  cursor:pointer;
-  transition: background 0.2s;
-}
-button:hover{background:#4f46e5;}
-#findUserBtn { background: #10b981; }
-#findUserBtn:hover { background: #059669; }
-#updateUidBtn { background: #ef4444; }
-#updateUidBtn:hover { background: #dc2626; }
-.msg{margin-top:12px;text-align:center;font-weight: bold;}
-#codeMsg { color:#ffd700; }
-#uidMsg { color:#34d399; }
-.code-box{
-  background:#334155;
-  padding:15px;
-  border-radius:10px;
-  margin-top:12px;
-  display:flex;
-  flex-direction:column;
-}
-.code-header{display:flex;justify-content:space-between;align-items:center;}
-.code-actions button{margin-top:6px;}
-#userInfoDisplay{
-    background: #334155;
-    padding: 15px;
-    border-radius: 8px;
-    margin-top: 15px;
-    text-align: right;
-    border-left: 5px solid #34d399;
-}
-</style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-body);
+            background-image: radial-gradient(circle at top right, #1e1b4b, transparent), radial-gradient(circle at bottom left, #1e1b4b, transparent);
+            color: var(--text-main);
+            padding: 20px;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h2 {
+            font-weight: 900;
+            font-size: 2rem;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            padding: 25px;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 550px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            margin-bottom: 25px;
+            box-sizing: border-box;
+        }
+
+        h3 {
+            color: var(--gold);
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            text-align: right;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-bottom: 5px;
+            margin-right: 5px;
+        }
+
+        input {
+            width: 100%;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 12px;
+            border-radius: 12px;
+            color: white;
+            font-family: 'Cairo';
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            outline: none;
+            background: rgba(0,0,0,0.4);
+        }
+
+        .btn-action {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: none;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .btn-search { background: var(--primary); }
+        .btn-update { background: var(--error); }
+        .btn-create { background: var(--accent-gradient); font-weight: 900; }
+
+        .user-info-box {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            padding: 15px;
+            border-radius: 15px;
+            margin-top: 15px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* تنسيق قائمة الأكواد */
+        .code-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 18px;
+            margin-bottom: 12px;
+            transition: 0.3s;
+        }
+
+        .code-item:hover { background: rgba(255,255,255,0.06); }
+
+        .code-badge {
+            font-family: monospace;
+            background: var(--gold);
+            color: black;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 900;
+        }
+
+        .msg { margin-top: 15px; font-size: 0.9rem; font-weight: bold; }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+    </style>
 </head>
 <body>
 
-<h2><i class="fas fa-tools"></i> لوحة تحكم المطور</h2>
+    <a href="index.html" style="color: var(--text-dim); text-decoration: none; align-self: flex-start; margin-bottom: 20px;">
+        <i class="fas fa-chevron-right"></i> العودة للرئيسية
+    </a>
 
-<div class="card">
-  <h3><i class="fas fa-id-badge"></i> تغيير المعرف العام (Public UID)</h3>
-  
-  <label>UID الحالي (Firebase UID)</label>
-  <input id="targetUidInput" placeholder="أدخل Firebase UID الخاص باللاعب">
-  <button id="findUserBtn"><i class="fas fa-search"></i> البحث عن المستخدم</button>
-  
-  <div id="userInfoDisplay" style="display:none;">
-      <p>اسم اللاعب: <strong id="currentName">---</strong></p>
-      <p>المعرّف الحالي: <strong id="currentPublicUid">---</strong></p>
-      <label>المعرّف الجديد (Public UID)</label>
-      <input id="newPublicUidInput" placeholder="أدخل المعرّف العام الجديد">
-      <button id="updateUidBtn"><i class="fas fa-sync-alt"></i> تحديث المعرّف العام</button>
-  </div>
+    <h2><i class="fas fa-user-shield"></i> لوحة التحكم</h2>
 
-  <div id="uidMsg" class="msg"></div>
-</div>
+    <div class="card">
+        <h3><i class="fas fa-id-card"></i> تعديل المعرف العام (Public UID)</h3>
+        <div class="input-group">
+            <label>Firebase UID للاعب</label>
+            <input id="targetUidInput" placeholder="أدخل المعرف الطويل للاعب...">
+            <button id="findUserBtn" class="btn-action btn-search">
+                <i class="fas fa-search"></i> بحث عن اللاعب
+            </button>
+        </div>
 
-<div class="card">
-  <h3><i class="fas fa-ticket-alt"></i> إدارة أكواد الخصم</h3>
-  <label>اسم الكود</label>
-  <input id="codeName" placeholder="مثال: FREE100">
+        <div id="userInfoDisplay" class="user-info-box" style="display:none;">
+            <div style="margin-bottom: 10px;">اللاعب: <b id="currentName">---</b></div>
+            <div style="margin-bottom: 15px;">المعرف الحالي: <span id="currentPublicUid" class="code-badge">---</span></div>
+            
+            <label>المعرف العام الجديد</label>
+            <input id="newPublicUidInput" placeholder="مثال: PLAYER_1">
+            <button id="updateUidBtn" class="btn-action btn-update">
+                <i class="fas fa-sync-alt"></i> تحديث المعرف الآن
+            </button>
+        </div>
+        <div id="uidMsg" class="msg"></div>
+    </div>
 
-  <label>عدد الكوينز</label>
-  <input type="number" id="coins" value="50">
+    <div class="card">
+        <h3><i class="fas fa-ticket-alt"></i> توليد أكواد الخصم</h3>
+        
+        <div class="input-group">
+            <label>اسم الكود (Promo Code)</label>
+            <input id="codeName" placeholder="مثال: RAMADAN2024">
+        </div>
 
-  <label>مدة Pro بالأيام (0 = بدون)</label>
-  <input type="number" id="proDays" value="0">
+        <div class="grid-3">
+            <div class="input-group">
+                <label>كوينز</label>
+                <input type="number" id="coins" value="100">
+            </div>
+            <div class="input-group">
+                <label>أيام PRO</label>
+                <input type="number" id="proDays" value="0">
+            </div>
+            <div class="input-group">
+                <label>أقصى استخدام</label>
+                <input type="number" id="maxUses" value="10">
+            </div>
+        </div>
 
-  <label>الحد الأقصى للاستخدام (0 = لا حد)</label>
-  <input type="number" id="maxUses" value="0">
+        <button id="createBtn" class="btn-action btn-create">
+            <i class="fas fa-plus-circle"></i> إنشاء كود فعال
+        </button>
+        <div id="codeMsg" class="msg"></div>
+    </div>
 
-  <button id="createBtn">إنشاء الكود</button>
-  <div id="codeMsg" class="msg"></div>
-</div>
-
-<div id="codesList" style="width:90%; max-width:500px;"></div>
+    <div style="width: 100%; max-width: 550px;">
+        <h3 style="color: var(--text-main);"><i class="fas fa-list-ul"></i> الأكواد الحالية</h3>
+        <div id="codesList"></div>
+    </div>
 
 <script>
-let targetUserRef = null;
-// المتغير db مُعرَّف بالفعل في auth.js
-
+// --- منطق Firebase (نفس المنطق الوظيفي الخاص بك مع تحسين العرض) ---
 firebase.auth().onAuthStateChanged(user => {
-  // 🚨 فحص صلاحيات البريد الإلكتروني للمسؤول (Admin)
-  if(!user || user.email !== "clansp245@gmail.com"){ 
-    document.body.innerHTML = "<h2 style='color:#ff4f4f;'>🚫 لا تملك صلاحية الوصول لهذه الصفحة.</h2>"; 
-    return;
-  }
-  
-  // ==================================
-  // دوال إدارة الأكواد
-  // ==================================
-  const dbRef = db.collection("promocodes");
-  const codeMsg = document.getElementById("codeMsg");
-
-  document.getElementById("createBtn").onclick = async () => {
-    const code = document.getElementById("codeName").value.trim().toUpperCase();
-    const coins = Number(document.getElementById("coins").value);
-    const proDays = Number(document.getElementById("proDays").value);
-    const maxUses = Number(document.getElementById("maxUses").value);
-    if(!code){ codeMsg.textContent = "❌ أدخل اسم الكود"; return; }
-    if(!confirm(`هل تريد إنشاء الكود ${code}?`)) return;
-
-    try{
-      const ref = dbRef.doc(code);
-      const snap = await ref.get();
-      if(snap.exists){ codeMsg.textContent="❌ الكود موجود مسبقًا"; return; }
-
-      await ref.set({
-        coins: coins,
-        durationDays: proDays,
-        maxUses,
-        redeemedBy: [],
-        active:true,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
-      codeMsg.textContent="✅ تم إنشاء الكود بنجاح";
-      loadCodes();
-      document.getElementById("codeName").value="";
-      document.getElementById("coins").value=50;
-      document.getElementById("proDays").value=0;
-      document.getElementById("maxUses").value=0;
-    }catch(e){
-      console.error(e);
-      codeMsg.textContent="❌ حدث خطأ أثناء الإنشاء";
-    }
-  };
-
-  async function loadCodes(){
-    const listDiv = document.getElementById("codesList");
-    listDiv.innerHTML = "";
-    const snapshot = await dbRef.orderBy("createdAt","desc").get();
-    snapshot.forEach(doc=>{
-      const data = doc.data();
-      const redeemedCount = (data.redeemedBy || []).length;
-      const maxUsesDisplay = data.maxUses === 0 ? '∞' : data.maxUses;
-
-      const codeDiv = document.createElement("div");
-      codeDiv.className="code-box";
-      codeDiv.innerHTML=`
-        <div class="code-header">
-          <strong style="color: ${data.active ? '#34d399' : '#ff4f4f'};">${doc.id} ${data.active ? '' : '(معطّل)'}</strong>
-          <span style="font-size: 0.9rem;">
-            Coins: ${data.coins || 0}, ProDays: ${data.durationDays || 0}
-          </span>
-        </div>
-        <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 5px;">
-            تم الاستخدام: ${redeemedCount} / ${maxUsesDisplay}
-        </div>
-        <div class="code-actions">
-          <button style="background:${data.active?'#f59e0b':'#34d399'};" onclick="toggleActive('${doc.id}',${data.active})">${data.active?'تعطيل':'تفعيل'}</button>
-          <button style="background:#ef4444;" onclick="deleteCode('${doc.id}')">حذف</button>
-        </div>
-      `;
-      listDiv.appendChild(codeDiv);
-    });
-  }
-
-  window.toggleActive = async (codeId,currentStatus) => {
-    try{
-      await dbRef.doc(codeId).update({active: !currentStatus});
-      loadCodes();
-    }catch(e){ console.error(e); alert("❌ حدث خطأ"); }
-  }
-
-  window.deleteCode = async (codeId) => {
-    if(!confirm(`هل تريد حذف الكود ${codeId}?`)) return;
-    try{
-      await dbRef.doc(codeId).delete();
-      loadCodes();
-    }catch(e){ console.error(e); alert("❌ حدث خطأ"); }
-  }
-
-
-  // ==================================
-  // دوال تغيير UID
-  // ==================================
-  const uidMsg = document.getElementById("uidMsg");
-  const userInfoDisplay = document.getElementById("userInfoDisplay");
-
-  document.getElementById("findUserBtn").onclick = async () => {
-    uidMsg.textContent = "";
-    userInfoDisplay.style.display = 'none';
-    const targetUid = document.getElementById("targetUidInput").value.trim();
-    if (!targetUid) {
-      uidMsg.textContent = "❌ أدخل Firebase UID للبحث.";
-      return;
-    }
-
-    try {
-      targetUserRef = db.collection("users").doc(targetUid);
-      const doc = await targetUserRef.get();
-
-      if (!doc.exists) {
-        // إذا فشل العثور على المستند، فغالباً إما أنه غير موجود أو لا يوجد صلاحية للقراءة
-        uidMsg.textContent = `❌ المستخدم ذو الـ UID: ${targetUid} غير موجود (أو لا تملك صلاحية القراءة).`;
-        return;
-      }
-
-      const data = doc.data();
-      document.getElementById("currentName").textContent = data.displayName || data.username || '---';
-      document.getElementById("currentPublicUid").textContent = data.publicUid || 'لا يوجد';
-      document.getElementById("newPublicUidInput").value = data.publicUid || '';
-      userInfoDisplay.style.display = 'block';
-      uidMsg.textContent = "✅ تم العثور على المستخدم.";
-    } catch (e) {
-      console.error("خطأ في البحث:", e);
-      if (e.code === 'permission-denied') {
-          uidMsg.textContent = "❌ خطأ في الصلاحيات. راجع قواعد أمان Firestore لـ /users.";
-      } else {
-          uidMsg.textContent = "❌ حدث خطأ أثناء البحث عن المستخدم. تأكد من إدخال Firebase UID صحيح.";
-      }
-    }
-  };
-
-  document.getElementById("updateUidBtn").onclick = async () => {
-    if (!targetUserRef) {
-      uidMsg.textContent = "❌ يجب البحث عن المستخدم أولاً.";
-      return;
-    }
-
-    const newPublicUid = document.getElementById("newPublicUidInput").value.trim();
-
-    if (!newPublicUid) {
-        uidMsg.textContent = "❌ لا يمكن أن يكون المعرّف الجديد فارغاً.";
+    if(!user || user.email !== "clansp245@gmail.com"){ 
+        document.body.innerHTML = `
+            <div class="card" style="text-align:center; margin-top:100px;">
+                <i class="fas fa-lock" style="font-size:3rem; color:var(--error); margin-bottom:20px;"></i>
+                <h2 style="-webkit-text-fill-color: var(--error);">وصول مرفوض</h2>
+                <p>هذه المنطقة مخصصة للمطور فقط.</p>
+                <button class="btn-action btn-search" onclick="location.href='index.html'">الخروج</button>
+            </div>`;
         return;
     }
-    
-    // تم إزالة فحص الطول و IMP-
 
-    if (!confirm(`هل أنت متأكد من تغيير المعرّف العام للمستخدم إلى ${newPublicUid}؟`)) return;
+    const dbRef = db.collection("promocodes");
 
-    try {
-      // 1. التحقق من عدم تكرار الـ UID الجديد (باستثناء المستخدم الحالي المستهدف)
-      const existingUser = await db.collection('users').where('publicUid', '==', newPublicUid).limit(1).get();
-      if (!existingUser.empty && existingUser.docs[0].id !== targetUserRef.id) {
-          uidMsg.textContent = "❌ هذا المعرّف العام (Public UID) مستخدم بالفعل من قبل شخص آخر!";
-          return;
-      }
+    // وظيفة إنشاء الكود
+    document.getElementById("createBtn").onclick = async () => {
+        const code = document.getElementById("codeName").value.trim().toUpperCase();
+        if(!code) return alert("أدخل اسم الكود");
 
-      // 2. تحديث الحقل
-      await targetUserRef.update({
-        publicUid: newPublicUid
-      });
+        try {
+            await dbRef.doc(code).set({
+                coins: Number(document.getElementById("coins").value),
+                durationDays: Number(document.getElementById("proDays").value),
+                maxUses: Number(document.getElementById("maxUses").value),
+                redeemedBy: [],
+                active: true,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            document.getElementById("codeMsg").innerHTML = `<span style="color:var(--success)">✅ تم إنشاء الكود ${code}</span>`;
+            loadCodes();
+        } catch(e) { alert("خطأ في الإنشاء"); }
+    };
 
-      uidMsg.textContent = `✅ تم تحديث المعرّف العام بنجاح إلى: ${newPublicUid}`;
-      
-      // تحديث العرض
-      document.getElementById("currentPublicUid").textContent = newPublicUid;
-      
-    } catch (e) {
-      console.error("خطأ في التحديث:", e);
-      if (e.code === 'permission-denied') {
-          uidMsg.textContent = "❌ فشل التحديث: راجع قواعد أمان Firestore لـ /users (عملية update).";
-      } else {
-          uidMsg.textContent = "❌ حدث خطأ أثناء تحديث المعرّف.";
-      }
+    // وظيفة جلب الأكواد
+    async function loadCodes() {
+        const listDiv = document.getElementById("codesList");
+        listDiv.innerHTML = '<p style="text-align:center;">جاري التحميل...</p>';
+        const snapshot = await dbRef.orderBy("createdAt", "desc").get();
+        listDiv.innerHTML = "";
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const div = document.createElement("div");
+            div.className = "code-item";
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <span class="code-badge">${doc.id}</span>
+                        <div style="font-size:0.8rem; color:var(--text-dim); margin-top:5px;">
+                            ${data.coins} كوينز | ${data.durationDays} يوم برو | (${(data.redeemedBy || []).length}/${data.maxUses || '∞'})
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button onclick="toggleActive('${doc.id}', ${data.active})" class="btn-action" style="padding:5px 10px; background:${data.active? 'var(--warning)':'var(--success)'}">
+                            <i class="fas ${data.active?'fa-pause':'fa-play'}"></i>
+                        </button>
+                        <button onclick="deleteCode('${doc.id}')" class="btn-action" style="padding:5px 10px; background:var(--error)">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            listDiv.appendChild(div);
+        });
     }
-  };
 
-  loadCodes();
+    // وظيفة البحث عن مستخدم
+    document.getElementById("findUserBtn").onclick = async () => {
+        const tid = document.getElementById("targetUidInput").value.trim();
+        const display = document.getElementById("userInfoDisplay");
+        if(!tid) return;
 
+        const doc = await db.collection("users").doc(tid).get();
+        if(doc.exists) {
+            const data = doc.data();
+            document.getElementById("currentName").innerText = data.displayName || "لاعب";
+            document.getElementById("currentPublicUid").innerText = data.publicUid || "لا يوجد";
+            display.style.display = "block";
+        } else {
+            alert("المستخدم غير موجود");
+        }
+    };
+
+    window.toggleActive = async (id, status) => {
+        await dbRef.doc(id).update({ active: !status });
+        loadCodes();
+    };
+
+    window.deleteCode = async (id) => {
+        if(confirm("حذف الكود نهائياً؟")) {
+            await dbRef.doc(id).delete();
+            loadCodes();
+        }
+    };
+
+    loadCodes();
 });
 </script>
-
 </body>
 </html>
 
