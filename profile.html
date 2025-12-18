@@ -8,7 +8,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    
     <script src="auth.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
@@ -30,190 +29,276 @@
             background-color: var(--bg-body);
             background-image: radial-gradient(circle at top right, #1e1b4b, transparent);
             color: var(--text-main);
-            padding: 20px; min-height: 100vh;
-            display: flex; flex-direction: column; align-items: center; margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .card {
-            background: var(--card-bg); backdrop-filter: blur(15px); padding: 25px;
-            border-radius: 24px; width: 100%; max-width: 500px;
-            border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            padding: 25px;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
 
         .profile-header { text-align: center; }
-        .avatar-container { width: 110px; height: 110px; margin: 0 auto 15px; position: relative; }
+        .avatar-container {
+            width: 110px;
+            height: 110px;
+            margin: 0 auto 15px;
+            position: relative;
+        }
         
         .default-avatar {
             width: 100%; height: 100%; border-radius: 50%;
-            background: var(--accent-gradient); display: flex;
-            align-items: center; justify-content: center; border: 4px solid var(--primary);
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            display: flex; align-items: center; justify-content: center;
+            border: 4px solid var(--primary);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
         }
+        .default-avatar i { font-size: 3rem; color: white; }
         
-        #profile-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary); display: none; }
+        #profile-img {
+            width: 100%; height: 100%; border-radius: 50%;
+            object-fit: cover; border: 4px solid var(--primary);
+            display: none;
+        }
 
         .change-photo-btn {
-            position: absolute; bottom: 5px; right: 5px; background: var(--primary);
-            color: white; width: 35px; height: 35px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid var(--bg-body);
+            position: absolute; bottom: 5px; right: 5px;
+            background: var(--primary); color: white;
+            width: 35px; height: 35px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; border: 3px solid var(--bg-body);
+            transition: 0.3s;
         }
 
         .input-group {
-            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 15px; display: flex; overflow: hidden; margin-top: 10px;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 15px; display: flex; overflow: hidden;
+            margin-top: 10px; transition: 0.3s;
         }
         
-        #nameInput { background: transparent; border: none; padding: 15px; color: white; font-family: 'Cairo'; flex-grow: 1; outline: none; }
+        #nameInput {
+            background: transparent; border: none; padding: 15px;
+            color: white; font-family: 'Cairo'; flex-grow: 1; outline: none;
+        }
         
-        .btn-save { background: var(--accent-gradient); border: none; color: white; padding: 0 20px; font-weight: 900; cursor: pointer; }
+        .btn-save {
+            background: var(--accent-gradient); border: none; color: white;
+            padding: 0 25px; font-family: 'Cairo'; font-weight: 900;
+            cursor: pointer; transition: 0.3s;
+        }
         .btn-save:disabled { opacity: 0.2; cursor: not-allowed; filter: grayscale(1); }
 
-        .status-badge { padding: 5px 12px; border-radius: 10px; font-size: 0.75rem; font-weight: bold; display: inline-block; margin-bottom: 10px; }
-        
-        #user-id-display { color: var(--gold); font-weight: 900; letter-spacing: 1px; }
-        .btn-back { width: 100%; max-width: 500px; padding: 15px; background: rgba(255,255,255,0.05); color: white; border-radius: 15px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); font-family: 'Cairo'; }
+        .item-badge {
+            background: rgba(99, 102, 241, 0.1); color: var(--primary);
+            padding: 4px 12px; border-radius: 10px; font-size: 0.75rem;
+            font-weight: bold; display: inline-block; margin-bottom: 5px;
+        }
+
+        .badges-container { display: flex; justify-content: center; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+        .badge-slot { font-size: 1.4rem; color: var(--gold); filter: drop-shadow(0 0 5px rgba(255,215,0,0.5)); }
+
+        .log-section { background: rgba(0,0,0,0.2); border-radius: 15px; padding: 15px; margin-bottom: 10px; }
+        .log-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem; }
+        .log-user { color: var(--primary); font-weight: bold; }
+
+        #user-id-display { color: var(--gold); font-weight: 900; background: rgba(255,215,0,0.1); padding: 2px 10px; border-radius: 8px; }
+
+        .btn-back { width: 100%; max-width: 500px; padding: 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 15px; cursor: pointer; font-family: 'Cairo'; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="card profile-header">
     <div class="avatar-container">
-        <div id="default-avatar" class="default-avatar"><i class="fas fa-user fa-3x"></i></div>
+        <div id="default-avatar" class="default-avatar"><i class="fas fa-user"></i></div>
         <img id="profile-img" src="" alt="Profile">
         <label for="upload-photo" class="change-photo-btn"><i class="fas fa-camera"></i></label>
         <input type="file" id="upload-photo" style="display:none" accept="image/*" onchange="handlePhotoUpload(this)">
     </div>
     
-    <div id="user-badges" style="margin-bottom: 10px;"></div>
-    <h2 id="display-name" style="margin: 5px 0; font-weight: 900;">تحميل...</h2>
-    <p style="font-size: 0.85rem; color: var(--text-dim);">المعرف: <span id="user-id-display">---</span></p>
-    <div style="color: var(--gold); font-weight: bold; margin-top: 5px;"><i class="fas fa-coins"></i> <span id="user-coins">0</span></div>
+    <div id="user-badges" class="badges-container"></div>
+    <h2 id="display-name" style="margin: 5px 0; font-weight: 900;">...</h2>
+    <p style="font-size: 0.85rem; margin-bottom: 8px;">المعرف الملكي: <span id="user-id-display">جارِ التحميل...</span></p>
+    <p id="user-email" style="color: var(--text-dim); font-size: 0.85rem; margin-bottom: 0;">...</p>
 </div>
 
 <div class="card">
-    <h3 style="margin:0; font-size: 1rem; color: var(--primary);"><i class="fas fa-id-card"></i> تعديل الهوية الملكية</h3>
+    <h3 style="margin:0 0 5px 0; font-size: 1.1rem; color: var(--primary);"><i class="fas fa-user-edit"></i> تعديل الهوية</h3>
     
     <div style="margin-top:15px">
-        <div id="name-card-status" class="status-badge" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">تحقق...</div>
+        <div id="name-status" class="item-badge">جارِ التحقق من بطاقة الاسم...</div>
         <div class="input-group">
-            <input id="nameInput" type="text" placeholder="اسم جديد...">
-            <button id="saveNameBtn" class="btn-save" disabled onclick="handleUpdateName()">حفظ</button>
+            <input id="nameInput" type="text" placeholder="اكتب اسمك الجديد...">
+            <button id="saveBtn" class="btn-save" disabled onclick="handleSaveName()">حفظ</button>
         </div>
     </div>
 
-    <div style="margin-top:20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-        <div id="id-card-status" class="status-badge" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">تحقق...</div>
-        <button id="saveIdBtn" class="btn-save" style="width:100%; height:50px; border-radius:12px" disabled onclick="handleUpdateID()">توليد ID مميز (VIP)</button>
+    <div style="margin-top:20px; border-top: 1px solid rgba(255,255,255,0.05); padding-top:15px">
+        <div id="id-status" class="item-badge">جارِ التحقق من بطاقة ID...</div>
+        <button id="idBtn" class="btn-save" style="width:100%; height:50px; border-radius:12px; margin-top:5px" disabled onclick="handleChangeID()">الحصول على ID مميز جداً</button>
     </div>
 </div>
 
-<button class="btn-back" onclick="location.href='index.html'">العودة للرئيسية</button>
+<div class="card">
+    <h3 style="margin:0 0 15px 0; font-size: 1.1rem;"><i class="fas fa-history"></i> سجل الهدايا الأخير</h3>
+    <div class="log-section">
+        <div style="color: #34d399; font-weight: 900; margin-bottom: 10px;"><i class="fas fa-arrow-down"></i> الواردة</div>
+        <div id="received-logs"></div>
+    </div>
+    <div class="log-section">
+        <div style="color: #fb7185; font-weight: 900; margin-bottom: 10px;"><i class="fas fa-arrow-up"></i> الصادرة</div>
+        <div id="sent-logs"></div>
+    </div>
+</div>
+
+<button class="btn-back" onclick="location.href='index.html'">
+    <i class="fas fa-chevron-right"></i> العودة للرئيسية
+</button>
 
 <script>
-// تعريف الداتابيز بشكل صريح لضمان الارتباط
 const db = firebase.firestore();
 let userData = null;
 
-// الدالة الأساسية لجلب الداتا
 firebase.auth().onAuthStateChanged(async user => {
-    if (!user) {
-        window.location.href = "auth.html";
-        return;
-    }
+    if (!user) return location.href = "auth.html";
     
-    // ربط حقيقي ولحظي مع Firestore
+    // ربط لحظي (Snapshot) لضمان تحديث الداتا فوراً
     db.collection('users').doc(user.uid).onSnapshot(doc => {
         if (doc.exists) {
             userData = doc.data();
-            refreshUI(user.uid);
+            updateUI(user.uid, user.email);
         }
     });
 });
 
-function refreshUI(uid) {
-    // 1. تحديث النصوص الأساسية
-    document.getElementById("display-name").innerText = userData.displayName || "لاعب جديد";
+function updateUI(uid, email) {
+    document.getElementById("display-name").innerText = userData.displayName || "لاعب مجهول";
     document.getElementById("user-id-display").innerText = userData.customID || uid.substring(0, 8).toUpperCase();
-    document.getElementById("user-coins").innerText = (userData.totalCoins || 0).toLocaleString();
-
-    // 2. تحديث الصورة
+    document.getElementById("user-email").innerText = email;
+    
+    // الصورة
+    const profileImg = document.getElementById('profile-img');
+    const defaultAvatar = document.getElementById('default-avatar');
     if (userData.photoURL) {
-        document.getElementById('profile-img').src = userData.photoURL;
-        document.getElementById('profile-img').style.display = 'block';
-        document.getElementById('default-avatar').style.display = 'none';
+        profileImg.src = userData.photoURL;
+        profileImg.style.display = 'block';
+        defaultAvatar.style.display = 'none';
     }
 
-    // 3. فحص الحقيبة (Inventory) لتفعيل الأزرار
-    const inv = userData.inventory || [];
-    
-    // تحقق بطاقة الاسم
-    const nameCards = inv.filter(i => i === "بطاقة الاسم").length;
-    const nameStatus = document.getElementById("name-card-status");
-    const nameBtn = document.getElementById("saveNameBtn");
-    
-    if (nameCards > 0) {
-        nameStatus.innerText = `متوفر: ${nameCards} بطاقة اسم`;
+    // فحص الحقيبة لتفعيل البطاقات
+    const inventory = userData.inventory || [];
+    const nameCards = inventory.filter(i => i === "بطاقة الاسم").length;
+    const idCards = inventory.filter(i => i === "بطاقة الـ ID").length;
+
+    // تحديث حالة الأزرار
+    const nameStatus = document.getElementById("name-status");
+    const saveBtn = document.getElementById("saveBtn");
+    if(nameCards > 0) {
+        nameStatus.innerText = `متوفر لديك ${nameCards} بطاقة تغيير اسم`;
         nameStatus.style.color = "#10b981";
-        nameStatus.style.background = "rgba(16, 185, 129, 0.1)";
-        nameBtn.disabled = false;
+        saveBtn.disabled = false;
     } else {
-        nameStatus.innerText = "لا تملك بطاقة اسم";
-        nameBtn.disabled = true;
+        nameStatus.innerText = "تحتاج بطاقة تغيير اسم";
+        nameStatus.style.color = "#ef4444";
+        saveBtn.disabled = true;
     }
 
-    // تحقق بطاقة الـ ID
-    const idCards = inv.filter(i => i === "بطاقة الـ ID").length;
-    const idStatus = document.getElementById("id-card-status");
-    const idBtn = document.getElementById("saveIdBtn");
-
-    if (idCards > 0) {
-        idStatus.innerText = `متوفر: ${idCards} بطاقة ID`;
+    const idStatus = document.getElementById("id-status");
+    const idBtn = document.getElementById("idBtn");
+    if(idCards > 0) {
+        idStatus.innerText = `متوفر لديك ${idCards} بطاقة ID مميز`;
         idStatus.style.color = "#38bdf8";
-        idStatus.style.background = "rgba(56, 189, 248, 0.1)";
         idBtn.disabled = false;
     } else {
-        idStatus.innerText = "لا تملك بطاقة ID مميز";
+        idStatus.innerText = "تحتاج بطاقة ID مميز جداً";
+        idStatus.style.color = "#ef4444";
         idBtn.disabled = true;
     }
+
+    renderBadges();
+    renderLogs();
 }
 
-// دالة تغيير الاسم واستهلاك البطاقة
-async function handleUpdateName() {
-    const newName = document.getElementById("nameInput").value.trim();
+async function handleSaveName() {
+    const newName = document.getElementById('nameInput').value.trim();
     if (newName.length < 3) return alert("الاسم قصير جداً");
-
-    if (confirm(`هل تريد تغيير اسمك إلى (${newName})؟ سيتم سحب بطاقة واحدة.`)) {
-        let newInv = [...userData.inventory];
-        const index = newInv.indexOf("بطاقة الاسم");
-        newInv.splice(index, 1); // حذف بطاقة واحدة
+    
+    if (confirm("سيتم استهلاك بطاقة تغيير اسم واحدة، هل أنت متأكد؟")) {
+        let currentInv = [...userData.inventory];
+        const index = currentInv.indexOf("بطاقة الاسم");
+        currentInv.splice(index, 1);
 
         await db.collection('users').doc(firebase.auth().currentUser.uid).update({
             displayName: newName,
-            inventory: newInv
+            inventory: currentInv
         });
-        alert("تم التحديث بنجاح ✨");
-        document.getElementById("nameInput").value = "";
+        alert("تم تغيير الاسم بنجاح!");
+        document.getElementById('nameInput').value = "";
     }
 }
 
-// دالة توليد ID مميز واستهلاك البطاقة
-async function handleUpdateID() {
-    const prefixes = ["VIP", "KING", "BOSS", "GOLD", "STAR", "TOP"];
-    const randomID = prefixes[Math.floor(Math.random() * prefixes.length)] + "-" + Math.floor(100 + Math.random() * 899);
+async function handleChangeID() {
+    // خوارزمية الـ ID المميز جداً
+    const prefixes = ["KING", "VIP", "REX", "ACE", "BOSS", "GOLD", "PRO"];
+    const luckyNumbers = ["777", "111", "007", "999", "101", "555"];
+    
+    const randomPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+    const randomNum = luckyNumbers[Math.floor(Math.random() * luckyNumbers.length)];
+    const newID = `${randomPrefix}-${randomNum}`;
 
-    if (confirm(`سيتم منحك ID مميز: (${randomID})، هل أنت موافق؟`)) {
-        let newInv = [...userData.inventory];
-        const index = newInv.indexOf("بطاقة الـ ID");
-        newInv.splice(index, 1);
+    // التأكد أنه غير مستخدم
+    const checkID = await db.collection('users').where('customID', '==', newID).get();
+    if (!checkID.empty) return handleChangeID(); // إعادة التوليد إذا كان مكرر
+
+    if (confirm(`هل تريد استهلاك بطاقة ID للحصول على المعرف المميز: ${newID}؟`)) {
+        let currentInv = [...userData.inventory];
+        const index = currentInv.indexOf("بطاقة الـ ID");
+        currentInv.splice(index, 1);
 
         await db.collection('users').doc(firebase.auth().currentUser.uid).update({
-            customID: randomID,
-            inventory: newInv
+            customID: newID,
+            inventory: currentInv
         });
-        alert("مبروك على الهوية الجديدة 🏅");
+        alert("تم منحك الـ ID المميز بنجاح!");
     }
 }
 
-// رفع الصورة
+function renderBadges() {
+    const container = document.getElementById('user-badges');
+    container.innerHTML = '';
+    if (userData.badges) {
+        userData.badges.forEach(b => container.innerHTML += `<i class="${b} badge-slot"></i>`);
+    }
+}
+
+function renderLogs() {
+    const rContainer = document.getElementById('received-logs');
+    const sContainer = document.getElementById('sent-logs');
+
+    const received = userData.receivedHistory || [];
+    rContainer.innerHTML = received.length === 0 ? '<p style="font-size:0.7rem; color:gray">لا توجد هدايا</p>' : '';
+    received.slice(-5).reverse().forEach(log => {
+        rContainer.innerHTML += `<div class="log-item"><span>${log.giftName}</span><span class="log-user">من: ${log.senderName}</span></div>`;
+    });
+
+    const sent = userData.sentHistory || [];
+    sContainer.innerHTML = sent.length === 0 ? '<p style="font-size:0.7rem; color:gray">لا توجد هدايا</p>' : '';
+    sent.slice(-5).reverse().forEach(log => {
+        sContainer.innerHTML += `<div class="log-item"><span>${log.giftName}</span><span class="log-user">إلى: ${log.recipientName}</span></div>`;
+    });
+}
+
 async function handlePhotoUpload(input) {
     const file = input.files[0];
     if (!file) return;
@@ -225,6 +310,6 @@ async function handlePhotoUpload(input) {
     reader.readAsDataURL(file);
 }
 </script>
-
 </body>
 </html>
+
