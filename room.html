@@ -31,7 +31,7 @@
             background-color: var(--bg-body);
             background-image: radial-gradient(circle at top right, #1e1b4b, transparent), radial-gradient(circle at bottom left, #1e1b4b, transparent);
             color: var(--text-main);
-            padding: 10px;
+            padding: 20px;
             min-height: 100vh;
             margin: 0;
             display: flex;
@@ -39,185 +39,197 @@
             align-items: center;
         }
 
-        .card { background: var(--card-bg); backdrop-filter: blur(15px); padding: 20px; border-radius: 24px; width: 100%; max-width: 500px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.3); margin-bottom: 15px; box-sizing: border-box; }
+        .card { background: var(--card-bg); backdrop-filter: blur(15px); padding: 25px; border-radius: 24px; width: 100%; max-width: 500px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.3); margin-bottom: 20px; box-sizing: border-box; }
         
-        /* تصميم صندوق الدردشة */
-        .chat-container {
+        /* تصميم الدردشة */
+        .chat-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 18px;
+            height: 300px;
             display: flex;
             flex-direction: column;
-            height: 300px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 15px;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.05);
+            margin-top: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
         }
-
         #chat-messages {
             flex: 1;
-            padding: 15px;
             overflow-y: auto;
+            padding: 15px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            scrollbar-width: thin;
+            gap: 10px;
         }
-
-        .msg {
-            max-width: 80%;
+        .message {
             padding: 8px 12px;
             border-radius: 12px;
+            max-width: 80%;
             font-size: 0.9rem;
-            line-height: 1.4;
-            position: relative;
+            word-wrap: break-word;
         }
+        .msg-me { background: var(--primary); align-self: flex-start; border-bottom-right-radius: 2px; }
+        .msg-other { background: rgba(255,255,255,0.1); align-self: flex-end; border-bottom-left-radius: 2px; }
+        .msg-info { font-size: 0.7rem; color: var(--gold); display: block; margin-bottom: 2px; }
 
-        .msg.other { background: rgba(255,255,255,0.1); align-self: flex-start; border-bottom-right-radius: 2px; }
-        .msg.me { background: var(--primary); align-self: flex-end; border-bottom-left-radius: 2px; }
-
-        .msg-sender { font-size: 0.7rem; font-weight: bold; margin-bottom: 3px; display: block; color: var(--gold); }
-
-        .chat-input-area {
+        .chat-input-container {
             display: flex;
             padding: 10px;
-            background: rgba(255,255,255,0.05);
             gap: 8px;
+            border-top: 1px solid rgba(255,255,255,0.1);
         }
-
         #chat-input {
             flex: 1;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
-            padding: 8px 12px;
+            background: transparent;
+            border: none;
             color: white;
+            outline: none;
             font-family: 'Cairo';
         }
-
         .send-btn {
             background: var(--accent-gradient);
             border: none;
             color: white;
-            width: 40px;
-            height: 40px;
+            padding: 5px 15px;
             border-radius: 10px;
             cursor: pointer;
         }
 
-        /* المودال والشارات (نفس الكود السابق) */
-        .player-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 10px 15px; border-radius: 15px; margin-bottom: 8px; cursor: pointer; }
-        .start-btn { width: 100%; padding: 15px; border-radius: 15px; border: none; background: var(--accent-gradient); color: white; font-weight: 900; cursor: pointer; margin-top: 10px;}
-        .badge-icon { width: 40px; height: 40px; background: rgba(255,255,255,0.05); border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); }
+        /* تنسيقات اللاعبين والشارات */
+        .player-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 12px 18px; border-radius: 15px; margin-bottom: 10px; cursor: pointer; }
+        .badge-icon { width: 40px; height: 40px; background: rgba(255,255,255,0.05); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; border: 1px solid rgba(255,255,255,0.1); }
+        .badge-dev { color: #f87171; } .badge-pro { color: #fbbf24; }
+        
+        .start-btn { width: 100%; padding: 18px; border-radius: 18px; border: none; background: var(--accent-gradient); color: white; font-weight: 900; cursor: pointer; margin-top: 15px;}
+        .start-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: #1e293b; width: 90%; max-width: 380px; border-radius: 30px; padding: 30px; text-align: center; position: relative;}
     </style>
 </head>
 
 <body onload="initLobby()">
 
-<div class="card">
-    <h2 style="margin:0 0 10px 0; font-size: 1.2rem;">🎮 غرفة: <span id="room-code-value">---</span></h2>
+<div class="card" id="waiting-lobby">
+    <h2 id="room-title">🎮 غرفة الانتظار</h2>
     
-    <div style="max-height: 150px; overflow-y: auto; margin-bottom: 15px;">
-        <div id="players-list-container"></div>
+    <div class="room-code-box" style="text-align:center; background: rgba(0,0,0,0.2); padding:10px; border-radius:15px; border: 1px dashed var(--primary); margin-bottom:15px;">
+        <span id="room-code-value" style="font-size:1.5rem; letter-spacing:3px; color:var(--gold);">------</span>
+        <i class="fas fa-copy" onclick="copyCode()" style="margin-right:10px; cursor:pointer;"></i>
     </div>
 
-    <div class="chat-container">
-        <div id="chat-messages">
-            </div>
-        <form class="chat-input-area" onsubmit="sendMessage(event)">
+    <div id="players-list-container"></div>
+
+    <div class="chat-section">
+        <div id="chat-messages"></div>
+        <form class="chat-input-container" onsubmit="sendMessage(event)">
             <input type="text" id="chat-input" placeholder="اكتب رسالة..." autocomplete="off">
             <button type="submit" class="send-btn"><i class="fas fa-paper-plane"></i></button>
         </form>
     </div>
 
-    <button class="start-btn" id="start-game-btn" onclick="startGame()" style="display: none;" disabled>ابدأ اللعبة</button>
+    <button class="start-btn" id="start-game-btn" onclick="startGame()" style="display: none;" disabled>
+        ابدأ اللعبة الآن <i class="fas fa-play-circle"></i>
+    </button>
 </div>
 
-<div id="profile-modal" style="display:none;" class="card">
+<div class="card" id="role-display-card" style="display:none; text-align:center;">
+    <h1 id="role-title">---</h1>
+    <div id="role-word" style="font-size: 2rem; color: var(--gold); padding: 20px; border: 2px solid var(--primary); display: inline-block; border-radius: 15px; margin: 20px 0;">---</div>
+    <p id="role-instructions" style="color: var(--text-dim);"></p>
+    <button class="start-btn" onclick="hideRoleCard()">فهمت، العودة للدردشة</button>
+</div>
+
+<div id="profile-modal" class="modal">
+    <div class="modal-content">
+        <i class="fas fa-times" onclick="closeProfile()" style="position:absolute; top:20px; left:20px; cursor:pointer;"></i>
+        <div id="modal-avatar" style="font-size: 4rem;"><i class="fas fa-user-circle"></i></div>
+        <h3 id="modal-name">---</h3>
+        <div id="modal-badges" style="display:flex; justify-content:center; gap:10px; margin: 15px 0;"></div>
+        <button class="start-btn" onclick="alert('قريباً')">إرسال هدية</button>
     </div>
+</div>
 
 <script>
-let currentUID;
-let roomCode;
-let roomData = null;
-let allUsersData = {};
+let currentUID, roomCode, roomData = null, allUsersData = {};
+const defaultWords = ["طائرة", "قهوة", "مستشفى", "كرة قدم", "شاطئ", "مدرسة"];
 
 async function initLobby() {
     const urlParams = new URLSearchParams(window.location.search);
     roomCode = urlParams.get('id');
-    
+    if (!roomCode) return window.location.href = "index.html";
+    document.getElementById('room-code-value').innerText = roomCode;
+
     firebase.auth().onAuthStateChanged(user => {
         if (!user) return window.location.href = "auth.html";
         currentUID = user.uid;
         startRoomListener();
-        startChatListener(); // تفعيل مستمع الدردشة
+        startChatListener(); // تفعيل الدردشة للجميع
     });
 }
 
-// مستمع الغرفة (اللاعبين والحالة)
 function startRoomListener() {
     db.collection('rooms').doc(roomCode).onSnapshot(async doc => {
-        if (!doc.exists) return;
+        if (!doc.exists) return window.location.href = "index.html";
         roomData = doc.data();
         await fetchPlayersDetails(roomData.players);
-        updateUI();
+        
+        if (roomData.status === 'playing') {
+            displayRole();
+        } else {
+            updateUI();
+        }
     });
 }
 
-// جلب تفاصيل اللاعبين
 async function fetchPlayersDetails(uids) {
     const promises = uids.map(uid => db.collection('users').doc(uid).get());
     const docs = await Promise.all(promises);
-    docs.forEach(doc => { if(doc.exists) allUsersData[doc.id] = doc.data(); });
+    docs.forEach(doc => { if (doc.exists) allUsersData[doc.id] = doc.data(); });
 }
 
-// تحديث الواجهة
 function updateUI() {
     const container = document.getElementById('players-list-container');
     container.innerHTML = '';
     roomData.players.forEach(uid => {
         const data = allUsersData[uid] || {};
+        const isHost = roomData.hostUID === uid;
         const div = document.createElement('div');
         div.className = 'player-item';
-        div.innerHTML = `<span>${uid === roomData.hostUID ? '👑' : '👤'} ${data.displayName || 'لاعب'}</span>`;
+        div.onclick = () => openProfile(uid);
+        div.innerHTML = `
+            <div>${isHost ? '👑' : '👤'} <b>${data.displayName || 'لاعب'}</b></div>
+            ${roomData.hostUID === currentUID && uid !== currentUID ? `<button onclick="event.stopPropagation(); kick('${uid}')" style="background:none; border:none; color:red;"><i class="fas fa-user-slash"></i></button>` : ''}
+        `;
         container.appendChild(div);
     });
 
-    const btn = document.getElementById('start-game-btn');
-    if(roomData.hostUID === currentUID) {
-        btn.style.display = 'block';
-        btn.disabled = roomData.players.length < 3;
+    const startBtn = document.getElementById('start-game-btn');
+    if (roomData.hostUID === currentUID) {
+        startBtn.style.display = 'block';
+        startBtn.disabled = roomData.players.length < 3;
     }
 }
 
-// --- نظام الدردشة ---
-
+// --- نظام الدردشة الفوري ---
 function startChatListener() {
-    // جلب آخر 50 رسالة واللحاق بالرسائل الجديدة
-    db.collection('rooms').doc(roomCode).collection('chat')
-      .orderBy('timestamp', 'asc')
-      .limitToLast(50)
-      .onSnapshot(snapshot => {
-          const chatBox = document.getElementById('chat-messages');
-          snapshot.docChanges().forEach(change => {
-              if (change.type === "added") {
-                  const data = change.doc.data();
-                  appendMessage(data);
-              }
-          });
-          chatBox.scrollTop = chatBox.scrollHeight; // النزول لآخر رسالة
-      });
-}
-
-function appendMessage(data) {
-    const chatBox = document.getElementById('chat-messages');
-    const isMe = data.senderId === currentUID;
-    const msgDiv = document.createElement('div');
-    msgDiv.className = `msg ${isMe ? 'me' : 'other'}`;
-    
-    msgDiv.innerHTML = `
-        ${!isMe ? `<span class="msg-sender">${data.senderName}</span>` : ''}
-        <span class="msg-text">${data.text}</span>
-    `;
-    chatBox.appendChild(msgDiv);
+    // استماع للرسائل في المجموعة الفرعية 'messages' داخل الغرفة
+    db.collection('rooms').doc(roomCode).collection('messages')
+    .orderBy('time', 'asc')
+    .onSnapshot(snapshot => {
+        const chatBox = document.getElementById('chat-messages');
+        chatBox.innerHTML = ''; // إعادة المسح لضمان الترتيب
+        snapshot.forEach(doc => {
+            const msg = doc.data();
+            const isMe = msg.senderId === currentUID;
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${isMe ? 'msg-me' : 'msg-other'}`;
+            msgDiv.innerHTML = `
+                <span class="msg-info">${isMe ? 'أنت' : msg.senderName}</span>
+                ${msg.text}
+            `;
+            chatBox.appendChild(msgDiv);
+        });
+        chatBox.scrollTop = chatBox.scrollHeight;
+    });
 }
 
 async function sendMessage(e) {
@@ -229,19 +241,73 @@ async function sendMessage(e) {
     input.value = '';
     const myData = allUsersData[currentUID] || {};
 
-    await db.collection('rooms').doc(roomCode).collection('chat').add({
+    // إضافة الرسالة لـ Firestore
+    await db.collection('rooms').doc(roomCode).collection('messages').add({
         senderId: currentUID,
         senderName: myData.displayName || 'لاعب',
         text: text,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        time: firebase.firestore.FieldValue.serverTimestamp()
     });
 }
 
-// دالة بدء اللعبة (كما في الكود السابق)
+// --- نظام اللعبة والأدوار ---
 async function startGame() {
-    // كود توزيع الأدوار...
+    const players = roomData.players;
+    const word = defaultWords[Math.floor(Math.random() * defaultWords.length)];
+    const impostorIndex = Math.floor(Math.random() * players.length);
+    const roles = {};
+
+    players.forEach((uid, index) => {
+        roles[uid] = {
+            role: (index === impostorIndex) ? 'impostor' : 'civilian',
+            word: (index === impostorIndex) ? '???' : word
+        };
+    });
+
+    await db.collection('rooms').doc(roomCode).update({
+        status: 'playing',
+        currentGameData: { roles: roles }
+    });
 }
 
+function displayRole() {
+    const roleData = roomData.currentGameData.roles[currentUID];
+    document.getElementById('waiting-lobby').style.display = 'none';
+    document.getElementById('role-display-card').style.display = 'block';
+    
+    const title = document.getElementById('role-title');
+    const word = document.getElementById('role-word');
+    
+    if (roleData.role === 'impostor') {
+        title.innerText = "أنت المحتال 😈";
+        title.style.color = "var(--error)";
+        word.innerText = "أنت لا تعرف الكلمة!";
+    } else {
+        title.innerText = "أنت مدني 😇";
+        title.style.color = "var(--success)";
+        word.innerText = roleData.word;
+    }
+}
+
+function hideRoleCard() {
+    document.getElementById('role-display-card').style.display = 'none';
+    document.getElementById('waiting-lobby').style.display = 'block';
+}
+
+function openProfile(uid) {
+    const data = allUsersData[uid] || {};
+    document.getElementById('modal-name').innerText = data.displayName || 'لاعب';
+    const badgeBox = document.getElementById('modal-badges');
+    badgeBox.innerHTML = '';
+    
+    if(data.email === 'clansp245@gmail.com') {
+        badgeBox.innerHTML += '<div class="badge-icon badge-dev"><i class="fas fa-code"></i></div>';
+    }
+    document.getElementById('profile-modal').style.display = 'flex';
+}
+
+function closeProfile() { document.getElementById('profile-modal').style.display = 'none'; }
+function copyCode() { navigator.clipboard.writeText(roomCode); alert("تم النسخ"); }
 </script>
 </body>
 </html>
