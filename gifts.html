@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎁 متجر الهدايا الملكي</title>
+    <title>🎁 متجر الهدايا الملكي المطور</title>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -41,106 +41,108 @@
         .top-info-bar { width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         #coins-display { background: rgba(251, 191, 36, 0.1); padding: 8px 15px; border-radius: 15px; color: var(--gold); font-weight: 900; border: 1px solid var(--gold); font-size: 0.9rem; }
 
-        h2 { font-size: 1.8rem; font-weight: 900; margin: 5px 0; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-
         .card {
             background: var(--card-bg); backdrop-filter: blur(15px); padding: 15px; border-radius: 20px;
             width: 100%; max-width: 500px; border: 1px solid rgba(255,255,255,0.1); text-align: right; box-sizing: border-box; margin-bottom: 12px;
         }
 
-        .recipient-box { display: flex; gap: 8px; margin-bottom: 10px; }
-        #self-gift-btn { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 0.85rem; }
-        
-        input[type="text"] { flex-grow: 1; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 10px; color: white; font-family: 'Cairo'; font-size: 0.85rem; }
+        /* ستايل البحث المطور */
+        .search-container { position: relative; flex-grow: 1; }
+        input[type="text"] { width: 100%; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; color: white; font-family: 'Cairo'; box-sizing: border-box; }
+        .search-results { position: absolute; background: #1e293b; width: 100%; z-index: 100; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); top: 50px; overflow: hidden; }
+        .search-item { padding: 10px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: 0.3s; }
+        .search-item:hover { background: var(--primary); }
 
-        .search-results { position: absolute; background: #1e293b; width: 100%; z-index: 100; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); top: 45px; }
-        .search-item { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
+        /* بروفايل المستلم المختصر */
+        .recipient-profile {
+            display: flex; align-items: center; gap: 15px; background: rgba(99, 102, 241, 0.1);
+            padding: 12px; border-radius: 15px; border: 1px dashed var(--primary); margin-top: 10px;
+        }
+        .user-avatar { width: 45px; height: 45px; background: var(--accent-gradient); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; font-weight: 900; }
 
         .tabs { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; width: 100%; max-width: 500px; scrollbar-width: none; }
-        .tab { padding: 6px 15px; background: rgba(255,255,255,0.05); border-radius: 20px; cursor: pointer; white-space: nowrap; font-weight: 700; font-size: 0.8rem; }
-        .tab.active { background: var(--primary); color: white; }
+        .tab { padding: 8px 18px; background: rgba(255,255,255,0.05); border-radius: 20px; cursor: pointer; white-space: nowrap; font-weight: 700; font-size: 0.85rem; transition: 0.3s; }
+        .tab.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4); }
 
-        /* تعديل الـ Grid ليصبح متجاوباً ولا يخرج عن الحواف */
-        .gifts-grid { 
-            display: grid; 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 10px; 
-            width: 100%;
-        }
-
+        .gifts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%; }
         .gift-item { 
-            background: rgba(255, 255, 255, 0.03); padding: 12px 8px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05);
-            display: flex; flex-direction: column; align-items: center; text-align: center;
+            background: rgba(255, 255, 255, 0.03); padding: 15px 10px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.05);
+            display: flex; flex-direction: column; align-items: center; text-align: center; position: relative;
         }
-        .gift-icon { font-size: 2rem; margin-bottom: 5px; }
-        .gift-name { font-weight: 700; font-size: 0.85rem; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
-        .gift-info { font-size: 0.7rem; color: var(--text-dim); margin-bottom: 5px; }
-        .gift-price { color: var(--gold); font-weight: 900; font-size: 0.8rem; margin-bottom: 8px; }
+        .badge-tag { position: absolute; top: 5px; right: 5px; background: var(--gold); color: black; font-size: 0.6rem; padding: 2px 6px; border-radius: 5px; font-weight: 900; }
+        
+        .gift-icon { font-size: 2.5rem; margin-bottom: 8px; }
+        .gift-name { font-weight: 700; font-size: 0.9rem; color: var(--text-main); }
+        .gift-info { font-size: 0.75rem; color: var(--text-dim); margin: 4px 0; }
+        .gift-price { color: var(--gold); font-weight: 900; font-size: 0.9rem; }
 
-        .qty-controls { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 8px; }
-        .qty-btn { width: 24px; height: 24px; border: none; background: var(--primary); color: white; border-radius: 5px; cursor: pointer; font-weight: 900; font-size: 1rem; }
-        .qty-num { min-width: 15px; font-weight: 900; font-size: 0.9rem; }
+        .qty-controls { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.3); padding: 5px 12px; border-radius: 10px; margin-top: 10px; }
+        .qty-btn { width: 28px; height: 28px; border: none; background: var(--primary); color: white; border-radius: 6px; cursor: pointer; font-weight: 900; }
 
-        #cart-summary { background: rgba(16, 185, 129, 0.1); padding: 15px; border-radius: 15px; margin-top: 15px; border: 1px solid var(--success); font-size: 0.85rem; }
-        .summary-row { display: flex; justify-content: space-between; margin-bottom: 3px; }
-        .total-price { font-size: 1.1rem; color: var(--gold); font-weight: 900; margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
+        #cart-summary { background: rgba(16, 185, 129, 0.05); padding: 15px; border-radius: 15px; margin-top: 15px; border: 1px solid var(--success); }
+        .total-price { font-size: 1.3rem; color: var(--gold); font-weight: 900; text-align: center; margin-top: 10px; }
 
         .send-btn {
-            width: 100%; padding: 15px; border-radius: 15px; border: none;
-            background: var(--accent-gradient); color: white; font-weight: 900;
-            font-size: 1.1rem; cursor: pointer; margin-top: 15px;
+            width: 100%; padding: 18px; border-radius: 15px; border: none;
+            background: var(--accent-gradient); color: white; font-weight: 900; font-size: 1.2rem; cursor: pointer; margin-top: 15px; transition: 0.3s;
         }
-        .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .send-btn:disabled { opacity: 0.4; filter: grayscale(1); }
 
-        #purchase-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000;
-            display: none; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(10px);
-        }
+        #purchase-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; display: none; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
     </style>
 </head>
 
 <body onload="initGiftPage()">
 
 <div class="top-info-bar">
-    <a href="index.html" style="color: var(--text-dim); text-decoration: none; font-size: 0.9rem;"><i class="fas fa-arrow-right"></i> رجوع</a>
+    <a href="index.html" style="color: var(--text-dim); text-decoration: none;"><i class="fas fa-arrow-right"></i> رجوع</a>
     <div id="coins-display"><i class="fas fa-coins"></i> <span id="user-coins">0</span></div>
 </div>
 
-<h2>🎁 متجر الهدايا الملكي</h2>
+<h2 style="text-align: center;">💎 المتجر الملكي</h2>
 
 <div class="card">
-    <div class="recipient-box">
-        <button id="self-gift-btn" onclick="selectSelf()">لنفسي</button>
-        <div style="flex-grow:1; position:relative;">
-            <input type="text" id="player-search" placeholder="ابحث عن صديق بالاسم...">
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <button id="self-gift-btn" onclick="selectSelf()" style="padding: 12px; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 900;">لنفسي</button>
+        <div class="search-container">
+            <input type="text" id="player-search" placeholder="ابحث عن لاعب باسمه...">
             <div id="search-results" class="search-results"></div>
         </div>
     </div>
-    <div id="recipient-alert" style="text-align: center; font-weight: 700; color: var(--primary); font-size: 0.8rem;">المستلم: (أنت)</div>
+    
+    <div id="recipient-profile-box" class="recipient-profile">
+        <div class="user-avatar" id="rec-avatar">؟</div>
+        <div style="flex-grow: 1;">
+            <div id="rec-name" style="font-weight: 900; font-size: 1rem;">اختر مستلم الهدية</div>
+            <div id="rec-stats" style="font-size: 0.75rem; color: var(--text-dim);">ابحث عن أصدقائك لإهدائهم شارات أو XP</div>
+        </div>
+    </div>
 </div>
 
 <div class="tabs">
-    <div class="tab active" onclick="filterGifts('all', this)">الكل</div>
+    <div class="tab active" onclick="filterGifts('all', this)">كل الهدايا</div>
+    <div class="tab" onclick="filterGifts('badges', this)">🔥 شارات نادرة</div>
     <div class="tab" onclick="filterGifts('pro', this)">اشتراكات Pro</div>
     <div class="tab" onclick="filterGifts('xp', this)">تطوير المستوى</div>
-    <div class="tab" onclick="filterGifts('luxury', this)">فخامة</div>
 </div>
 
 <div class="card" style="padding: 10px;">
     <div id="gifts-container" class="gifts-grid"></div>
     
     <div id="cart-summary">
-        <div class="summary-row"><span>XP الإجمالي:</span> <span id="total-xp-display">0</span></div>
-        <div class="summary-row"><span>أيام Pro الإجمالية:</span> <span id="total-pro-days">0</span></div>
-        <div class="total-price summary-row"><span>التكلفة:</span> <span><span id="total-cost-display">0</span> كوينز</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+            <span>إجمالي الـ XP: <b id="total-xp-display">0</b></span>
+            <span>أيام Pro: <b id="total-pro-days">0</b></span>
+        </div>
+        <div class="total-price">المجموع: <span id="total-cost-display">0</span> كوينز</div>
     </div>
 
-    <button class="send-btn" id="send-gift-btn" disabled onclick="processPurchase()">تأكيد وإرسال <i class="fas fa-paper-plane"></i></button>
+    <button class="send-btn" id="send-gift-btn" disabled onclick="processPurchase()">إرسال الهدايا الملكية <i class="fas fa-gem"></i></button>
 </div>
 
 <div id="purchase-overlay">
-    <div style="font-size: 4rem;">🎁</div>
-    <h3 style="color: white; margin-top: 15px;">جاري إرسال هداياك...</h3>
+    <div style="font-size: 5rem; animation: bounce 1s infinite;">🎁</div>
+    <h2 style="color: white; margin-top: 20px;">تتم الآن المعاملة الملكية...</h2>
 </div>
 
 <script>
@@ -149,25 +151,30 @@ let selectedPlayer = { uid: null, displayName: "نفسك" };
 let giftCart = {}; 
 let currentUserId = null;
 
-// الالتزام التام بأسعار برو الأصلية
 const gifts = [
-    // اشتراكات برو بأسعارها الحقيقية
+    // شارات نادرة (Badges) - غالية
+    {id: 100, name:"شارة الأسطورة", cost:10000, type: 'badge', icon:"🛡️", info: "تظهر بجانب اسمك للأبد"},
+    {id: 101, name:"شارة الثري", cost:8000, type: 'badge', icon:"💎", info: "للأثرياء فقط"},
+    {id: 102, name:"شارة النينجا", cost:5000, type: 'badge', icon:"🥷", info: "تألق بلمسة غامضة"},
+    {id: 103, name:"شارة النار", cost:3000, type: 'badge', icon:"🔥", info: "شارة مشتعلة"},
+    {id: 104, name:"شارة القلب", cost:1500, type: 'badge', icon:"❤️", info: "انشر الحب"},
+    {id: 105, name:"شارة البرق", cost:1000, type: 'badge', icon:"⚡", info: "كن سريعاً كالبرق"},
+
+    // اشتراكات برو
     {id: 8, name:"برو أسبوع", cost:150, days: 7, icon:"⭐", cat: 'pro'},
     {id: 9, name:"برو شهر", cost:450, days: 30, icon:"🏆", cat: 'pro'},
-    {id: 10, name:"برو 3 أشهر", cost:1080, days: 90, icon:"✨", cat: 'pro'},
     {id: 11, name:"برو سنة", cost:2414, days: 365, icon:"👑", cat: 'pro'},
 
-    // هدايا XP
-    {id: 0, name:"وردة حمراء", cost:50, xp:15, icon:"🌹", cat: 'xp'},
-    {id: 1, name:"شوكولاتة", cost:120, xp:40, icon:"🍫", cat: 'xp'},
-    {id: 4, name:"كتاب الحكمة", cost:500, xp:200, icon:"📚", cat: 'xp'},
-    {id: 5, name:"حقيبة كوينز", cost:1000, xp:450, icon:"💰", cat: 'xp'},
-    
-    // هدايا فاخرة
-    {id: 12, name:"سيارة", cost:15000, xp:7000, icon:"🏎️", cat: 'luxury'},
-    {id: 13, name:"يخت", cost:50000, xp:25000, icon:"🛥️", cat: 'luxury'},
-    {id: 16, name:"صاروخ", cost:1000000, xp:750000, icon:"🚀", cat: 'luxury'}
+    // هدايا XP متنوعة
+    {id: 0, name:"وردة ملكية", cost:50, xp:20, icon:"🌹", cat: 'xp'},
+    {id: 1, name:"صندوق كنوز", cost:1200, xp:600, icon:"📦", cat: 'xp'},
+    {id: 4, name:"تاج ملكي", cost:5000, xp:2500, icon:"👑", cat: 'xp'},
+    {id: 5, name:"يخت خاص", cost:15000, xp:8000, icon:"🛥️", cat: 'luxury'},
+    {id: 6, name:"قصر فخم", cost:50000, xp:30000, icon:"🏰", cat: 'luxury'},
+    {id: 7, name:"كوكب المريخ", cost:500000, xp:350000, icon:"🪐", cat: 'luxury'}
 ];
+
+function calculateLevel(xp) { return Math.floor(Math.sqrt(xp / 100)) + 1; }
 
 async function initGiftPage() {
     renderGifts('all');
@@ -187,17 +194,22 @@ async function initGiftPage() {
 function renderGifts(filter) {
     const container = document.getElementById("gifts-container");
     container.innerHTML = '';
-    const filtered = filter === 'all' ? gifts : gifts.filter(g => g.cat === filter);
     
+    let filtered = gifts;
+    if(filter === 'badges') filtered = gifts.filter(g => g.type === 'badge');
+    else if(filter !== 'all') filtered = gifts.filter(g => g.cat === filter || g.type === filter);
+
     filtered.forEach(g => {
         const qty = giftCart[g.id] || 0;
+        const isBadge = g.type === 'badge';
         const div = document.createElement("div");
         div.className = "gift-item";
         div.innerHTML = `
+            ${isBadge ? '<span class="badge-tag">نادرة</span>' : ''}
             <div class="gift-icon">${g.icon}</div>
             <div class="gift-name">${g.name}</div>
-            <div class="gift-info">${g.cat === 'pro' ? '+' + g.days + ' يوم' : '+' + g.xp + ' XP'}</div>
-            <div class="gift-price">${g.cost.toLocaleString()}</div>
+            <div class="gift-info">${g.type === 'badge' ? g.info : (g.days ? '+' + g.days + ' يوم' : '+' + g.xp + ' XP')}</div>
+            <div class="gift-price">${g.cost.toLocaleString()} كوينز</div>
             <div class="qty-controls">
                 <button class="qty-btn" onclick="updateQty(${g.id}, 1)">+</button>
                 <span class="qty-num" id="qty-${g.id}">${qty}</span>
@@ -215,14 +227,17 @@ function filterGifts(cat, el) {
 }
 
 function updateQty(id, change) {
+    const gift = gifts.find(g => g.id === id);
     let current = giftCart[id] || 0;
     let newVal = Math.max(0, current + change);
+    
+    // الشارات تشترى مرة واحدة فقط في كل عملية
+    if (gift.type === 'badge' && newVal > 1) newVal = 1;
+    
     if (newVal === 0) delete giftCart[id];
     else giftCart[id] = newVal;
     
-    if(document.getElementById(`qty-${id}`)) {
-        document.getElementById(`qty-${id}`).innerText = newVal;
-    }
+    if(document.getElementById(`qty-${id}`)) document.getElementById(`qty-${id}`).innerText = newVal;
     calculateTotal();
 }
 
@@ -232,19 +247,25 @@ function calculateTotal() {
         const gift = gifts.find(g => g.id == id);
         cost += gift.cost * giftCart[id];
         if (gift.cat === 'pro') days += gift.days * giftCart[id];
-        else xp += gift.xp * giftCart[id];
+        else if (gift.cat === 'xp' || gift.cat === 'luxury') xp += gift.xp * giftCart[id];
     }
     document.getElementById("total-cost-display").innerText = cost.toLocaleString();
     document.getElementById("total-xp-display").innerText = xp.toLocaleString();
     document.getElementById("total-pro-days").innerText = days;
-    
-    const canAfford = currentUserData.totalCoins >= cost;
-    document.getElementById("send-gift-btn").disabled = cost === 0 || !canAfford;
+    document.getElementById("send-gift-btn").disabled = cost === 0 || currentUserData.totalCoins < cost;
 }
 
 function selectSelf() {
-    selectedPlayer = { uid: currentUserId, displayName: "نفسك" };
-    document.getElementById("recipient-alert").innerText = "المستلم: أنت (تطوير حسابك)";
+    selectedPlayer = { uid: currentUserId, displayName: currentUserData.displayName };
+    updateRecipientUI(currentUserData);
+    document.getElementById("rec-name").innerText = "أنت (تطوير حسابك)";
+}
+
+function updateRecipientUI(data) {
+    const lvl = calculateLevel(data.xp || 0);
+    document.getElementById("rec-avatar").innerText = data.displayName[0].toUpperCase();
+    document.getElementById("rec-name").innerText = data.displayName;
+    document.getElementById("rec-stats").innerHTML = `المستوى: ${lvl} | XP: ${data.xp || 0} | شارات: ${(data.badges || []).length}`;
 }
 
 function setupSearch() {
@@ -261,15 +282,22 @@ function setupSearch() {
 
         resultsDiv.innerHTML = "";
         snap.forEach(doc => {
-            if (doc.id === currentUserId) return;
+            const data = doc.data();
+            const lvl = calculateLevel(data.xp || 0);
             const item = document.createElement("div");
             item.className = "search-item";
-            item.innerText = doc.data().displayName;
+            item.innerHTML = `
+                <div class="user-avatar" style="width:30px; height:30px; font-size:0.8rem;">${data.displayName[0]}</div>
+                <div>
+                    <div style="font-weight:bold; font-size:0.85rem;">${data.displayName}</div>
+                    <div style="font-size:0.65rem; color:#aaa;">Lvl: ${lvl} | XP: ${data.xp || 0}</div>
+                </div>
+            `;
             item.onclick = () => {
-                selectedPlayer = { uid: doc.id, displayName: doc.data().displayName };
-                document.getElementById("recipient-alert").innerText = `المستلم: ${doc.data().displayName}`;
-                input.value = "";
+                selectedPlayer = { uid: doc.id, ...data };
+                updateRecipientUI(data);
                 resultsDiv.innerHTML = "";
+                input.value = "";
             };
             resultsDiv.appendChild(item);
         });
@@ -279,10 +307,13 @@ function setupSearch() {
 async function processPurchase() {
     const overlay = document.getElementById("purchase-overlay");
     let totalCost = 0, totalXP = 0, totalDays = 0;
+    let badgesToGain = [];
+
     for (const id in giftCart) {
         const gift = gifts.find(g => g.id == id);
         totalCost += gift.cost * giftCart[id];
-        if (gift.cat === 'pro') totalDays += gift.days * giftCart[id];
+        if (gift.type === 'badge') badgesToGain.push(gift.icon);
+        else if (gift.cat === 'pro') totalDays += gift.days * giftCart[id];
         else totalXP += gift.xp * giftCart[id];
     }
 
@@ -299,6 +330,8 @@ async function processPurchase() {
 
         let updates = {};
         if (totalXP > 0) updates.xp = firebase.firestore.FieldValue.increment(totalXP);
+        if (badgesToGain.length > 0) updates.badges = firebase.firestore.FieldValue.arrayUnion(...badgesToGain);
+        
         if (totalDays > 0) {
             const recipientDoc = await recipientRef.get();
             const currentExpiry = recipientDoc.data().proExpiryTime || Date.now();
@@ -308,9 +341,10 @@ async function processPurchase() {
 
         batch.update(recipientRef, updates);
         await batch.commit();
-        setTimeout(() => location.href = "index.html", 1000);
+        
+        setTimeout(() => location.href = "index.html", 1500);
     } catch (e) {
-        alert("خطأ في الاتصال!");
+        alert("فشل في إتمام العملية الملكية!");
         overlay.style.display = "none";
     }
 }
