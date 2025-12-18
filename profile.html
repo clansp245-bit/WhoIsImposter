@@ -1,371 +1,221 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>👤 ملفي الشخصي</title>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="auth.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👤 ملفي الشخصي</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    <script src="auth.js"></script>
 
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-<style>
-/* ... (التنسيقات الأصلية تبقى كما هي) ... */
-body{font-family:'Cairo',sans-serif;background:#0f172a;color:#f1f5f9;text-align:center;padding:20px}
-h2 { color:#34d399; }
-.card{background:#1e293b;padding:25px;border-radius:12px;max-width:450px;margin:20px auto;text-align:right;}
-.info-item{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #334155;font-weight:700;}
-input,button{width:100%;padding:12px;border-radius:8px;border:none;font-family:'Cairo'}
-input{background:#334155;color:white;margin-bottom:10px}
-button{background:#34d399;color:white;font-weight:700;cursor:pointer}
-button:disabled{background:#475569}
-#error{margin-top:10px;min-height:20px;text-align:center;}
+    <style>
+        :root {
+            --primary: #6366f1;
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --bg-body: #0a0f1e;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f1f5f9;
+            --gold: #ffd700;
+        }
 
-/* تعديل عرض الـ UID مع زر النسخ */
-.uid-container {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end; /* لجعله يبدأ من اليمين */
-    gap: 10px;
-    direction: ltr; /* لضمان عرض الـ UID من اليسار لليمين */
-}
-#publicUid {
-    direction: ltr; 
-    font-size: 0.9rem;
-    color: #ffd700;
-}
-.copy-btn {
-    background: none;
-    border: none;
-    color: #94a3b8;
-    cursor: pointer;
-    padding: 0;
-    width: 20px;
-}
-.copy-btn:hover {
-    color: #34d399;
-}
-/* التنسيقات الجديدة للهدايا */
-.gifts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 15px;
-    margin-top: 20px;
-    text-align: center;
-}
-.gift-icon {
-    background: #334155;
-    padding: 10px;
-    border-radius: 8px;
-    font-size: 2rem;
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.2s;
-}
-.gift-icon:hover {
-    transform: translateY(-3px);
-}
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-body);
+            background-image: radial-gradient(circle at top right, #1e1b4b, transparent);
+            color: var(--text-main);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-.gift-icon.locked {
-    filter: grayscale(100%) opacity(50%);
-}
-.gift-icon.unlocked {
-    border: 2px solid #34d399;
-}
-.gift-icon.unlocked .count {
-    background: #34d399;
-    color: #0f172a;
-    border-radius: 50%;
-    padding: 2px 6px;
-    font-size: 0.7rem;
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    font-weight: 700;
-}
-.gift-icon.unlocked .best-sender {
-    font-size: 0.6rem;
-    color: #facc15;
-    display: block;
-    margin-top: 5px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-</style>
+        /* تصميم قسم الصورة الشخصية */
+        .profile-avatar-section {
+            position: relative;
+            margin-bottom: 25px;
+        }
+
+        .avatar-wrapper {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: var(--accent-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 4px solid var(--card-bg);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .avatar-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-wrapper i {
+            font-size: 4rem;
+            color: white;
+        }
+
+        .change-photo-btn {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background: var(--primary);
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 3px solid var(--bg-body);
+            transition: 0.3s;
+        }
+
+        .change-photo-btn:hover { transform: scale(1.1); }
+
+        /* البطاقات وباقي العناصر */
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            padding: 25px;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 480px;
+            border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+
+        .info-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .uid-container { display: flex; gap: 8px; background: rgba(0,0,0,0.2); padding: 5px 12px; border-radius: 10px; font-family: monospace; }
+        
+        #file-input { display: none; }
+        .loading-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.6);
+            display: none; align-items: center; justify-content: center; font-size: 0.8rem;
+        }
+    </style>
 </head>
 
-<body>
+<body onload="initProfile()">
 
-<h2>👤 الملف الشخصي</h2>
+<h2>👤 ملفي الشخصي</h2>
+
+<div class="profile-avatar-section">
+    <div class="avatar-wrapper" id="avatar-container">
+        <div class="loading-overlay" id="upload-loader"><i class="fas fa-spinner fa-spin"></i></div>
+        <i class="fas fa-user" id="default-icon"></i>
+        <img id="user-photo" src="" style="display: none;">
+    </div>
+    <label for="file-input" class="change-photo-btn">
+        <i class="fas fa-camera" style="font-size: 0.9rem;"></i>
+    </label>
+    <input type="file" id="file-input" accept="image/*" onchange="uploadPhoto(event)">
+</div>
 
 <div class="card">
-    <div class="info-item"><span>البريد</span><span id="email">...</span></div>
-    
+    <div class="info-item"><span>اسم المستخدم</span><span id="display-name">...</span></div>
     <div class="info-item">
-        <span>Public UID</span>
+        <span>معرف اللاعب</span>
         <div class="uid-container">
-            <span id="publicUid">...</span>
-            <button class="copy-btn" onclick="copyPublicUid()">
-                <i class="fas fa-copy"></i>
-            </button>
+            <span id="publicUid" style="color: var(--gold);">---</span>
+            <i class="fas fa-copy" onclick="copyUID()" style="cursor:pointer"></i>
         </div>
     </div>
-    
-    <div class="info-item"><span>المستوى</span><span id="level">...</span></div>
-    <div class="info-item"><span>XP</span><span id="xp">...</span></div>
-    <div class="info-item"><span>الحالة</span><span id="status">...</span></div>
-    <div class="info-item"><span>الكوينز</span><span id="coins">...</span></div>
+    <div class="info-item"><span>الرصيد</span><span id="coins" style="color: var(--gold);">0 كوينز</span></div>
 </div>
 
-<div class="card">
-    <h3>مجموعة هدايا <i class="fas fa-box-open"></i></h3>
-    <p style="color:#94a3b8; font-size:0.9rem;">الهدايا التي تلقيتها</p>
-    <div id="gifts-collection-container" class="gifts-grid">
-        جاري تحميل الهدايا...
-    </div>
-</div>
-
-<div class="card">
-    <h3>تغيير اسم العرض</h3>
-    <p id="costText" style="color:#facc15;font-weight:700"></p>
-    <input id="nameInput" disabled placeholder="اسم العرض الجديد">
-    <button id="saveBtn" disabled>حفظ التغيير</button>
-    <div id="error"></div>
-</div>
-
-<button onclick="location.href='index.html'" style="background:#6366f1;max-width:450px;width:100%">
-    العودة <i class="fas fa-arrow-right"></i>
+<button class="card" onclick="location.href='index.html'" style="background: var(--primary); text-align: center; font-weight: 900; color: white; cursor: pointer;">
+    العودة للرئيسية
 </button>
 
 <script>
-let userData=null;
-let isSaving=false;
-const BASE_COST=500;
-const GIFTS_DEFINITION = [ /* ... (قائمة الهدايا تبقى كما هي) ... */
-    {name:"وردة", icon:"🌹"},
-    {name:"قلم ذهبي", icon:"🖋️"},
-    {name:"سيارة سباق", icon:"🏎️"},
-    {name:"طائرة خاصة", icon:"✈️"},
-    {name:"يخت فاخر", icon:"🛥️"},
-    {name:"مجوهرات", icon:"💎"},
-    {name:"كتاب سحري", icon:"📖"},
-    {name:"تاج ملكي", icon:"👑"}
-];
+let currentUser;
 
-const nameInput=document.getElementById("nameInput");
-const saveBtn=document.getElementById("saveBtn");
-const errorBox=document.getElementById("error");
-const costText=document.getElementById("costText");
-
-// 🚨 دالة النسخ الجديدة
-function copyPublicUid() {
-    const uid = document.getElementById("publicUid").innerText;
-    navigator.clipboard.writeText(uid)
-        .then(() => {
-            errorBox.innerText = "✅ تم نسخ الـ UID!";
-            errorBox.style.color = "#22c55e";
-            setTimeout(() => { errorBox.innerText = ""; }, 3000);
-        })
-        .catch(err => {
-            console.error('فشل النسخ:', err);
-            errorBox.innerText = "❌ فشل النسخ";
-            errorBox.style.color = "#ef4444";
-        });
-}
-
-// 🚨 تحديث الدالة: لن نحتاج لـ generateUniquePublicUid هنا بعد الآن، فقط في auth.js
-// ولكن يجب التأكد من وجود دالة isPro/isProUser في auth.js 
-function isProUser(data) {
-    const expiry = data?.proExpiryTime || 0;
-    return expiry > Date.now();
-}
-
-
-/* ---------------- GIFT RENDERING ---------------- */
-
-async function loadGiftsData() {
-    const user = firebase.auth().currentUser;
-    if (!user) return {};
-
-    const receivedGifts = userData.receivedGifts || {};
-    
-    const senderUids = new Set();
-    for (const index in receivedGifts) {
-        const senders = receivedGifts[index].senders || {};
-        const maxSenderUid = Object.keys(senders).reduce((a, b) => senders[a] > senders[b] ? a : b, null);
-        if (maxSenderUid) senderUids.add(maxSenderUid);
-    }
-
-    const senderNames = {};
-    if (senderUids.size > 0) {
-        // 🚨 استخدام دالة getDisplayNamesByUids من auth.js
-        const namesMap = await getDisplayNamesByUids(Array.from(senderUids)); 
-        Object.assign(senderNames, namesMap);
-    }
-    
-    return { receivedGifts, senderNames };
-}
-
-async function renderGifts() {
-    const container = document.getElementById("gifts-collection-container");
-    container.innerHTML = 'جاري تحميل الهدايا...';
-    
-    try {
-        const { receivedGifts, senderNames } = await loadGiftsData();
-        container.innerHTML = '';
+async function initProfile() {
+    firebase.auth().onAuthStateChanged(async user => {
+        if (!user) return window.location.href = "auth.html";
+        currentUser = user;
         
-        GIFTS_DEFINITION.forEach((gift, index) => {
-            const giftData = receivedGifts[index];
-            const unlocked = !!giftData && (giftData.count || 0) > 0;
-            
-            const div = document.createElement('div');
-            div.className = `gift-icon ${unlocked ? 'unlocked' : 'locked'}`;
-            div.setAttribute('title', gift.name);
-            
-            let bestSenderName = 'لا يوجد';
-            if (unlocked) {
-                bestSenderName = getBestSenderName(giftData.senders, senderNames);
-            }
-            
-            div.innerHTML = `
-                ${gift.icon}
-                ${unlocked ? `<span class="count">${giftData.count}</span>` : ''}
-                ${unlocked ? `<span class="best-sender">من: ${bestSenderName}</span>` : ''}
-            `;
-            container.appendChild(div);
-        });
+        // جلب البيانات من Firestore
+        const userData = await loadUserData(); // دالة من ملف auth.js الخاص بك
         
-        if (GIFTS_DEFINITION.length === 0) {
-            container.innerHTML = "<p style='color:#94a3b8;'>لا توجد هدايا محددة بعد.</p>";
-        }
+        document.getElementById('display-name').innerText = user.displayName || "لاعب مجهول";
+        document.getElementById('publicUid').innerText = userData.publicUid || "---";
+        document.getElementById('coins').innerText = (userData.totalCoins || 0) + " كوينز";
 
-    } catch (error) {
-        console.error("فشل عرض الهدايا:", error);
-        container.innerHTML = "<p style='color:#ef4444;'>خطأ في تحميل بيانات الهدايا.</p>";
+        // عرض الصورة الشخصية إذا وجدت
+        updateAvatarUI(user.photoURL);
+    });
+}
+
+function updateAvatarUI(url) {
+    const img = document.getElementById('user-photo');
+    const icon = document.getElementById('default-icon');
+    if (url) {
+        img.src = url;
+        img.style.display = 'block';
+        icon.style.display = 'none';
+    } else {
+        img.style.display = 'none';
+        icon.style.display = 'block';
     }
 }
 
-function getBestSenderName(senders, senderNames) {
-    if (!senders || Object.keys(senders).length === 0) return 'غير معروف';
+async function uploadPhoto(event) {
+    const file = event.target.files[0];
+    if (!file) return;
 
-    const maxSenderUid = Object.keys(senders).reduce((a, b) => senders[a] > senders[b] ? a : b);
-    
-    // إذا كان المرسل هو المستخدم نفسه، لا تعرض الاسم
-    if (maxSenderUid === firebase.auth().currentUser.uid) {
-        return 'نفسك';
-    }
-    
-    return senderNames[maxSenderUid] || 'مستخدم مجهول';
-}
-
-/* ---------------- AUTH LOAD ---------------- */
-
-firebase.auth().onAuthStateChanged(async user=>{
-    if(!user) return location.href="auth.html";
-
-    // 🚨 لا نحتاج لإنشاء UID هنا، بل نعتمد على auth.js لجلب أو إنشاء Public UID
-    userData=await loadUserData();
-    if(!userData){ errorBox.innerText="فشل تحميل البيانات"; return; }
-
-    // عرض بيانات البروفايل
-    document.getElementById("email").innerText=user.email;
-    document.getElementById("publicUid").innerText=userData.publicUid||"غير محدد"; // 🚨 عرض Public UID
-    document.getElementById("level").innerText=userData.level||1;
-    document.getElementById("xp").innerText=userData.xp||0;
-    document.getElementById("coins").innerText=userData.totalCoins||0;
-
-    const isPro = isProUser(userData);
-    document.getElementById("status").innerText=isPro?"Pro 👑":"عادي";
-
-    nameInput.value=user.displayName||user.email.split("@")[0];
-    nameInput.disabled=false;
-
-    await updateCost(isPro);
-    validate();
-    
-    await renderGifts();
-});
-
-/* ---------------- NAME CHANGE ---------------- */
-
-nameInput.addEventListener("input",validate);
-
-function validate(){
-    const current=nameInput.value.trim();
-    const original=firebase.auth().currentUser.displayName||firebase.auth().currentUser.email.split("@")[0];
-    saveBtn.disabled=isSaving||current.length<3||current===original;
-}
-
-async function isNameAvailable(name){
-    // 🚨 التأكد من البحث عن الاسم وعدم تضارب الـ Public UID
-    if (name.toUpperCase().startsWith("IMP-")) return false; // لا يمكن اختيار اسم يبدأ بـ Public UID
-    
-    const snap=await firebase.firestore()
-        .collection("users")
-        .where("displayName","==",name)
-        .limit(1).get();
-    return snap.empty||snap.docs[0].id===firebase.auth().currentUser.uid;
-}
-
-async function updateCost(isPro){
-    if(!userData.hasChangedNameBefore){
-        costText.innerText="🎉 أول تغيير مجاني";
-        userData.finalCost=0;
+    // التحقق من الحجم (اختياري - مثلاً أقل من 2 ميجا)
+    if (file.size > 2 * 1024 * 1024) {
+        alert("الصورة كبيرة جداً، اختر صورة أقل من 2 ميجابايت");
         return;
     }
-    userData.finalCost=BASE_COST;
-    costText.innerText=`💰 تكلفة التغيير: ${BASE_COST} كوينز`;
+
+    const loader = document.getElementById('upload-loader');
+    loader.style.display = 'flex';
+
+    try {
+        // 1. التخزين في Firebase Storage
+        const storageRef = firebase.storage().ref(`avatars/${currentUser.uid}`);
+        await storageRef.put(file);
+        const downloadURL = await storageRef.getDownloadURL();
+
+        // 2. تحديث ملف التعريف في Auth
+        await currentUser.updateProfile({ photoURL: downloadURL });
+
+        // 3. تحديث الرابط في Firestore ليكون دائماً متاحاً
+        await db.collection('users').doc(currentUser.uid).update({
+            photoURL: downloadURL
+        });
+
+        updateAvatarUI(downloadURL);
+        alert("تم تحديث الصورة بنجاح!");
+    } catch (error) {
+        console.error(error);
+        alert("فشل رفع الصورة: " + error.message);
+    } finally {
+        loader.style.display = 'none';
+    }
 }
 
-saveBtn.onclick=async()=>{
-    if(isSaving) return;
-    isSaving=true; saveBtn.disabled=true; errorBox.innerText="";
-
-    const user=firebase.auth().currentUser;
-    const newName=nameInput.value.trim();
-
-    if(!(await isNameAvailable(newName))){
-        errorBox.innerText="❌ الاسم مستخدم بالفعل أو محجوز (لا يمكن أن يبدأ بـ IMP-)";
-        isSaving=false; validate(); return;
-    }
-
-    if(userData.totalCoins<userData.finalCost){
-        errorBox.innerText="❌ كوينز غير كافية للتغيير";
-        isSaving=false; validate(); return;
-    }
-
-    try{
-        // 1. تحديث الاسم في Firebase Auth
-        await user.updateProfile({displayName:newName});
-        const newCoins=userData.totalCoins-userData.finalCost;
-
-        // 2. تحديث الحقول الضرورية في Firestore باستخدام merge: true
-        // (سيتم تحديث displayName، totalCoins، hasChangedNameBefore فقط)
-        await firebase.firestore().collection("users").doc(user.uid).set({
-            displayName:newName,
-            totalCoins:newCoins,
-            hasChangedNameBefore:true,
-            lastUpdated: firebase.firestore.FieldValue.serverTimestamp() // مهم للقواعد
-        },{merge:true});
-
-        // 3. تحديث البيانات المحلية
-        userData.totalCoins=newCoins;
-        userData.hasChangedNameBefore=true;
-        document.getElementById("coins").innerText=newCoins;
-        errorBox.innerText="✅ تم الحفظ وتغيير الاسم";
-        errorBox.style.color="#22c55e";
-    }catch(e){
-        errorBox.innerText="❌ خطأ أثناء الحفظ (قد تكون مشكلة في قواعد الأمان)";
-        errorBox.style.color="#ef4444";
-        console.error("خطأ تغيير الاسم:", e);
-    }
-    isSaving=false; validate();
-};
+function copyUID() {
+    const uid = document.getElementById('publicUid').innerText;
+    navigator.clipboard.writeText(uid);
+    alert("تم نسخ المعرف!");
+}
 </script>
-
 </body>
 </html>
+
