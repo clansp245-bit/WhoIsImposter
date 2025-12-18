@@ -214,7 +214,7 @@
     </div>
 
 <script>
-    let uData = null;
+      let uData = null;
     const XP_PER_LVL = 1000;
     const MAX_LVL = 30;
 
@@ -290,7 +290,7 @@
         {n: "شارة السيزون (ذهبية)", v: "gold_s_badge", t: "badge", i: "fa-regular fa-1", color: "#fbbf24"} 
     ];
 
-    // بنك المهام (بصيغة مختصرة)
+    // بنك المهام
     const TASK_BANK = [
         { t: "جمع 1000 كوينز", g: 1000, xp: 500, k: "totalCoins" },
         { t: "لعب 3 مباريات", g: 3, xp: 600, k: "s_matches" },
@@ -311,8 +311,6 @@
             db.collection('users').doc(user.uid).onSnapshot(doc => {
                 uData = doc.data();
                 
-                // --- إصلاح المشكلة هنا ---
-                // نتحقق إذا كانت المهام غير موجودة، أو إذا كانت موجودة ولكن بالتنسيق القديم (لا تحتوي على t)
                 const needsFix = !uData.active_tasks || (uData.active_tasks.length > 0 && !uData.active_tasks[0].t);
                 
                 if (needsFix) {
@@ -326,7 +324,6 @@
     }
 
     async function generateNewTasks(uid) {
-        // نضع 3 مهام جديدة بالتنسيق الصحيح
         await db.collection('users').doc(uid).update({ 
             active_tasks: TASK_BANK.slice(0, 3),
             s_claimed: uData?.s_claimed || [] 
@@ -357,7 +354,6 @@
             const premItem = PREM_REWARDS_MAP[i];
             
             let freeHtml = '';
-            // إذا كان المستخدم بريميوم ووصل لفل 30، استبدل الصندوق الفضي
             if (i === 30 && uData.s_premium) {
                 freeHtml = `
                 <div class="reward-box" style="justify-content:center; opacity:0.5; border-style:dashed;">
@@ -379,7 +375,6 @@
         
         if(uData.active_tasks && uData.active_tasks.length > 0) {
             uData.active_tasks.forEach((task, idx) => {
-                // حماية إضافية في حال وجود بيانات تالفة
                 if(!task || !task.t) return;
 
                 const currentVal = uData[task.k] || 0;
@@ -518,6 +513,7 @@
 
     function openModal(id) { document.getElementById(id+'-modal').style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id+'-modal').style.display = 'none'; }
+
 </script>
 
 </body>
