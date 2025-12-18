@@ -22,20 +22,17 @@
             --text-main: #f1f5f9;
             --text-dim: #94a3b8;
             --gold: #ffd700;
-            --success: #10b981;
+            --pro-color: #f472b6;
+            --tool-color: #38bdf8;
         }
 
         body {
             font-family: 'Cairo', sans-serif;
             background-color: var(--bg-body);
-            background-image: radial-gradient(circle at top right, #1e1b4b, transparent), radial-gradient(circle at bottom left, #1e1b4b, transparent);
+            background-image: radial-gradient(circle at top right, #1e1b4b, transparent);
             color: var(--text-main);
-            padding: 10px;
-            min-height: 100vh;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            padding: 10px; margin: 0;
+            display: flex; flex-direction: column; align-items: center;
         }
 
         .top-info-bar { width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -43,160 +40,116 @@
 
         .card {
             background: var(--card-bg); backdrop-filter: blur(15px); padding: 15px; border-radius: 20px;
-            width: 100%; max-width: 500px; border: 1px solid rgba(255,255,255,0.1); text-align: right; box-sizing: border-box; margin-bottom: 12px;
+            width: 100%; max-width: 500px; border: 1px solid rgba(255,255,255,0.1); box-sizing: border-box; margin-bottom: 12px;
         }
 
-        .search-container { position: relative; flex-grow: 1; }
-        input[type="text"] { width: 100%; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 10px; color: white; font-family: 'Cairo'; }
-        
-        .search-results { position: absolute; background: #1e293b; width: 100%; z-index: 100; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); top: 45px; overflow: hidden; border: 1px solid var(--primary); }
-        .search-item { padding: 10px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
-
-        .recipient-profile {
-            display: flex; align-items: center; gap: 12px; background: rgba(99, 102, 241, 0.1);
-            padding: 10px; border-radius: 15px; border: 1px dashed var(--primary); margin-top: 10px;
-        }
-        .user-avatar { width: 40px; height: 40px; background: var(--accent-gradient); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: 900; }
-
-        .tabs { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; width: 100%; max-width: 500px; scrollbar-width: none; }
+        /* Tabs */
+        .tabs { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; width: 100%; max-width: 500px; scrollbar-width: none; }
         .tab { padding: 8px 15px; background: rgba(255,255,255,0.05); border-radius: 20px; cursor: pointer; white-space: nowrap; font-weight: 700; font-size: 0.8rem; }
         .tab.active { background: var(--primary); color: white; }
 
-        .gifts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; }
+        /* Gifts Grid */
+        .gifts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%; }
         .gift-item { 
             background: rgba(255, 255, 255, 0.03); padding: 15px 5px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.05);
-            display: flex; flex-direction: column; align-items: center; text-align: center;
+            display: flex; flex-direction: column; align-items: center; text-align: center; position: relative;
         }
         
         .gift-icon-container { 
-            width: 60px; height: 60px; border-radius: 15px; background: rgba(255,255,255,0.05);
-            display: flex; justify-content: center; align-items: center; font-size: 1.8rem; margin-bottom: 10px;
+            width: 65px; height: 65px; border-radius: 20px; background: rgba(255,255,255,0.05);
+            display: flex; justify-content: center; align-items: center; font-size: 2rem; margin-bottom: 10px;
         }
-        .badge-icon { color: var(--gold); text-shadow: 0 0 15px var(--gold); }
-        .normal-icon { font-size: 2.2rem; }
 
-        .gift-name { font-weight: 700; font-size: 0.85rem; }
-        .gift-info { font-size: 0.7rem; color: var(--text-dim); margin-bottom: 5px; }
-        .gift-price { color: var(--gold); font-weight: 900; font-size: 0.85rem; }
+        /* تلوين الأيقونات */
+        .badge-icon { color: var(--gold); text-shadow: 0 0 10px rgba(255,215,0,0.3); }
+        .tool-icon { color: var(--tool-color); }
+        .pro-exclusive-tag { 
+            position: absolute; top: 5px; left: 5px; background: var(--pro-color); 
+            color: white; font-size: 0.6rem; padding: 2px 6px; border-radius: 5px; font-weight: 900;
+        }
 
-        .qty-controls { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.4); padding: 4px 10px; border-radius: 8px; margin-top: 8px; }
-        .qty-btn { width: 25px; height: 25px; border: none; background: var(--primary); color: white; border-radius: 5px; cursor: pointer; font-weight: 900; }
+        .gift-name { font-weight: 900; font-size: 0.9rem; color: #fff; }
+        .gift-price { color: var(--gold); font-weight: 900; font-size: 0.85rem; margin-top: 5px; }
 
-        #cart-summary { background: rgba(16, 185, 129, 0.05); padding: 12px; border-radius: 15px; margin-top: 10px; border: 1px solid var(--success); text-align: center; }
-        .send-btn { width: 100%; padding: 15px; border-radius: 15px; border: none; background: var(--accent-gradient); color: white; font-weight: 900; font-size: 1.1rem; cursor: pointer; margin-top: 10px; }
-        .send-btn:disabled { opacity: 0.3; }
+        .qty-controls { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+        .qty-btn { width: 28px; height: 28px; border: none; background: var(--primary); color: white; border-radius: 8px; cursor: pointer; font-weight: 900; }
 
-        #purchase-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; display: none; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
+        .send-btn { width: 100%; padding: 15px; border-radius: 15px; border: none; background: var(--accent-gradient); color: white; font-weight: 900; cursor: pointer; margin-top: 15px; }
+        .send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        #purchase-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; display: none; flex-direction: column; justify-content: center; align-items: center; }
     </style>
 </head>
 
 <body onload="initGiftPage()">
 
 <div class="top-info-bar">
-    <a href="index.html" style="color: var(--text-dim); text-decoration: none;"><i class="fas fa-chevron-right"></i> رجوع</a>
+    <a href="index.html" style="color: var(--text-dim); text-decoration: none;"><i class="fas fa-chevron-right"></i></a>
     <div id="coins-display"><i class="fas fa-coins"></i> <span id="user-coins">0</span></div>
 </div>
 
-<h2 style="font-weight: 900; color: var(--gold); text-align: center;">🔱 المتجر الملكي الأسطوري</h2>
+<h2 style="font-weight: 900; color: #fff;">💎 المتجر الملكي</h2>
 
 <div class="card">
-    <div style="display: flex; gap: 8px; align-items: center;">
-        <button id="self-gift-btn" onclick="selectSelf()" style="padding: 10px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 900; cursor: pointer;">نفسي</button>
-        <div class="search-container">
-            <input type="text" id="player-search" placeholder="ابحث عن صديق...">
-            <div id="search-results" class="search-results"></div>
-        </div>
-    </div>
-    
-    <div id="recipient-profile-box" class="recipient-profile">
-        <div class="user-avatar" id="rec-avatar"><i class="fas fa-user"></i></div>
-        <div style="flex-grow: 1;">
-            <div id="rec-name" style="font-weight: 900;">اختر المستلم</div>
-            <div id="rec-stats" style="font-size: 0.65rem; color: var(--text-dim);">اكتشف أصدقاء جدد وأرسل الهدايا</div>
-        </div>
-    </div>
+    <input type="text" id="player-search" placeholder="ابحث عن صديق بالاسم..." style="width: 100%; padding: 12px; border-radius: 10px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; font-family: 'Cairo';">
+    <div id="rec-info" style="margin-top: 10px; font-size: 0.8rem; color: var(--primary); font-weight: bold;">المستلم: <span id="rec-name">نفسي</span></div>
 </div>
 
 <div class="tabs">
     <div class="tab active" onclick="filterGifts('all', this)">الكل</div>
-    <div class="tab" onclick="filterGifts('badges', this)">شارات نادرة</div>
-    <div class="tab" onclick="filterGifts('simple', this)">هدايا بسيطة</div>
-    <div class="tab" onclick="filterGifts('luxury', this)">هدايا ملكية</div>
-    <div class="tab" onclick="filterGifts('pro', this)">عضوية Pro</div>
+    <div class="tab" onclick="filterGifts('tools', this)">بطاقات الأدوات</div>
+    <div class="tab" onclick="filterGifts('badges', this)">شارات</div>
+    <div class="tab" onclick="filterGifts('pro', this)">هدايا البرو 🔥</div>
 </div>
 
-<div class="card" style="padding: 10px;">
+<div class="card">
     <div id="gifts-container" class="gifts-grid"></div>
-    
-    <div id="cart-summary">
-        <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
-            <span>XP: <b id="total-xp-display" style="color:var(--success)">0</b></span>
-            <span>برو: <b id="total-pro-days" style="color:var(--primary)">0</b> يوم</span>
-        </div>
-        <div style="font-weight: 900; font-size: 1.1rem; margin-top: 5px; color: var(--gold);">الإجمالي: <span id="total-cost-display">0</span> كوينز</div>
+    <div style="text-align: center; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+        <span style="color: var(--text-dim)">الإجمالي:</span>
+        <span id="total-cost" style="color: var(--gold); font-weight: 900; font-size: 1.2rem;">0</span>
     </div>
-
-    <button class="send-btn" id="send-gift-btn" disabled onclick="processPurchase()">تأكيد وإرسال <i class="fas fa-paper-plane"></i></button>
+    <button class="send-btn" id="send-btn" disabled onclick="processPurchase()">تأكيد الشراء</button>
 </div>
 
 <div id="purchase-overlay">
-    <i class="fas fa-gem fa-beat" style="font-size: 4rem; color: var(--gold);"></i>
-    <h3 style="color: white; margin-top: 20px;">جاري معالجة الكنوز...</h3>
+    <i class="fas fa-spinner fa-spin" style="font-size: 3rem; color: var(--primary);"></i>
+    <p>جاري تنفيذ الطلب...</p>
 </div>
 
 <script>
 let currentUserData = {};
-let selectedPlayer = { uid: null, displayName: "نفسك" }; 
-let giftCart = {}; 
-let currentUserId = null;
+let selectedPlayerUid = null;
+let cart = {};
 
 const gifts = [
-    // --- الشارات (Badges) - تستخدم أيقونات Font Awesome ---
-    {id: 100, name:"الأسطورة", cost:10000, type: 'badges', icon:"fas fa-shield-halved", isBadge: true, info: "تظهر للأبد"},
-    {id: 101, name:"الإمبراطور", cost:8500, type: 'badges', icon:"fas fa-crown", isBadge: true, info: "سيادة مطلقة"},
-    {id: 102, name:"التنين", cost:7000, type: 'badges', icon:"fas fa-dragon", isBadge: true, info: "قوة نارية"},
-    {id: 103, name:"المحارب", cost:5500, type: 'badges', icon:"fas fa-hand-fist", isBadge: true, info: "شجاعة"},
-    {id: 104, name:"الماسة", cost:4000, type: 'badges', icon:"fas fa-gem", isBadge: true, info: "لمعان ملكي"},
-    {id: 105, name:"البرق", cost:2500, type: 'badges', icon:"fas fa-bolt", isBadge: true, info: "سرعة"},
-    {id: 106, name:"النجم", cost:1500, type: 'badges', icon:"fas fa-star", isBadge: true, info: "نجم ساطع"},
-    {id: 107, name:"المحبة", cost:1000, type: 'badges', icon:"fas fa-heart", isBadge: true, info: "قلب ذهبي"},
+    // --- بطاقات الأدوات (الجديدة) ---
+    {id: 50, name:"بطاقة تغيير الاسم", cost:500, cat:"tools", icon:"fas fa-id-card", isTool: true},
+    {id: 51, name:"بطاقة تغيير ID", cost:1000000, cat:"tools", icon:"fas fa-fingerprint", isTool: true},
 
-    // --- هدايا واشتراكات (تستخدم إيموجي) ---
-    {id: 1, name:"وردة", cost:50, xp:25, icon:"🌹", cat: 'simple'},
-    {id: 2, name:"بيتزا", cost:200, xp:110, icon:"🍕", cat: 'simple'},
-    {id: 3, name:"ساعة", cost:500, xp:300, icon:"⌚", cat: 'simple'},
-    {id: 4, name:"حقيبة", cost:1000, xp:650, icon:"💼", cat: 'simple'},
-    {id: 5, name:"برجر", cost:150, xp:80, icon:"🍔", cat: 'simple'},
-    {id: 6, name:"آيس كريم", cost:80, xp:40, icon:"🍦", cat: 'simple'},
-    {id: 7, name:"لابتوب", cost:3000, xp:1500, icon:"💻", cat: 'simple'},
-    {id: 8, name:"هاتف", cost:2000, xp:1200, icon:"📱", cat: 'simple'},
+    // --- هدايا البرو الحصرية ---
+    {id: 60, name:"التاج الملكي", cost:5000, cat:"pro", icon:"fas fa-crown", proOnly: true, xp: 2000},
+    {id: 61, name:"سيارة ذهبية", cost:15000, cat:"pro", icon:"fas fa-car-side", proOnly: true, xp: 7000},
+    {id: 62, name:"خاتم الألماس", cost:3000, cat:"pro", icon:"fas fa-ring", proOnly: true, xp: 1200},
 
-    {id: 20, name:"خاتم", cost:5000, xp:3000, icon:"💍", cat: 'luxury'},
-    {id: 21, name:"سيارة", cost:15000, xp:10000, icon:"🏎️", cat: 'luxury'},
-    {id: 22, name:"طائرة", cost:50000, xp:35000, icon:"✈️", cat: 'luxury'},
-    {id: 23, name:"قصر", cost:150000, xp:110000, icon:"🏰", cat: 'luxury'},
-    {id: 24, name:"جزيرة", cost:500000, xp:400000, icon:"🏝️", cat: 'luxury'},
-    {id: 25, name:"كوكب", cost:1000000, xp:850000, icon:"🪐", cat: 'luxury'},
+    // --- الشارات (Badges) ---
+    {id: 100, name:"الأسطورة", cost:10000, cat:"badges", icon:"fas fa-shield-halved", isBadge: true},
+    {id: 101, name:"التنين", cost:7000, cat:"badges", icon:"fas fa-dragon", isBadge: true},
+    {id: 102, name:"المحارب", cost:5000, cat:"badges", icon:"fas fa-hand-fist", isBadge: true},
 
-    {id: 30, name:"برو أسبوع", cost:150, days: 7, icon:"⭐", cat: 'pro'},
-    {id: 31, name:"برو شهر", cost:450, days: 30, icon:"🏆", cat: 'pro'},
-    {id: 32, name:"برو سنة", cost:2414, days: 365, icon:"👑", cat: 'pro'}
+    // --- الهدايا العادية ---
+    {id: 1, name:"وردة", cost:50, cat:"all", icon:"🌹", xp: 20},
+    {id: 2, name:"قلب", cost:100, cat:"all", icon:"❤️", xp: 50},
+    {id: 7, name:"لابتوب", cost:3000, cat:"all", icon:"💻", xp: 1500}
 ];
 
-function calculateLevel(xp) { return Math.floor(Math.sqrt(xp / 100)) + 1; }
-
 async function initGiftPage() {
-    renderGifts('all');
     firebase.auth().onAuthStateChanged(async user => {
-        if(!user) return window.location.href="auth.html";
-        currentUserId = user.uid; 
-        const data = await loadUserData();
-        if(data) {
-            currentUserData = data;
-            document.getElementById("user-coins").innerText = (data.totalCoins || 0).toLocaleString();
-            selectSelf();
-            setupSearch();
-        }
+        if(!user) return;
+        selectedPlayerUid = user.uid;
+        const doc = await firebase.firestore().collection('users').doc(user.uid).get();
+        currentUserData = doc.data();
+        document.getElementById("user-coins").innerText = currentUserData.totalCoins.toLocaleString();
+        renderGifts('all');
     });
 }
 
@@ -204,35 +157,55 @@ function renderGifts(filter) {
     const container = document.getElementById("gifts-container");
     container.innerHTML = '';
     
-    // حل مشكلة الفلترة: التحقق من cat و type
-    let filtered = gifts;
-    if(filter !== 'all') {
-        filtered = gifts.filter(g => g.cat === filter || g.type === filter);
-    }
-
-    filtered.forEach(g => {
-        const qty = giftCart[g.id] || 0;
+    gifts.forEach(g => {
+        if(filter !== 'all' && g.cat !== filter) return;
+        
+        const isPro = (currentUserData.proExpiryTime || 0) > Date.now();
         const div = document.createElement("div");
         div.className = "gift-item";
         
-        // التعديل: الشارة فقط تظهر كأيقونة
-        const iconHTML = g.isBadge 
-            ? `<i class="${g.icon} badge-icon"></i>` 
-            : `<span class="normal-icon">${g.icon}</span>`;
-
+        let iconContent = g.icon.startsWith('fas') ? `<i class="${g.icon} ${g.isBadge ? 'badge-icon' : 'tool-icon'}"></i>` : `<span>${g.icon}</span>`;
+        
         div.innerHTML = `
-            <div class="gift-icon-container">${iconHTML}</div>
+            ${g.proOnly ? '<span class="pro-exclusive-tag">PRO فقط</span>' : ''}
+            <div class="gift-icon-container">${iconContent}</div>
             <div class="gift-name">${g.name}</div>
-            <div class="gift-info">${g.isBadge ? g.info : (g.days ? '+' + g.days + ' يوم' : '+' + g.xp + ' XP')}</div>
-            <div class="gift-price">${g.cost.toLocaleString()} <i class="fas fa-coins" style="font-size:0.7rem"></i></div>
+            <div class="gift-price">${g.cost.toLocaleString()} كوينز</div>
             <div class="qty-controls">
-                <button class="qty-btn" onclick="updateQty(${g.id}, 1)">+</button>
-                <span class="qty-num" id="qty-${g.id}">${qty}</span>
-                <button class="qty-btn" onclick="updateQty(${g.id}, -1)">-</button>
+                <button class="qty-btn" onclick="changeQty(${g.id}, 1)">+</button>
+                <span id="qty-${g.id}">${cart[g.id] || 0}</span>
+                <button class="qty-btn" onclick="changeQty(${g.id}, -1)">-</button>
             </div>
         `;
         container.appendChild(div);
     });
+}
+
+function changeQty(id, delta) {
+    const gift = gifts.find(g => g.id === id);
+    const isPro = (currentUserData.proExpiryTime || 0) > Date.now();
+    
+    // شرط البرو
+    if(gift.proOnly && !isPro) {
+        alert("هذا العنصر حصري لأعضاء PRO فقط!");
+        return;
+    }
+
+    cart[id] = Math.max(0, (cart[id] || 0) + delta);
+    if(gift.isBadge || gift.isTool) cart[id] = Math.min(cart[id], 1); // قطعة واحدة فقط من الأدوات والشارات
+
+    document.getElementById(`qty-${id}`).innerText = cart[id];
+    updateTotal();
+}
+
+function updateTotal() {
+    let total = 0;
+    for(let id in cart) {
+        const gift = gifts.find(g => g.id == id);
+        total += gift.cost * cart[id];
+    }
+    document.getElementById("total-cost").innerText = total.toLocaleString();
+    document.getElementById("send-btn").disabled = total === 0 || total > currentUserData.totalCoins;
 }
 
 function filterGifts(cat, el) {
@@ -241,114 +214,49 @@ function filterGifts(cat, el) {
     renderGifts(cat);
 }
 
-function updateQty(id, change) {
-    const gift = gifts.find(g => g.id === id);
-    let current = giftCart[id] || 0;
-    let newVal = Math.max(0, current + change);
-    if (gift.isBadge && newVal > 1) newVal = 1;
-    if (newVal === 0) delete giftCart[id];
-    else giftCart[id] = newVal;
-    if(document.getElementById(`qty-${id}`)) document.getElementById(`qty-${id}`).innerText = newVal;
-    calculateTotal();
-}
-
-function calculateTotal() {
-    let cost = 0, xp = 0, days = 0;
-    for (const id in giftCart) {
-        const gift = gifts.find(g => g.id == id);
-        cost += gift.cost * giftCart[id];
-        if (gift.cat === 'pro') days += gift.days * giftCart[id];
-        else if (gift.xp) xp += gift.xp * giftCart[id];
-    }
-    document.getElementById("total-cost-display").innerText = cost.toLocaleString();
-    document.getElementById("total-xp-display").innerText = xp.toLocaleString();
-    document.getElementById("total-pro-days").innerText = days;
-    document.getElementById("send-gift-btn").disabled = cost === 0 || currentUserData.totalCoins < cost;
-}
-
-function selectSelf() {
-    selectedPlayer = { uid: currentUserId, displayName: currentUserData.displayName };
-    updateRecipientUI(currentUserData);
-}
-
-function updateRecipientUI(data) {
-    const lvl = calculateLevel(data.xp || 0);
-    document.getElementById("rec-avatar").innerHTML = `<i class="fas fa-user"></i>`;
-    document.getElementById("rec-name").innerText = data.displayName + (data.uid === currentUserId ? " (أنت)" : "");
-    document.getElementById("rec-stats").innerHTML = `المستوى: ${lvl} | XP: ${data.xp || 0}`;
-}
-
-function setupSearch() {
-    const input = document.getElementById("player-search");
-    const resultsDiv = document.getElementById("search-results");
-    input.addEventListener("input", async () => {
-        const query = input.value.trim();
-        if (query.length < 2) { resultsDiv.innerHTML = ""; return; }
-        const snap = await firebase.firestore().collection("users")
-            .where("displayName", ">=", query).where("displayName", "<=", query + "\uf8ff")
-            .limit(5).get();
-        resultsDiv.innerHTML = "";
-        snap.forEach(doc => {
-            const data = doc.data();
-            const item = document.createElement("div");
-            item.className = "search-item";
-            item.innerHTML = `<div class="user-avatar" style="width:30px; height:30px;">${data.displayName[0]}</div>
-                              <div style="font-size:0.8rem; font-weight:bold;">${data.displayName}</div>`;
-            item.onclick = () => {
-                selectedPlayer = { uid: doc.id, ...data };
-                updateRecipientUI(data);
-                resultsDiv.innerHTML = "";
-                input.value = "";
-            };
-            resultsDiv.appendChild(item);
-        });
-    });
-}
-
 async function processPurchase() {
-    const overlay = document.getElementById("purchase-overlay");
-    let totalCost = 0, totalXP = 0, totalDays = 0;
-    let badgesToGain = [];
+    document.getElementById("purchase-overlay").style.display = "flex";
+    const db = firebase.firestore();
+    const batch = db.batch();
+    const myRef = db.collection('users').doc(firebase.auth().currentUser.uid);
+    const targetRef = db.collection('users').doc(selectedPlayerUid);
 
-    for (const id in giftCart) {
-        const gift = gifts.find(g => g.id == id);
-        totalCost += gift.cost * giftCart[id];
-        // حفظ كلاس الأيقونة في مصفوفة الشارات
-        if (gift.isBadge) badgesToGain.push(gift.icon);
-        else if (gift.cat === 'pro') totalDays += gift.days * giftCart[id];
-        else if (gift.xp) totalXP += gift.xp * giftCart[id];
+    let totalCost = 0;
+    let itemsToGive = [];
+
+    for(let id in cart) {
+        if(cart[id] > 0) {
+            const gift = gifts.find(g => g.id == id);
+            totalCost += gift.cost * cart[id];
+            itemsToGive.push({ ...gift, count: cart[id] });
+        }
     }
-
-    if (currentUserData.totalCoins < totalCost) return alert("رصيدك غير كافٍ!");
-    overlay.style.display = "flex";
 
     try {
-        const db = firebase.firestore();
-        const batch = db.batch();
-        const senderRef = db.collection("users").doc(currentUserId);
-        const recipientRef = db.collection("users").doc(selectedPlayer.uid);
+        // خصم الكوينز
+        batch.update(myRef, { totalCoins: firebase.firestore.FieldValue.increment(-totalCost) });
 
-        batch.update(senderRef, { totalCoins: firebase.firestore.FieldValue.increment(-totalCost) });
+        // إضافة الأدوات أو الهدايا للمستلم
+        itemsToGive.forEach(item => {
+            if(item.isBadge) {
+                batch.update(targetRef, { badges: firebase.firestore.FieldValue.arrayUnion(item.icon) });
+            } else if(item.isTool) {
+                // إضافة البطاقات لمصفوفة الأدوات (inventory)
+                batch.update(targetRef, { inventory: firebase.firestore.FieldValue.arrayUnion(item.name) });
+            } else {
+                // زيادة الـ XP للهدايا العادية
+                batch.update(targetRef, { xp: firebase.firestore.FieldValue.increment(item.xp * item.count) });
+            }
+        });
 
-        let updates = {};
-        if (totalXP > 0) updates.xp = firebase.firestore.FieldValue.increment(totalXP);
-        // إضافة الشارات للمصفوفة في الداتابيز
-        if (badgesToGain.length > 0) updates.badges = firebase.firestore.FieldValue.arrayUnion(...badgesToGain);
-        
-        if (totalDays > 0) {
-            const recipientDoc = await recipientRef.get();
-            const currentExpiry = recipientDoc.data().proExpiryTime || Date.now();
-            const base = currentExpiry > Date.now() ? currentExpiry : Date.now();
-            updates.proExpiryTime = base + (totalDays * 24 * 60 * 60 * 1000);
-        }
-
-        batch.update(recipientRef, updates);
         await batch.commit();
-        
-        setTimeout(() => location.href = "index.html", 1500);
-    } catch (e) {
-        alert("خطأ في الاتصال!");
-        overlay.style.display = "none";
+        alert("تمت العملية بنجاح! تفقد ملفك الشخصي.");
+        location.href = "profile.html";
+    } catch(e) {
+        console.error(e);
+        alert("حدث خطأ أثناء الشراء");
+    } finally {
+        document.getElementById("purchase-overlay").style.display = "none";
     }
 }
 </script>
