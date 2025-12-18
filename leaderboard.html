@@ -55,7 +55,7 @@
             align-items: center;
             background: rgba(255, 255, 255, 0.03);
             margin-bottom: 10px;
-            padding: 12px 15px;
+            padding: 10px 15px;
             border-radius: 15px;
             transition: 0.3s;
             cursor: pointer;
@@ -63,17 +63,30 @@
 
         .player-item:hover { background: rgba(255, 255, 255, 0.08); transform: translateX(-5px); }
 
-        .rank { width: 35px; font-weight: 900; color: var(--accent); }
+        .rank { width: 30px; font-weight: 900; color: var(--accent); font-size: 1.1rem; }
 
-        .info { flex-grow: 1; margin-right: 10px; }
-        .name { display: block; font-weight: 700; color: #fff; }
+        /* تعديل الصورة الشخصية */
+        .avatar-frame {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            margin-left: 12px;
+            overflow: hidden;
+            background: #1e293b;
+        }
+        .avatar-frame img { width: 100%; height: 100%; object-fit: cover; }
+
+        .info { flex-grow: 1; }
+        .name-wrapper { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+        .name { font-weight: 700; color: #fff; font-size: 0.95rem; }
         .value { font-weight: 900; color: var(--gold); }
 
-        /* الأيقونات بدلاً من الإيموجي */
-        .badge-icon { margin-left: 5px; font-size: 0.9rem; }
-        .icon-dev { color: #f87171; } /* أحمر للمطور */
-        .icon-pro { color: #fbbf24; } /* ذهبي للبرو */
-        .icon-legend { color: #a855f7; } /* بنفسجي للأسطورة */
+        /* الشارات */
+        .badge-icon { font-size: 0.85rem; margin: 0 1px; }
+        .purchased-badge { color: var(--gold); filter: drop-shadow(0 0 3px var(--gold)); }
+        .icon-dev { color: #f87171; }
+        .icon-pro { color: #fbbf24; }
 
         /* النافذة المنبثقة */
         .modal {
@@ -90,19 +103,23 @@
             border-radius: 30px; padding: 30px;
             text-align: center; border: 1px solid var(--primary);
         }
+        .modal-avatar {
+            width: 100px; height: 100px;
+            border-radius: 50%; border: 4px solid var(--primary);
+            margin: 0 auto 15px; object-fit: cover;
+        }
 
         .btn-add {
             width: 100%; margin-top: 20px; padding: 15px;
             border-radius: 15px; border: none;
             background: var(--primary); color: white;
-            font-weight: 900; cursor: pointer; transition: 0.3s;
+            font-weight: 900; cursor: pointer;
         }
-        .btn-add:disabled { background: #475569; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
-    <h2 style="color: var(--accent); font-weight: 900;"><i class="fas fa-medal"></i> قمة المحتالين</h2>
+    <h2 style="color: var(--accent); font-weight: 900; margin-bottom: 30px;"><i class="fas fa-medal"></i> قمة المحتالين</h2>
 
     <div id="loading" style="text-align:center; margin-bottom: 20px;">
         <i class="fas fa-circle-notch fa-spin fa-2x"></i>
@@ -110,27 +127,28 @@
 
     <div class="leaderboard-container">
         <div id="coins-leaderboard" class="leaderboard-card">
-            <h3 style="color: var(--gold);"><i class="fas fa-coins"></i> بنك المدينة</h3>
+            <h3 style="color: var(--gold); margin-bottom: 20px;"><i class="fas fa-coins"></i> بنك المدينة</h3>
         </div>
         
         <div id="xp-leaderboard" class="leaderboard-card">
-            <h3 style="color: #a855f7;"><i class="fas fa-bolt"></i> الخبرة القتالية</h3>
+            <h3 style="color: #a855f7; margin-bottom: 20px;"><i class="fas fa-bolt"></i> الخبرة القتالية</h3>
         </div>
     </div>
 
     <div id="profileModal" class="modal">
         <div class="modal-content">
-            <div id="modal-badges" style="margin-bottom: 10px; font-size: 1.2rem;"></div>
-            <h2 id="modal-name">---</h2>
-            <p id="modal-uid" style="color: var(--text-dim); font-size: 0.8rem;"></p>
+            <img id="modal-img" src="" class="modal-avatar" alt="Avatar">
+            <div id="modal-badges" style="margin-bottom: 10px; font-size: 1.4rem;"></div>
+            <h2 id="modal-name" style="margin: 0;">---</h2>
+            <p id="modal-uid" style="color: var(--text-dim); font-size: 0.8rem; margin-top: 5px;"></p>
             
-            <div id="modal-stats" style="display: flex; justify-content: space-around; margin: 20px 0;">
-                </div>
+            <div id="modal-stats" style="display: flex; justify-content: space-around; margin: 25px 0; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 20px;">
+            </div>
 
             <button id="add-friend-btn" class="btn-add" onclick="handleAddFriend()">
                 <i class="fas fa-user-plus"></i> إضافة صديق
             </button>
-            <button onclick="closeModal()" style="background:none; border:none; color:#94a3b8; margin-top:15px; cursor:pointer;">إغلاق</button>
+            <button onclick="closeModal()" style="background:none; border:none; color:#94a3b8; margin-top:15px; cursor:pointer; font-weight: bold;">إغلاق</button>
         </div>
     </div>
 
@@ -138,24 +156,35 @@
     let selectedUserUid = null;
     const ADMIN_EMAIL = "clansp245@gmail.com";
 
-    // دالة تحويل البيانات لأيقونات
+    // دالة جلب الشارات (الافتراضية + المشتراة)
     function getUserBadgesIcons(user) {
         let icons = "";
+        // شارات النظام
         if (user.email === ADMIN_EMAIL) icons += '<i class="fas fa-user-shield badge-icon icon-dev" title="المطور"></i>';
         if (user.proExpiryTime > Date.now()) icons += '<i class="fas fa-crown badge-icon icon-pro" title="عضو برو"></i>';
-        if (user.xp > 5000) icons += '<i class="fas fa-fire badge-icon icon-legend" title="أسطورة"></i>';
+        
+        // شارات المتجر (المخزنة كمصفوفة كلاسات أيقونات)
+        if (user.badges && Array.isArray(user.badges)) {
+            user.badges.forEach(badgeClass => {
+                icons += `<i class="${badgeClass} badge-icon purchased-badge"></i>`;
+            });
+        }
         return icons;
     }
 
     async function loadLeaderboards() {
-        const usersRef = db.collection('users');
-        const coinsSnap = await usersRef.orderBy('totalCoins', 'desc').limit(10).get();
-        const xpSnap = await usersRef.orderBy('xp', 'desc').limit(10).get();
-        
-        document.getElementById('loading').style.display = 'none';
-        
-        renderList('coins-leaderboard', coinsSnap, 'totalCoins', 'fa-coins');
-        renderList('xp-leaderboard', xpSnap, 'xp', 'fa-bolt');
+        try {
+            const usersRef = db.collection('users');
+            const coinsSnap = await usersRef.orderBy('totalCoins', 'desc').limit(10).get();
+            const xpSnap = await usersRef.orderBy('xp', 'desc').limit(10).get();
+            
+            document.getElementById('loading').style.display = 'none';
+            
+            renderList('coins-leaderboard', coinsSnap, 'totalCoins', 'fa-coins');
+            renderList('xp-leaderboard', xpSnap, 'xp', 'fa-bolt');
+        } catch (error) {
+            console.error("Error loading leaderboard: ", error);
+        }
     }
 
     function renderList(containerId, snapshot, field, icon) {
@@ -167,12 +196,20 @@
             div.className = 'player-item';
             div.onclick = () => openProfile(user, doc.id);
             
+            const avatarUrl = user.photoURL || 'https://via.placeholder.com/150';
+            
             div.innerHTML = `
                 <span class="rank">#${index++}</span>
-                <div class="info">
-                    <span class="name">${user.displayName} ${getUserBadgesIcons(user)}</span>
+                <div class="avatar-frame">
+                    <img src="${avatarUrl}" alt="Avatar">
                 </div>
-                <span class="value">${user[field].toLocaleString()} <i class="fas ${icon}"></i></span>
+                <div class="info">
+                    <div class="name-wrapper">
+                        <span class="name">${user.displayName}</span>
+                        <div class="badges-list">${getUserBadgesIcons(user)}</div>
+                    </div>
+                </div>
+                <span class="value">${(user[field] || 0).toLocaleString()} <i class="fas ${icon}"></i></span>
             `;
             container.appendChild(div);
         });
@@ -180,14 +217,20 @@
 
     function openProfile(user, uid) {
         selectedUserUid = uid;
+        const avatarUrl = user.photoURL || 'https://via.placeholder.com/150';
+        
+        document.getElementById('modal-img').src = avatarUrl;
         document.getElementById('modal-name').innerText = user.displayName;
-        document.getElementById('modal-uid').innerText = user.publicUid;
+        document.getElementById('modal-uid').innerText = "ID: " + (user.publicUid || "------");
         document.getElementById('modal-badges').innerHTML = getUserBadgesIcons(user);
         
-        // عرض الـ XP والمستوى الحقيقي
+        // حساب المستوى بناءً على الـ XP
+        const level = Math.floor(Math.sqrt((user.xp || 0) / 100)) + 1;
+
         document.getElementById('modal-stats').innerHTML = `
-            <div><i class="fas fa-star" style="color:var(--accent)"></i><br>مستوى ${user.level || 1}</div>
-            <div><i class="fas fa-bolt" style="color:#a855f7"></i><br>${user.xp || 0} XP</div>
+            <div><i class="fas fa-star" style="color:var(--accent); font-size: 1.2rem;"></i><br><small>المستوى</small><br><b>${level}</b></div>
+            <div><i class="fas fa-bolt" style="color:#a855f7; font-size: 1.2rem;"></i><br><small>XP</small><br><b>${(user.xp || 0).toLocaleString()}</b></div>
+            <div><i class="fas fa-coins" style="color:var(--gold); font-size: 1.2rem;"></i><br><small>كوينز</small><br><b>${(user.totalCoins || 0).toLocaleString()}</b></div>
         `;
         
         document.getElementById('profileModal').style.display = 'flex';
@@ -196,8 +239,6 @@
     async function handleAddFriend() {
         const btn = document.getElementById('add-friend-btn');
         const originalContent = btn.innerHTML;
-        
-        // ظهور الساعة الرملية والتعطيل
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-hourglass-half fa-spin"></i> جاري الإرسال...';
 
@@ -206,7 +247,7 @@
             btn.innerHTML = '<i class="fas fa-check"></i> تم إرسال الطلب';
             setTimeout(closeModal, 1500);
         } catch (e) {
-            alert(e.message);
+            alert(e.message || "حدث خطأ");
             btn.disabled = false;
             btn.innerHTML = originalContent;
         }
