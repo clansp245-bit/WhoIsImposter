@@ -1,288 +1,242 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🏆 قائمة المتصدرين</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏆 قائمة المتصدرين</title>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="auth.js"></script> 
 
-<script src="auth.js"></script> 
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --accent: #34d399;
+            --glass-bg: rgba(30, 41, 59, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --gold: #ffd700;
+        }
 
-<style>
-:root {
-    --bg-dark: #0f172a;
-    --card-dark: #1e293b;
-    --accent-color: #34d399;
-    --gold-color: #ffd700;
-    --pro-border: #ffd700;
-    --admin-bg: #4f46e5;
-}
-body {
-    font-family: 'Cairo', sans-serif;
-    background: var(--bg-dark);
-    color: #f1f5f9;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-    min-height: 100vh;
-}
-h2 {
-    color: var(--accent-color);
-    margin-bottom: 30px;
-}
-.leaderboard-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 30px;
-    width: 90%;
-    max-width: 1200px;
-}
-.leaderboard-card {
-    background: var(--card-dark);
-    padding: 20px;
-    border-radius: 12px;
-    width: 100%;
-    max-width: 500px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-h3 {
-    text-align: center;
-    color: var(--gold-color);
-    margin-bottom: 20px;
-    border-bottom: 2px solid #334155;
-    padding-bottom: 10px;
-}
-.player-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 15px;
-    margin-bottom: 8px;
-    border-radius: 8px;
-    background: #334155;
-    transition: transform 0.2s, box-shadow 0.2s;
-    font-size: 1rem;
-    position: relative;
-    overflow: hidden;
-}
-.player-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
-}
-.rank {
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: var(--accent-color);
-    width: 30px;
-    text-align: center;
-}
-.info {
-    flex-grow: 1;
-    margin-right: 15px;
-}
-.name {
-    font-weight: bold;
-    color: #f8fafc;
-}
-.public-uid {
-    font-size: 0.8rem;
-    color: #94a3b8;
-    display: block;
-}
-.value {
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: var(--gold-color);
-}
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #0a0f1e;
+            background-image: radial-gradient(circle at top right, #1e1b4b, transparent);
+            color: #f1f5f9;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-/* تمييز حالة PRO */
-.player-item.pro {
-    border: 2px solid var(--pro-border);
-    background: #334155; /* خلفية ثابتة لتظهر الإطار */
-    padding-right: 25px;
-}
-.player-item.pro::after {
-    content: "⭐ PRO";
-    position: absolute;
-    left: 0;
-    top: 0;
-    background: var(--pro-border);
-    color: var(--bg-dark);
-    padding: 2px 5px;
-    font-size: 0.7rem;
-    border-radius: 0 0 8px 0;
-    font-weight: bold;
-}
+        h2 { font-weight: 900; font-size: 2rem; color: var(--accent); margin-bottom: 30px; text-shadow: 0 0 15px rgba(52, 211, 153, 0.3); }
 
-/* تمييز المطور/المسؤول */
-.player-item.admin {
-    background: var(--admin-bg);
-    border: 2px solid #f8fafc;
-    box-shadow: 0 0 10px var(--admin-bg);
-}
-.player-item.admin .name {
-    color: var(--gold-color);
-}
-.player-item.admin::before {
-    content: "👑 DEVELOPER";
-    position: absolute;
-    right: 0;
-    top: 0;
-    background: #dc2626;
-    color: #fff;
-    padding: 2px 5px;
-    font-size: 0.7rem;
-    border-radius: 0 8px 0 8px;
-    font-weight: bold;
-}
-</style>
+        .leaderboard-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        /* تصميم الكرت الزجاجي */
+        .leaderboard-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            padding: 25px;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        h3 { text-align: center; color: var(--gold); margin-bottom: 20px; font-size: 1.3rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; }
+
+        .player-item {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            margin-bottom: 10px;
+            padding: 12px 15px;
+            border-radius: 15px;
+            transition: 0.3s;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .player-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: scale(1.02);
+            border-color: var(--primary);
+        }
+
+        .rank { width: 35px; font-weight: 900; font-size: 1.2rem; color: var(--accent); }
+
+        /* الألوان للمراكز الثلاثة الأولى */
+        .player-item:nth-child(2) .rank { color: #ffd700; } /* ذهبي */
+        .player-item:nth-child(3) .rank { color: #c0c0c0; } /* فضي */
+        .player-item:nth-child(4) .rank { color: #cd7f32; } /* برونزي */
+
+        .info { flex-grow: 1; margin-right: 10px; }
+        .name { display: block; font-weight: 700; color: #fff; }
+        .public-uid { font-size: 0.75rem; color: #94a3b8; font-family: monospace; }
+
+        .value { font-weight: 900; color: var(--gold); display: flex; align-items: center; gap: 5px; }
+
+        /* الشارات الصغيرة في القائمة */
+        .mini-badge { font-size: 0.7rem; background: var(--primary); color: white; padding: 2px 6px; border-radius: 5px; margin-right: 5px; }
+
+        /* النافذة المنبثقة (Modal) للبروفايل */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background: #1e293b;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 30px;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            border: 1px solid var(--primary);
+        }
+        .close-modal { position: absolute; top: 20px; left: 20px; color: #94a3b8; cursor: pointer; font-size: 1.5rem; }
+
+        .profile-img {
+            width: 100px; height: 100px; background: var(--accent);
+            border-radius: 50%; margin: 0 auto 15px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 3rem; border: 4px solid var(--primary);
+        }
+        .badges-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 15px; }
+        .badge-tag { background: rgba(99, 102, 241, 0.2); border: 1px solid var(--primary); padding: 5px 12px; border-radius: 10px; font-size: 0.8rem; color: #fff; }
+
+        #loading { text-align: center; margin-top: 50px; }
+    </style>
 </head>
 <body>
 
-<h2><i class="fas fa-trophy"></i> قائمة المتصدرين (Leaderboard)</h2>
+    <h2><i class="fas fa-trophy"></i> قاعة المشاهير</h2>
 
-<div id="loading" style="text-align: center; margin-top: 50px;">
-    <i class="fas fa-spinner fa-spin fa-3x" style="color: var(--accent-color);"></i>
-    <p style="margin-top: 15px;">يتم تحميل بيانات المتصدرين...</p>
-</div>
+    <div id="loading">
+        <i class="fas fa-spinner fa-spin fa-3x" style="color: var(--accent);"></i>
+        <p>جاري استدعاء الأساطير...</p>
+    </div>
 
-<div class="leaderboard-container">
-    <div id="coins-leaderboard" class="leaderboard-card">
-        <h3><i class="fas fa-coins"></i> الأعلى كوينز</h3>
+    <div class="leaderboard-container">
+        <div id="coins-leaderboard" class="leaderboard-card">
+            <h3><i class="fas fa-coins"></i> كبار الأثرياء</h3>
+        </div>
+        
+        <div id="xp-leaderboard" class="leaderboard-card">
+            <h3><i class="fas fa-star"></i> أقوى المحتالين (XP)</h3>
+        </div>
     </div>
-    
-    <div id="xp-leaderboard" class="leaderboard-card">
-        <h3><i class="fas fa-star"></i> الأعلى خبرة (XP)</h3>
+
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <div class="profile-img" id="modal-img"><i class="fas fa-user"></i></div>
+            <h2 id="modal-name" style="margin-bottom: 5px;">---</h2>
+            <p id="modal-uid" style="color: var(--gold); font-family: monospace;"></p>
+            
+            <div id="modal-stats" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;">
+                </div>
+
+            <div class="badges-container" id="modal-badges">
+                </div>
+
+            <button onclick="addFriendAction()" style="width: 100%; margin-top: 20px; padding: 12px; border-radius: 12px; border: none; background: var(--primary); color: white; font-weight: 900; cursor: pointer;">
+                <i class="fas fa-user-plus"></i> إضافة صديق
+            </button>
+        </div>
     </div>
-</div>
 
 <script>
-// الوصول إلى db عبر auth.js
-if (typeof db === 'undefined' || typeof isPro === 'undefined') {
-    document.getElementById('loading').innerHTML = '<p style="color: #ef4444;">❌ خطأ في تحميل Firebase: تأكد من تضمين ملف auth.js بشكل صحيح.</p>';
-}
+    const ADMIN_EMAIL = "clansp245@gmail.com";
+    const usersRef = db.collection('users');
 
-const ADMIN_EMAIL = "clansp245@gmail.com";
-const COINS_LIMIT = 10;
-const XP_LIMIT = 10;
-const usersRef = db.collection('users');
-
-/**
- * دالة لرسم لوحة المتصدرين
- * @param {string} containerId - ID للعنصر الحاوي (مثل 'coins-leaderboard')
- * @param {Array<Object>} data - مصفوفة بيانات المستخدمين
- * @param {string} valueField - الحقل المراد عرضه (مثل 'totalCoins')
- */
-function renderLeaderboard(containerId, data, valueField) {
-    const container = document.getElementById(containerId);
-    // إزالة العنوان
-    const title = container.querySelector('h3');
-    container.innerHTML = '';
-    container.appendChild(title);
-    
-    if (data.length === 0) {
-        container.innerHTML += '<p style="text-align: center; color: #94a3b8;">لا توجد بيانات للعرض.</p>';
-        return;
+    async function loadLeaderboards() {
+        const coinsSnap = await usersRef.orderBy('totalCoins', 'desc').limit(10).get();
+        const xpSnap = await usersRef.orderBy('xp', 'desc').limit(10).get();
+        
+        document.getElementById('loading').style.display = 'none';
+        
+        renderList('coins-leaderboard', coinsSnap, 'totalCoins', 'fa-coins');
+        renderList('xp-leaderboard', xpSnap, 'xp', 'fa-star');
     }
 
-    data.forEach((user, index) => {
-        let classes = 'player-item';
+    function renderList(containerId, snapshot, field, icon) {
+        const container = document.getElementById(containerId);
+        let index = 1;
         
-        // 1. تمييز Pro
-        if (isPro(user)) {
-            classes += ' pro';
-        }
-
-        // 2. تمييز المطور
-        if (user.email === ADMIN_EMAIL) {
-            classes += ' admin';
-        }
-
-        const playerDiv = document.createElement('div');
-        playerDiv.className = classes;
-        
-        // استخدام دالة لتحويل القيمة إلى نص مبسط (مثلاً: 123456 -> 123,456)
-        const formattedValue = new Intl.NumberFormat().format(user[valueField]);
-
-        playerDiv.innerHTML = `
-            <span class="rank">${index + 1}</span>
-            <div class="info">
-                <span class="name">${user.displayName || 'مستخدم'}</span>
-                <span class="public-uid">${user.publicUid || 'لا يوجد ID'}</span>
-            </div>
-            <span class="value">
-                ${formattedValue} 
-                <i class="${valueField === 'totalCoins' ? 'fas fa-coins' : 'fas fa-star'}"></i>
-            </span>
-        `;
-        container.appendChild(playerDiv);
-    });
-}
-
-/**
- * دالة لجلب البيانات من Firestore
- * @param {string} orderByField - الحقل للترتيب (مثل 'totalCoins' أو 'xp')
- * @param {number} limit - الحد الأقصى للنتائج
- */
-async function fetchLeaderboard(orderByField, limit) {
-    try {
-        const snapshot = await usersRef
-            .orderBy(orderByField, 'desc')
-            .limit(limit)
-            .get();
-        
-        const data = [];
         snapshot.forEach(doc => {
-            // إضافة Firebase UID داخل كائن البيانات للمقارنة مع المطور
-            data.push({ ...doc.data(), uid: doc.id }); 
+            const user = doc.data();
+            const playerDiv = document.createElement('div');
+            playerDiv.className = 'player-item';
+            playerDiv.onclick = () => openProfile(user);
+            
+            playerDiv.innerHTML = `
+                <span class="rank">${index++}</span>
+                <div class="info">
+                    <span class="name">${user.displayName || 'لاعب مجهول'} ${user.email === ADMIN_EMAIL ? '👑' : ''}</span>
+                    <span class="public-uid">${user.publicUid || '---'}</span>
+                </div>
+                <span class="value">${user[field].toLocaleString()} <i class="fas ${icon}"></i></span>
+            `;
+            container.appendChild(playerDiv);
         });
-        return data;
+    }
+
+    // فتح بروفايل اللاعب
+    function openProfile(user) {
+        document.getElementById('modal-name').innerText = user.displayName || "لاعب";
+        document.getElementById('modal-uid').innerText = user.publicUid || "بدون ID";
+        document.getElementById('modal-stats').innerHTML = `
+            <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px;">
+                <div style="font-size: 0.7rem; color: #94a3b8;">الكوينز</div>
+                <div style="color: var(--gold); font-weight: 900;">${user.totalCoins || 0}</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px;">
+                <div style="font-size: 0.7rem; color: #94a3b8;">المستوى</div>
+                <div style="color: var(--accent); font-weight: 900;">${user.level || 1}</div>
+            </div>
+        `;
+
+        // إضافة الشارات (Badges)
+        const badgesBox = document.getElementById('modal-badges');
+        badgesBox.innerHTML = '';
         
-    } catch (error) {
-        console.error(`خطأ في جلب متصدرين ${orderByField}:`, error);
-        if (error.code === 'permission-denied') {
-             alert(`❌ خطأ الصلاحيات: تأكد من أن قواعد Firestore تسمح بالقراءة لمجموعة /users.`);
-        }
-        return [];
+        if (user.email === ADMIN_EMAIL) badgesBox.innerHTML += '<span class="badge-tag" style="border-color: #ef4444;">🛠️ المطور</span>';
+        if (isPro(user)) badgesBox.innerHTML += '<span class="badge-tag" style="border-color: var(--gold);">👑 عضو PRO</span>';
+        if ((user.xp || 0) > 10000) badgesBox.innerHTML += '<span class="badge-tag">🔥 أسطوري</span>';
+        
+        document.getElementById('profileModal').style.display = 'flex';
     }
-}
 
-async function loadLeaderboards() {
-    document.getElementById('loading').style.display = 'block';
+    function closeModal() { document.getElementById('profileModal').style.display = 'none'; }
 
-    // جلب البيانات بشكل متوازٍ
-    const [coinsData, xpData] = await Promise.all([
-        fetchLeaderboard('totalCoins', COINS_LIMIT),
-        fetchLeaderboard('xp', XP_LIMIT)
-    ]);
-    
-    document.getElementById('loading').style.display = 'none';
-
-    // 1. رسم لوحة الكوينز
-    renderLeaderboard('coins-leaderboard', coinsData, 'totalCoins');
-    
-    // 2. رسم لوحة الخبرة
-    renderLeaderboard('xp-leaderboard', xpData, 'xp');
-}
-
-// ابدأ بتحميل المتصدرين بمجرد اكتمال تهيئة Firebase
-firebase.auth().onAuthStateChanged(user => {
-    // يجب أن يكون المستخدم مسجل دخول لرؤية الصفحة (بناءً على قواعدك)
-    if (user) {
-        loadLeaderboards();
-    } else {
-        document.body.innerHTML = "<h2 style='color:#ffd700;'>🛑 يجب تسجيل الدخول لرؤية المتصدرين.</h2>";
+    function addFriendAction() {
+        alert("سيتم إضافة نظام الأصدقاء في التحديث القادم!");
     }
-});
 
+    firebase.auth().onAuthStateChanged(user => {
+        if (user) loadLeaderboards();
+        else window.location.href = "auth.html";
+    });
 </script>
 </body>
 </html>
