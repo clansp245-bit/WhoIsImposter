@@ -1,66 +1,203 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🚪 الدخول/إنشاء الغرفة</title>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="auth.js"></script> 
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚪 غرف اللعب</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="auth.js"></script> 
 
-<style>
-/* التنسيقات كما هي في كودك الأصلي */
-#home-icon { position: absolute; top: 20px; left: 20px; font-size: 24px; color: #94a3b8; cursor: pointer; transition: color 0.3s; }
-#home-icon:hover { color: #34d399; }
-body { font-family: 'Cairo', sans-serif; background-color: #0f172a; color: #f1f5f9; text-align: center; padding: 20px; min-height: 100vh; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.card { background-color: #1e293b; padding: 40px; border-radius: 12px; max-width: 400px; width: 90%; margin: 20px auto; box-shadow: 0 8px 15px rgba(0,0,0,0.3); text-align: right; }
-h2 { font-size: 2rem; font-weight: 700; margin-bottom: 30px; color: #34d399; }
-input[type="text"] { font-family: 'Cairo', sans-serif; width: 100%; padding: 15px; margin: 10px 0 20px 0; border-radius: 8px; border: 1px solid #334155; font-size: 18px; background-color: #334155; color: #f1f5f9; box-sizing: border-box; text-align: center; }
-button { margin-top: 15px; padding: 14px 30px; font-size: 18px; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.3s, transform 0.2s; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
-#create-btn { background-color: #6366f1; color: #ffffff; }
-#create-btn:hover { background-color: #4f46e5; transform: translateY(-2px); }
-#join-btn { background-color: #34d399; color: #0f172a; }
-#join-btn:hover { background-color: #10b981; transform: translateY(-2px); }
-.separator { text-align: center; margin: 25px 0; color: #94a3b8; font-weight: 700; }
-#error-msg { color: #ff4f4f; margin-top: 15px; text-align: center; font-weight: 700; font-size: 0.9rem; }
-</style>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #6366f1;
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --bg-body: #0a0f1e;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8;
+            --success: #34d399;
+            --error: #ff4f4f;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-body);
+            background-image: radial-gradient(circle at top right, #1e1b4b, transparent), radial-gradient(circle at bottom left, #1e1b4b, transparent);
+            color: var(--text-main);
+            padding: 20px;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .top-nav {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .back-link {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 1.1rem;
+            transition: 0.3s;
+        }
+        .back-link:hover { color: var(--primary); }
+
+        h2 { 
+            font-size: 2.2rem; 
+            font-weight: 900; 
+            margin-bottom: 25px; 
+            background: var(--accent-gradient); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+            text-align: center;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            padding: 30px;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 420px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            box-sizing: border-box;
+        }
+
+        /* تصميم الأزرار مثل صفحة الجيفت */
+        .main-btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 16px;
+            border: none;
+            background: var(--accent-gradient);
+            color: white;
+            font-weight: 900;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin-bottom: 15px;
+            box-shadow: 0 8px 16px rgba(99, 102, 241, 0.2);
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .main-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .secondary-btn {
+            background: rgba(52, 211, 153, 0.1);
+            border: 1px solid rgba(52, 211, 153, 0.3);
+            color: var(--success);
+        }
+        .secondary-btn:hover {
+            background: var(--success);
+            color: var(--bg-body);
+        }
+
+        .separator {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 20px 0;
+            color: var(--text-dim);
+        }
+        .separator::before, .separator::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .separator:not(:empty)::before { margin-left: .5em; }
+        .separator:not(:empty)::after { margin-right: .5em; }
+
+        input[type="text"] {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 14px;
+            color: white;
+            font-family: 'Cairo';
+            font-size: 1.2rem;
+            text-align: center;
+            letter-spacing: 5px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        #error-msg {
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-align: center;
+            margin-top: 10px;
+            min-height: 1.2em;
+        }
+        .status-loading { color: var(--primary); }
+        .status-error { color: var(--error); }
+        .status-success { color: var(--success); }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            padding-right: 5px;
+        }
+
+    </style>
 </head>
 
 <body>
 
-<a href="index.html" id="home-icon" title="العودة للصفحة الرئيسية">
-    <i class="fas fa-arrow-right"></i>
-</a>
+<div class="top-nav">
+    <a href="index.html" class="back-link"><i class="fas fa-chevron-right"></i> رجوع</a>
+</div>
+
+<h2>🚪 غرف اللعب</h2>
 
 <div class="card">
-    <h2>انضمام أو إنشاء غرفة</h2>
-
-    <button id="create-btn" onclick="createRoom()">
+    <button class="main-btn" id="create-btn" onclick="createRoom()">
         <i class="fas fa-plus-circle"></i> إنشاء غرفة جديدة
     </button>
     
-    <div class="separator">أو</div>
+    <div class="separator">أو انضم برمز</div>
 
-    <label for="room-code" style="color:#f1f5f9; margin-bottom: 10px;">أدخل رمز الغرفة:</label>
-    <input type="text" id="room-code" maxlength="6" placeholder="مثلاً: XYZ123">
+    <label>أدخل رمز الغرفة المكون من 6 أرقام/حروف</label>
+    <input type="text" id="room-code" maxlength="6" placeholder="------">
     
-    <button id="join-btn" onclick="joinRoom()">
-        <i class="fas fa-sign-in-alt"></i> الانضمام للغرفة
+    <button class="main-btn secondary-btn" id="join-btn" onclick="joinRoom()">
+        <i class="fas fa-sign-in-alt"></i> انضمام للغرفة
     </button>
     
     <div id="error-msg"></div>
 </div>
 
 <script>
+// --- المنطق البرمجي المحدث ---
 let currentUserData = null;
 let currentUID = null;
 let isUserDataLoaded = false; 
 
-// التحقق من حالة المستخدم عند تحميل الصفحة
 firebase.auth().onAuthStateChanged(async (user) => {
     if (!user) {
         window.location.href = "auth.html";
@@ -69,15 +206,13 @@ firebase.auth().onAuthStateChanged(async (user) => {
     currentUID = user.uid;
     
     try {
-        const data = await loadUserData(); // الدالة الموجودة في auth.js
+        const data = await loadUserData(); 
         if(data) {
             currentUserData = data;
             isUserDataLoaded = true;
-            document.getElementById('error-msg').innerText = '';
         }
     } catch (e) {
-        console.error("خطأ في التحميل:", e);
-        document.getElementById('error-msg').innerText = '⚠️ حدث خطأ في تحميل بياناتك.';
+        console.error("فشل التحميل:", e);
     }
 });
 
@@ -93,13 +228,14 @@ function generateRoomCode() {
 async function createRoom() {
     const errorDiv = document.getElementById('error-msg');
     if (!isUserDataLoaded) {
-        errorDiv.innerText = '⚠️ انتظر تحميل بياناتك...';
+        errorDiv.className = 'status-loading';
+        errorDiv.innerText = '⚠️ جاري جلب بياناتك...';
         return;
     }
 
-    errorDiv.innerText = 'جاري الإنشاء...';
+    errorDiv.className = 'status-loading';
+    errorDiv.innerText = 'جاري توليد الغرفة...';
     
-    // استخدام الإعدادات الافتراضية إذا لم تكن موجودة
     const settings = currentUserData.settings || { impostors: 1, selectedCategories: ['objects'] };
     const playerName = currentUserData.displayName || "لاعب مجهول";
 
@@ -107,12 +243,8 @@ async function createRoom() {
     let roomRef = db.collection('rooms').doc(roomCode);
 
     try {
-        // تأكد أن الرمز غير مستخدم (بسيط)
         const doc = await roomRef.get();
-        if (doc.exists) { 
-            createRoom(); // حاول مرة أخرى برمز جديد
-            return;
-        }
+        if (doc.exists) return createRoom(); // إعادة المحاولة إذا وجد الرمز (نادر جداً)
 
         await roomRef.set({
             hostUID: currentUID,
@@ -126,7 +258,8 @@ async function createRoom() {
 
         window.location.href = `room.html?id=${roomCode}`;
     } catch (e) {
-        errorDiv.innerText = "❌ فشل إنشاء الغرفة: " + e.message;
+        errorDiv.className = 'status-error';
+        errorDiv.innerText = "❌ فشل الإنشاء: " + e.message;
     }
 }
 
@@ -136,11 +269,13 @@ async function joinRoom() {
     const errorDiv = document.getElementById('error-msg');
 
     if (roomCode.length !== 6) {
-        errorDiv.innerText = '❌ الرمز غير صحيح.';
+        errorDiv.className = 'status-error';
+        errorDiv.innerText = '❌ الرمز ناقص';
         return;
     }
 
-    errorDiv.innerText = 'جاري الانضمام...';
+    errorDiv.className = 'status-loading';
+    errorDiv.innerText = 'جاري التحقق من الغرفة...';
 
     const roomRef = db.collection('rooms').doc(roomCode);
     const playerName = currentUserData.displayName || "لاعب مجهول";
@@ -151,10 +286,9 @@ async function joinRoom() {
             if (!doc.exists) throw "الغرفة غير موجودة!";
             
             const data = doc.data();
-            if (data.status !== 'waiting') throw "بدأت اللعبة بالفعل!";
+            if (data.status !== 'waiting') throw "اللعبة بدأت بالفعل!";
             if (data.players.length >= 10) throw "الغرفة ممتلئة!";
 
-            // إذا لم يكن اللاعب موجوداً أصلاً، نضيفه
             if (!data.players.includes(currentUID)) {
                 transaction.update(roomRef, {
                     players: firebase.firestore.FieldValue.arrayUnion(currentUID),
@@ -165,6 +299,7 @@ async function joinRoom() {
 
         window.location.href = `room.html?id=${roomCode}`;
     } catch (e) {
+        errorDiv.className = 'status-error';
         errorDiv.innerText = "❌ " + e;
     }
 }
