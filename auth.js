@@ -1,6 +1,6 @@
 /**
  * @file: auth.js
- * @description: المحرك الكامل والموحد للمصادقة، قواعد البيانات، المكافآت، ونظام الأصدقاء.
+ * @description: المحرك المحدث - معالجة تصفير الكوينز، الشارات بالأيقونات، ونظام الأصدقاء.
  */
 
 // 1. إعدادات Firebase
@@ -13,15 +13,15 @@ const firebaseConfig = {
     appId: "1:766002212710:web:02b56401e230faed09e2a7"
 };
 
-// تهيئة التطبيق إذا لم يكن مهيئاً
 if (!firebase.apps.length) { 
     firebase.initializeApp(firebaseConfig); 
 }
 
 const auth = firebase.auth();
 const db = firebase.firestore();
+const ADMIN_EMAIL = "clansp245@gmail.com";
 
-// --- 2. دوال المصادقة (Auth) ---
+// --- 2. دوال المصادقة ---
 
 async function signUp(email, password) {
     const cred = await auth.createUserWithEmailAndPassword(email, password);
@@ -44,17 +44,13 @@ function logout() {
     return auth.signOut();
 }
 
-// --- 3. إدارة بيانات المستخدم (Data Management) ---
+// --- 3. إدارة بيانات المستخدم ---
 
-/**
- * إنشاء سجل مستخدم جديد في قاعدة البيانات عند التسجيل لأول مرة
- */
 async function createFirestoreUserEntry(user) {
     const userRef = db.collection("users").doc(user.uid);
     const doc = await userRef.get();
 
     if (!doc.exists) {
-        // توليد معرف عام مميز مثل IMP-A1B2
         const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
         const genID = () => `IMP-${Array.from({length:4},()=>chars[Math.floor(Math.random()*chars.length)]).join('')}`;
         
@@ -63,11 +59,11 @@ async function createFirestoreUserEntry(user) {
             email: user.email,
             displayName: user.displayName || user.email.split("@")[0],
             publicUid: genID(),
-            totalCoins: 1000,
+            totalCoins: 0, // تم التعديل هنا: يبدأ المستخدم بـ 0 كوينز
             level: 1,
             xp: 0,
-            players: [], // قائمة الـ UIDs للأصدقاء المقبولين
-            settings: {}, // إعدادات اللعبة المفضلة
+            players: [],
+            settings: {},
             proExpiryTime: 0,
             isOnline: true,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -78,9 +74,6 @@ async function createFirestoreUserEntry(user) {
     return doc.data();
 }
 
-/**
- * تحميل بيانات المستخدم الحالي
- */
 async function loadUserData() {
     const user = auth.currentUser;
     if (!user) return null;
@@ -88,9 +81,6 @@ async function loadUserData() {
     return doc.exists ? doc.data() : await createFirestoreUserEntry(user);
 }
 
-/**
- * تحديث بيانات المستخدم (مثل تغيير الإعدادات)
- */
 async function saveUserData(dataToUpdate) {
     const user = auth.currentUser;
     if (!user) return false;
@@ -103,53 +93,48 @@ async function saveUserData(dataToUpdate) {
     }
 }
 
-// --- 4. نظام المكافآت والمستوى (Economy & Leveling) ---
+// --- 4. نظام المكافآت والمستوى ---
 
 function getRequiredXPForLevel(level) {
-    return level * 100; // مثال: المستوى 1 يحتاج 100XP، المستوى 2 يحتاج 200XP
+    // نظام تصاعدي: كل مستوى يحتاج خبرة أكثر
+    return level * 100; 
 }
 
 function isPro(userData) {
     return userData && userData.proExpiryTime > Date.now();
 }
 
-/**
- * إضافة نقاط خبرة وكوينز مع دعم مضاعفة المكافآت للبرو
- */
 async function addXPAndCoins(userData, coinsToAdd, xpToAdd) {
     const user = auth.currentUser;
     if (!user) return;
 
     const proStatus = isPro(userData);
-    const multiplier = proStatus ? 1.5 : 1.0; // زيادة 50% للبرو
+    const multiplier = proStatus ? 1.5 : 1.0;
 
     const finalCoins = Math.floor(coinsToAdd * multiplier);
     const finalXp = Math.floor(xpToAdd * multiplier);
 
-    let newXp = (userData.xp || 0) + finalXp;
-    let newLevel = userData.level || 1;
+    let currentTotalXp = (userData.xp || 0) + finalXp;
+    let currentLevel = userData.level || 1;
 
-    // التحقق من رفع المستوى (Level Up)
-    while (newXp >= getRequiredXPForLevel(newLevel)) {
-        newXp -= getRequiredXPForLevel(newLevel);
-        newLevel++;
+    // منطق رفع المستوى الحقيقي
+    while (currentTotalXp >= getRequiredXPForLevel(currentLevel)) {
+        currentTotalXp -= getRequiredXPForLevel(currentLevel);
+        currentLevel++;
     }
 
     const updates = {
         totalCoins: (userData.totalCoins || 0) + finalCoins,
-        xp: newXp,
-        level: newLevel
+        xp: currentTotalXp,
+        level: currentLevel
     };
 
     await saveUserData(updates);
     return { coins: finalCoins, xp: finalXp, isPro: proStatus };
 }
 
-// --- 5. نظام الأصدقاء والبحث (Social System) ---
+// --- 5. نظام الأصدقاء والبحث ---
 
-/**
- * البحث عن لاعب باستخدام المعرف العام (IMP-XXXX)
- */
 async function searchUsersByPublicId(publicId) {
     try {
         const queryStr = publicId.toUpperCase().trim();
@@ -177,7 +162,7 @@ async function sendFriendRequest(targetUid) {
         .where("status", "==", "pending")
         .get();
 
-    if (!existing.empty) throw new Error("يوجد طلب معلق بالفعل لهذا اللاعب");
+    if (!existing.empty) throw new Error("يوجد طلب معلق بالفعل");
 
     return await db.collection("friendRequests").add({
         senderId: myId,
@@ -191,43 +176,44 @@ async function acceptFriendRequest(requestId, senderId) {
     const myId = auth.currentUser.uid;
     const batch = db.batch();
     
-    // إضافة الطرفين لبعضهما البعض
     batch.update(db.collection("users").doc(myId), { players: firebase.firestore.FieldValue.arrayUnion(senderId) });
     batch.update(db.collection("users").doc(senderId), { players: firebase.firestore.FieldValue.arrayUnion(myId) });
-    
-    // حذف الطلب بعد القبول
     batch.delete(db.collection("friendRequests").doc(requestId));
     
     return await batch.commit();
 }
 
-// --- 6. وظائف الواجهة (UI Helpers) ---
+// --- 6. وظائف الواجهة (أيقونات بدلاً من الإيموجي) ---
 
 function getBadgesHTML(userData) {
     if (!userData) return '';
     let html = '';
-    const OWNER_EMAIL = "clansp245@gmail.com"; 
     
-    if (userData.email === OWNER_EMAIL) {
-        html += `<i class="fas fa-user-shield" style="color:#38bdf8; margin-left:5px;" title="المالك"></i> `;
+    // شارة المطور (أيقونة درع أحمر)
+    if (userData.email === ADMIN_EMAIL) {
+        html += `<i class="fas fa-user-shield" style="color:#f87171; margin-left:8px;" title="المطور"></i>`;
     }
+    // شارة البرو (أيقونة تاج ذهبي)
     if (isPro(userData)) {
-        html += `<i class="fas fa-crown" style="color:#ffd700; margin-left:5px;" title="برو"></i> `;
+        html += `<i class="fas fa-crown" style="color:#fbbf24; margin-left:8px;" title="عضو برو"></i>`;
+    }
+    // شارة الأسطورة (أيقونة نار بنفسجية لمن تخطى 5000 XP)
+    if (userData.xp > 5000) {
+        html += `<i class="fas fa-fire" style="color:#a855f7; margin-left:8px;" title="أسطورة"></i>`;
     }
     return html;
 }
 
-// --- 7. المستمعون التلقائيون (Listeners) ---
+// --- 7. المستمعون ---
 
-// مراقبة حالة الاتصال والتواجد أونلاين
 auth.onAuthStateChanged(user => {
     if (user) {
         const userRef = db.collection("users").doc(user.uid);
         userRef.update({ isOnline: true }).catch(()=>{});
         
-        // عند إغلاق التبويب أو المتصفح
         window.addEventListener('beforeunload', () => {
             userRef.update({ isOnline: false });
         });
     }
 });
+
