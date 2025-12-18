@@ -197,28 +197,32 @@
 </div>
 
 <script>
-// --- الدوال المساعدة للتأكد من وجودها إذا لم تكن في auth.js ---
-if (typeof updateCoinsAndProTime === 'undefined') {
-    async function updateCoinsAndProTime(userData, coinsToAdd, durationDays) {
-        const user = firebase.auth().currentUser;
-        if (!user) return;
-        let newCoins = (userData.totalCoins || 0) + (coinsToAdd || 0);
-        let currentProTime = userData.proExpiryTime || Date.now();
-        let baseTime = currentProTime > Date.now() ? currentProTime : Date.now();
-        let newProTime = baseTime + (durationDays * 24 * 60 * 60 * 1000);
-        const updates = {
-            totalCoins: newCoins,
-            proExpiryTime: durationDays > 0 ? newProTime : (userData.proExpiryTime || 0)
-        };
-        await firebase.firestore().collection("users").doc(user.uid).update(updates);
-        return updates;
-    }
+// --- الدوال المساعدة ---
+async function updateRewards(userData, coins, days, gems) {
+    const user = firebase.auth().currentUser;
+    if (!user) return;
+
+    let newCoins = (userData.totalCoins || 0) + (coins || 0);
+    let newGems = (userData.s_gems || 0) + (gems || 0);
+    
+    let currentProTime = userData.proExpiryTime || Date.now();
+    let baseTime = currentProTime > Date.now() ? currentProTime : Date.now();
+    let newProTime = baseTime + (days * 24 * 60 * 60 * 1000);
+
+    const updates = {
+        totalCoins: newCoins,
+        s_gems: newGems,
+        proExpiryTime: days > 0 ? newProTime : (userData.proExpiryTime || 0)
+    };
+
+    await firebase.firestore().collection("users").doc(user.uid).update(updates);
+    return updates;
 }
 
 const impostorsInput = document.getElementById("impostors");
 const timerInput = document.getElementById("discussionTimer");
 const noTimerCheckbox = document.getElementById("noTimerMode");
-let currentUserData = { totalCoins:0, proExpiryTime:0, players:[], settings:{}, receivedGifts: [] }; 
+let currentUserData = { totalCoins:0, s_gems:0, proExpiryTime:0, settings:{}}; 
 
 const wordCategories = {
     free: [
@@ -285,8 +289,9 @@ function loadSelectedCategories() {
 async function loadSettings(){
   firebase.auth().onAuthStateChanged(async user=>{
     if(!user){window.location.href="auth.html"; return;}
-    const data = await loadUserData();
-    if(data) currentUserData = data;
+    const doc = await firebase.firestore().collection("users").doc(user.uid).get();
+    if(doc.exists) currentUserData = doc.data();
+
     const pro = isPro();
     const settings = currentUserData.settings || {}; 
     
@@ -322,8 +327,8 @@ async function saveSettings(){
       selectedCategories: selectedCategories 
   };
   
-  const success = await saveUserData({ ...currentUserData, settings: settings });
-  if(success) location.href="index.html";
+  await firebase.firestore().collection("users").doc(firebase.auth().currentUser.uid).update({ settings: settings });
+  location.href="index.html";
 }
 
 async function redeemCode() {
@@ -342,26 +347,32 @@ async function redeemCode() {
             const docRef = db.collection("promocodes").doc(code);
             const doc = await t.get(docRef);
             if(!doc.exists) throw "الكود غير صحيح";
+            
             const d = doc.data();
-            if(d.redeemedBy?.includes(firebase.auth().currentUser.uid)) throw "استخدمت الكود سابقاً";
-            if(d.usedCount >= d.maxUses) throw "انتهت صلاحية الكود";
+            const myUid = firebase.auth().currentUser.uid;
+            
+            if(!d.active) throw "هذا الكود معطل حالياً";
+            if(d.redeemedBy && d.redeemedBy.includes(myUid)) throw "استخدمت الكود سابقاً";
+            if(d.redeemedBy && d.redeemedBy.length >= d.maxUses) throw "انتهت صلاحية الكود (وصل للحد الأقصى)";
             
             t.update(docRef, {
-                usedCount: firebase.firestore.FieldValue.increment(1),
-                redeemedBy: firebase.firestore.FieldValue.arrayUnion(firebase.auth().currentUser.uid)
+                redeemedBy: firebase.firestore.FieldValue.arrayUnion(myUid)
             });
             return d;
         });
 
-        const updates = await updateCoinsAndProTime(currentUserData, res.coins || 0, res.durationDays || 0);
-        // تحديث البيانات محلياً
-        currentUserData.totalCoins = updates.totalCoins;
-        currentUserData.proExpiryTime = updates.proExpiryTime;
+        // تحديث جميع الجوائز بما فيها الجواهر
+        const results = await updateRewards(currentUserData, res.coins || 0, res.durationDays || 0, res.gems || 0);
+        
+        // تحديث الواجهة محلياً
+        currentUserData.totalCoins = results.totalCoins;
+        currentUserData.s_gems = results.s_gems;
+        currentUserData.proExpiryTime = results.proExpiryTime;
         
         msg.style.color = "#34d399";
-        msg.innerText = "✅ تم تفعيل المكافأة بنجاح!";
+        msg.innerHTML = `✅ تم التفعيل! +${res.coins || 0} كوينز | +${res.gems || 0} جواهر`;
         codeInput.value = "";
-        renderWordCategories(); // تحديث القفل للفئات
+        renderWordCategories();
     } catch(e) {
         msg.style.color = "var(--danger)";
         msg.innerText = "❌ " + e;
@@ -374,4 +385,3 @@ function openAdminPage(){ window.open("admin-promocode.html","_blank"); }
 </script>
 </body>
 </html>
-
