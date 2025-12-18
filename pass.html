@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌟 سيزون الأساطير - الموسم 1</title>
+    <title>🏆 سيزون الأساطير: نظام المهام والجوائز</title>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -16,255 +16,244 @@
 
     <style>
         :root {
-            --bg-dark: #05070a;
-            --glass: rgba(255, 255, 255, 0.05);
-            --gold-gradient: linear-gradient(45deg, #ffd700, #ffae00);
-            --premium-color: #a855f7;
-            --text-main: #e2e8f0;
+            --bg: #070912;
+            --primary: #6366f1;
+            --gold: #ffb100;
+            --glass: rgba(255,255,255,0.05);
         }
 
         body {
             font-family: 'Cairo', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            margin: 0; padding: 0;
-            background-image: radial-gradient(circle at top, #1e1b4b, #05070a);
-            padding-bottom: 120px;
+            background: var(--bg); color: #fff; margin: 0;
+            background-image: radial-gradient(circle at top right, #1e1b4b, transparent);
         }
 
-        /* Top Banner */
-        .season-banner {
-            width: 100%; height: 180px;
-            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.8)), url('https://img.freepik.com/free-vector/abstract-dark-particles-background_23-2148424578.jpg');
-            background-size: cover; background-position: center;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            border-bottom: 2px solid var(--premium-color);
+        .tabs-nav {
+            display: flex; background: rgba(0,0,0,0.4);
+            position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--glass);
         }
-
-        .xp-status-card {
-            width: 90%; max-width: 450px;
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(10px);
-            border-radius: 20px; padding: 20px;
-            margin-top: -40px; border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            z-index: 10;
+        .tab-btn {
+            flex: 1; padding: 15px; border: none; background: none;
+            color: #94a3b8; font-weight: 900; cursor: pointer; font-family: 'Cairo';
         }
+        .tab-btn.active { color: var(--primary); border-bottom: 3px solid var(--primary); background: rgba(99, 102, 241, 0.1); }
 
-        /* Progress Bar */
-        .progress-wrapper { height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; margin: 15px 0; overflow: hidden; }
-        .progress-fill { 
-            height: 100%; width: 0%; 
-            background: linear-gradient(90deg, #6366f1, #a855f7); 
-            box-shadow: 0 0 10px #6366f1; transition: width 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        .container { padding: 15px; max-width: 600px; margin: auto; }
+
+        /* ستايل المهام */
+        .task-card {
+            background: var(--glass); border-radius: 15px; padding: 15px;
+            margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1);
+            display: flex; justify-content: space-between; align-items: center;
         }
-
-        /* Grid System */
-        .season-timeline { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
-        
-        .lvl-node {
-            display: grid; grid-template-columns: 60px 1fr 1fr;
-            gap: 15px; align-items: center; position: relative;
+        .task-info h4 { margin: 0; font-size: 0.9rem; }
+        .task-xp { color: #10b981; font-weight: bold; font-size: 0.8rem; }
+        .btn-claim-task { 
+            background: var(--primary); border: none; color: white; 
+            padding: 5px 15px; border-radius: 8px; cursor: pointer; font-weight: bold;
         }
+        .btn-claim-task:disabled { background: #334155; cursor: not-allowed; opacity: 0.5; }
 
-        .lvl-badge {
-            width: 50px; height: 50px; background: #1e293b; 
-            border: 2px solid var(--premium-color); border-radius: 12px;
+        /* ستايل السيزون */
+        .lvl-row {
+            display: grid; grid-template-columns: 50px 1fr 1fr;
+            gap: 10px; margin-bottom: 15px; align-items: stretch;
+        }
+        .lvl-number {
+            background: #1e293b; border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
-            font-weight: 900; font-size: 1.2rem; transform: rotate(45deg);
+            font-weight: 900; border: 1px solid var(--primary);
         }
-        .lvl-badge span { transform: rotate(-45deg); }
-
-        .reward-icon-card {
-            background: var(--glass); border-radius: 18px;
-            padding: 15px; border: 1px solid rgba(255,255,255,0.1);
-            text-align: center; transition: 0.3s; position: relative;
+        .reward-box {
+            background: var(--glass); border-radius: 12px; padding: 10px;
+            text-align: center; border: 1px solid rgba(255,255,255,0.05);
+            display: flex; flex-direction: column; align-items: center; justify-content: space-between;
         }
-
-        .reward-icon-card i { font-size: 2rem; margin-bottom: 5px; display: block; }
-        .reward-icon-card.locked { opacity: 0.3; filter: grayscale(1); }
-        .reward-icon-card.premium { border-color: #f59e0b33; background: rgba(245, 158, 11, 0.05); }
-
-        .reward-tag { position: absolute; top: -10px; right: 10px; font-size: 0.6rem; padding: 2px 8px; border-radius: 5px; font-weight: bold; }
-        .tag-free { background: #64748b; }
-        .tag-premium { background: var(--gold-gradient); color: #000; }
-
-        /* Level Up Animation Popup */
-        .levelup-modal {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.95);
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 1000; text-align: center;
+        .reward-box.premium { border-color: rgba(255, 177, 0, 0.2); background: rgba(255, 177, 0, 0.03); }
+        .reward-box i { font-size: 1.5rem; margin-bottom: 5px; }
+        
+        .btn-claim-reward {
+            width: 100%; margin-top: 8px; font-size: 0.7rem; padding: 4px;
+            border-radius: 5px; border: none; cursor: pointer; font-weight: 900;
+            background: #10b981; color: white;
         }
-        .levelup-circle {
-            width: 150px; height: 150px; border-radius: 50%;
-            border: 5px solid gold; display: flex; align-items: center; justify-content: center;
-            font-size: 4rem; font-weight: 900; color: gold;
-            box-shadow: 0 0 50px rgba(255, 215, 0, 0.5);
-            margin-bottom: 20px;
+        .btn-claim-reward.locked { background: #1e293b; color: #64748b; cursor: not-allowed; }
+        .btn-claim-reward.done { background: none; border: 1px solid #10b981; color: #10b981; cursor: default; }
+
+        /* الأنيميشن الخاص بالاستلام */
+        .claimed-anim { animation: pulse 0.5s; }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
 
-        /* Bottom Menu */
-        .pass-footer {
-            position: fixed; bottom: 0; width: 100%; padding: 20px;
-            background: rgba(10, 15, 26, 0.95); backdrop-filter: blur(15px);
-            border-top: 1px solid rgba(255,255,255,0.1);
-            display: flex; gap: 10px; box-sizing: border-box;
+        .footer-buy {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            padding: 15px; background: rgba(10,15,26,0.9); backdrop-filter: blur(10px);
+            display: flex; gap: 10px;
         }
-
-        .btn-main {
-            flex: 1; padding: 15px; border-radius: 15px; border: none;
-            font-weight: 900; font-family: 'Cairo'; cursor: pointer;
-        }
-        .btn-buy { background: var(--gold-gradient); color: #000; }
-        .btn-skip { background: rgba(255,255,255,0.1); color: #fff; }
-
     </style>
 </head>
-<body>
+<body onload="initApp()">
 
-    <div class="season-banner">
-        <h1 style="margin:0; font-weight: 900; letter-spacing: 2px;">SEASON PASS</h1>
-        <p style="color: var(--premium-color); font-weight: bold;">الموسم الأول: عودة الملوك</p>
+    <div class="tabs-nav">
+        <button class="tab-btn active" onclick="showTab('pass')"><i class="fas fa-trophy"></i> السيزون</button>
+        <button class="tab-btn" onclick="showTab('tasks')"><i class="fas fa-tasks"></i> المهام</button>
     </div>
 
-    <center>
-        <div class="xp-status-card">
-            <div style="display:flex; justify-content:space-between; align-items:center">
-                <span id="pass-type-text" style="font-weight:900; color:#94a3b8">المسار المجاني</span>
-                <span style="font-weight:900"><i class="fas fa-star" style="color: gold;"></i> لفل <span id="current-lvl-top">1</span></span>
+    <div id="pass-tab" class="container">
+        <div id="header-info" style="text-align: center; margin-bottom: 20px;">
+            <h2 style="margin:0">الموسم 1 <span id="user-lvl-display" style="color:var(--primary)">1</span></h2>
+            <div style="background: rgba(255,255,255,0.1); height: 8px; border-radius: 4px; margin: 10px 0;">
+                <div id="xp-bar" style="height: 100%; background: var(--primary); width: 0%; border-radius: 4px; transition: 0.5s;"></div>
             </div>
-            
-            <div class="progress-wrapper">
-                <div id="xp-bar" class="progress-fill"></div>
-            </div>
-            
-            <div style="display:flex; justify-content:space-between; font-size:0.8rem; opacity:0.8">
-                <span>XP: <span id="xp-current">0</span></span>
-                <span>المطلوب: <span id="xp-needed">1000</span></span>
-            </div>
+            <span id="xp-text" style="font-size: 0.8rem; color: #94a3b8;">0 / 1000 XP</span>
         </div>
-    </center>
-
-    <div class="season-timeline" id="timeline">
-        </div>
-
-    <div class="pass-footer">
-        <button class="btn-main btn-buy" id="premium-btn" onclick="buyPremium()">تفعيل الملكي 1400 كوينز</button>
-        <button class="btn-main btn-skip" onclick="skipLevel()">تخطي لفل 500 كوينز</button>
+        <div id="rewards-list"></div>
     </div>
 
-    <div id="levelup-modal" class="levelup-modal">
-        <div class="animate__animated animate__zoomInDown">
-            <div class="levelup-circle" id="new-lvl-num">1</div>
-            <h1 style="color: gold; margin:0">LEVEL UP!</h1>
-            <p>تهانينا! لقد فتحت مكافآت جديدة في السيزون</p>
-            <button class="btn-main btn-buy" style="padding: 10px 40px; margin-top: 20px;" onclick="closeLvlUp()">استمرار</button>
-        </div>
+    <div id="tasks-tab" class="container" style="display: none;">
+        <h3>المهام اليومية</h3>
+        <div id="tasks-list"></div>
+    </div>
+
+    <div style="height: 100px;"></div> <div class="footer-buy">
+        <button id="buy-btn" onclick="upgradePass()" style="flex: 2; background: var(--gold); border: none; border-radius: 12px; font-weight: 900; cursor: pointer; font-family: 'Cairo'; padding: 12px;">
+            تفعيل السيزون الملكي (1400 كوينز)
+        </button>
+        <button onclick="skipLevel()" style="flex: 1; background: var(--glass); border: 1px solid var(--primary); color: white; border-radius: 12px; cursor: pointer;">
+            تخطى لفل
+        </button>
     </div>
 
 <script>
-    // --- إعدادات الجوائز (رهيبة جداً) ---
-    const rewards = [
-        { lvl: 1, free: { n: "50 كوينز", i: "fa-coins", c: "#ffd700" }, prem: { n: "شارة ملكي", i: "fa-crown", c: "#a855f7" } },
-        { lvl: 2, free: { n: "XP مضاعف", i: "fa-bolt", c: "#10b981" }, prem: { n: "300 كوينز", i: "fa-coins", c: "#ffd700" } },
-        { lvl: 3, free: { n: "صندوق", i: "fa-box-open", c: "#94a3b8" }, prem: { n: "REX-999 ID", i: "fa-fingerprint", c: "#f43f5e" } },
-        { lvl: 4, free: { n: "بطاقة اسم", i: "fa-id-card", c: "#6366f1" }, prem: { n: "1000 كوينز", i: "fa-coins", c: "#ffd700" } },
-        { lvl: 5, free: { n: "شارة ذهبية", i: "fa-medal", c: "gold" }, prem: { n: "VIP ID", i: "fa-star", c: "cyan" } }
-    ];
-
-    let userSeasonData = null;
+    let uData = null;
     const XP_STEP = 1000;
 
-    async function initPass() {
+    // داتا المهام
+    const dailyTasks = [
+        { id: 't1', title: 'العب 5 مرات عادي', goal: 5, xp: 200, type: 'games_played' },
+        { id: 't2', title: 'العب 5 مرات أونلاين', goal: 5, xp: 300, type: 'online_played' },
+        { id: 't3', title: 'أرسل هدية لصديق', goal: 1, xp: 500, type: 'gift_sent' },
+        { id: 't4', title: 'تصدر قائمة الكوينز', goal: 1, xp: 1000, type: 'rank_top' }
+    ];
+
+    // توليد 30 لفل من الجوائز
+    const rewards = [];
+    for(let i=1; i<=30; i++) {
+        rewards.push({
+            lvl: i,
+            free: { id: `f${i}`, n: `${i*10} كوينز`, i: "fa-coins", val: i*10, type: 'coins' },
+            prem: { id: `p${i}`, n: i % 5 === 0 ? "ID مميز" : `${i*50} كوينز`, i: i % 5 === 0 ? "fa-id-badge" : "fa-coins", val: i*50, type: i % 5 === 0 ? 'special_id' : 'coins' }
+        });
+    }
+
+    async function initApp() {
         auth.onAuthStateChanged(user => {
-            if (!user) return;
-            
+            if(!user) return;
             db.collection('users').doc(user.uid).onSnapshot(doc => {
-                const data = doc.data();
-                // إذا لم تكن البيانات موجودة، أنشئها (نظام مستقل)
-                if (data.s_xp === undefined) {
-                    db.collection('users').doc(user.uid).update({ s_xp: 0, s_premium: false });
-                }
-                
-                checkLevelUp(data); // فحص إذا زاد الليفل لعمل انيميشن
-                userSeasonData = data;
-                renderTimeline();
-                updateHeader();
+                uData = doc.data();
+                if(!uData.s_claimed) db.collection('users').doc(user.uid).update({ s_claimed: [], s_tasks: {}, s_xp: 0, s_premium: false });
+                renderAll();
             });
         });
     }
 
-    function updateHeader() {
-        const xp = userSeasonData.s_xp || 0;
-        const lvl = Math.floor(xp / XP_STEP) + 1;
-        const currentXP = xp % XP_STEP;
-        const progress = (currentXP / XP_STEP) * 100;
-
-        document.getElementById('xp-bar').style.width = progress + '%';
-        document.getElementById('xp-current').innerText = currentXP;
-        document.getElementById('current-lvl-top').innerText = lvl;
-        
-        if (userSeasonData.s_premium) {
-            document.getElementById('pass-type-text').innerText = "المسار الملكي ✨";
-            document.getElementById('pass-type-text').style.color = "gold";
-            document.getElementById('premium-btn').style.display = "none";
-        }
+    function showTab(tab) {
+        document.getElementById('pass-tab').style.display = tab === 'pass' ? 'block' : 'none';
+        document.getElementById('tasks-tab').style.display = tab === 'tasks' ? 'block' : 'none';
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        event.currentTarget.classList.add('active');
     }
 
-    function renderTimeline() {
-        const container = document.getElementById('timeline');
-        container.innerHTML = "";
-        const userLvl = Math.floor((userSeasonData.s_xp || 0) / XP_STEP) + 1;
+    function renderAll() {
+        const xp = uData.s_xp || 0;
+        const currentLvl = Math.floor(xp / XP_STEP) + 1;
+        
+        // تحديث الهيدر
+        document.getElementById('user-lvl-display').innerText = currentLvl;
+        document.getElementById('xp-bar').style.width = ((xp % XP_STEP) / XP_STEP * 100) + '%';
+        document.getElementById('xp-text').innerText = `${xp % XP_STEP} / ${XP_STEP} XP`;
+        if(uData.s_premium) document.getElementById('buy-btn').style.display = 'none';
 
-        rewards.forEach(item => {
-            const isUnlocked = item.lvl <= userLvl;
-            const node = document.createElement('div');
-            node.className = "lvl-node";
-            node.innerHTML = `
-                <div class="lvl-badge" style="border-color: ${isUnlocked ? 'gold' : '#1e293b'}">
-                    <span>${item.lvl}</span>
-                </div>
-                
-                <div class="reward-icon-card ${isUnlocked ? 'animate__animated animate__fadeIn' : 'locked'}">
-                    <span class="reward-tag tag-free">FREE</span>
-                    <i class="fas ${item.free.i}" style="color: ${item.free.c}"></i>
-                    <div style="font-size:0.7rem">${item.free.n}</div>
-                </div>
-
-                <div class="reward-icon-card premium ${isUnlocked && userSeasonData.s_premium ? 'animate__animated animate__bounceIn' : 'locked'}">
-                    <span class="reward-tag tag-premium">ELITE</span>
-                    <i class="fas ${item.prem.i}" style="color: ${item.prem.c}"></i>
-                    <div style="font-size:0.7rem">${item.prem.n}</div>
-                </div>
+        // رندر الجوائز
+        const rList = document.getElementById('rewards-list');
+        rList.innerHTML = '';
+        rewards.forEach(r => {
+            const row = document.createElement('div');
+            row.className = 'lvl-row';
+            row.innerHTML = `
+                <div class="lvl-number">${r.lvl}</div>
+                ${createRewardBox(r.lvl, r.free, false)}
+                ${createRewardBox(r.lvl, r.prem, true)}
             `;
-            container.appendChild(node);
+            rList.appendChild(row);
+        });
+
+        // رندر المهام
+        const tList = document.getElementById('tasks-list');
+        tList.innerHTML = '';
+        dailyTasks.forEach(task => {
+            const progress = uData.s_tasks?.[task.type] || 0;
+            const isDone = progress >= task.goal;
+            const alreadyClaimed = uData.s_claimed.includes(task.id);
+
+            const div = document.createElement('div');
+            div.className = 'task-card';
+            div.innerHTML = `
+                <div class="task-info">
+                    <h4>${task.title}</h4>
+                    <div class="task-xp">+${task.xp} XP سيزون</div>
+                    <small>${progress}/${task.goal}</small>
+                </div>
+                <button class="btn-claim-task" ${(!isDone || alreadyClaimed) ? 'disabled' : ''} onclick="claimTask('${task.id}', ${task.xp})">
+                    ${alreadyClaimed ? 'تم' : 'استلام'}
+                </button>
+            `;
+            tList.appendChild(div);
         });
     }
 
-    // --- نظام الانيميشن المتطور ---
-    let lastKnownLvl = 1;
-    function checkLevelUp(newData) {
-        const newLvl = Math.floor((newData.s_xp || 0) / XP_STEP) + 1;
-        if (newLvl > lastKnownLvl) {
-            showLvlUp(newLvl);
-        }
-        lastKnownLvl = newLvl;
+    function createRewardBox(lvl, item, isPrem) {
+        const userLvl = Math.floor((uData.s_xp || 0) / XP_STEP) + 1;
+        const canClaim = lvl <= userLvl && (!isPrem || uData.s_premium);
+        const isClaimed = uData.s_claimed.includes(item.id);
+
+        let btnState = `<button class="btn-claim-reward locked">مقفل</button>`;
+        if (isClaimed) btnState = `<button class="btn-claim-reward done"><i class="fas fa-check"></i> تم</button>`;
+        else if (canClaim) btnState = `<button class="btn-claim-reward animate__animated animate__pulse animate__infinite" onclick="claimReward('${item.id}', '${item.type}', ${item.val})">استلام</button>`;
+
+        return `
+            <div class="reward-box ${isPrem ? 'premium' : ''}">
+                <i class="fas ${item.i}" style="color: ${isPrem ? 'var(--gold)' : 'var(--primary)'}"></i>
+                <span style="font-size:0.6rem">${item.n}</span>
+                ${btnState}
+            </div>
+        `;
     }
 
-    function showLvlUp(lvl) {
-        document.getElementById('new-lvl-num').innerText = lvl;
-        document.getElementById('levelup-modal').style.display = "flex";
-        // صوت بسيط إذا أردت (اختياري)
+    async function claimReward(id, type, val) {
+        const ref = db.collection('users').doc(auth.currentUser.uid);
+        let updateData = { s_claimed: firebase.firestore.FieldValue.arrayUnion(id) };
+        
+        if(type === 'coins') updateData.totalCoins = firebase.firestore.FieldValue.increment(val);
+        if(type === 'special_id') updateData.hasSpecialID = true;
+
+        await ref.update(updateData);
+        alert("تم استلام الجائزة بنجاح! 🎉");
     }
 
-    function closeLvlUp() {
-        document.getElementById('levelup-modal').style.display = "none";
+    async function claimTask(id, xp) {
+        await db.collection('users').doc(auth.currentUser.uid).update({
+            s_xp: firebase.firestore.FieldValue.increment(xp),
+            s_claimed: firebase.firestore.FieldValue.arrayUnion(id)
+        });
     }
 
-    // --- عمليات الشراء ---
-    async function buyPremium() {
-        if(userSeasonData.totalCoins < 1400) return alert("الكوينز غير كافية!");
-        if(confirm("شراء تفعيل السيزون الملكي بـ 1400 كوينز؟")) {
+    async function upgradePass() {
+        if(uData.totalCoins < 1400) return alert("لا يوجد كوينز كافية!");
+        if(confirm("تفعيل السيزون الملكي مقابل 1400 كوينز؟")) {
             await db.collection('users').doc(auth.currentUser.uid).update({
                 totalCoins: firebase.firestore.FieldValue.increment(-1400),
                 s_premium: true
@@ -273,16 +262,13 @@
     }
 
     async function skipLevel() {
-        if(userSeasonData.totalCoins < 500) return alert("الكوينز غير كافية!");
-        if(confirm("تخطي هذا الليفل بـ 500 كوينز؟")) {
-            await db.collection('users').doc(auth.currentUser.uid).update({
-                totalCoins: firebase.firestore.FieldValue.increment(-500),
-                s_xp: firebase.firestore.FieldValue.increment(XP_STEP)
-            });
-        }
+        const price = 500; // سعر ثابت أو متغير
+        if(uData.totalCoins < price) return alert("كوينز غير كافية!");
+        await db.collection('users').doc(auth.currentUser.uid).update({
+            totalCoins: firebase.firestore.FieldValue.increment(-price),
+            s_xp: firebase.firestore.FieldValue.increment(XP_STEP)
+        });
     }
-
-    initPass();
 </script>
 </body>
 </html>
