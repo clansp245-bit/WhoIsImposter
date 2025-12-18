@@ -39,157 +39,43 @@
             align-items: center;
         }
 
-        /* شريط الرجوع */
-        .nav-header {
-            width: 100%;
-            max-width: 500px;
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
+        .nav-header { width: 100%; max-width: 500px; display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .leave-btn { color: var(--error); text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 8px; background: rgba(239, 68, 68, 0.1); padding: 8px 15px; border-radius: 12px; transition: 0.3s; }
 
-        .leave-btn {
-            color: var(--error);
-            text-decoration: none;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(239, 68, 68, 0.1);
-            padding: 8px 15px;
-            border-radius: 12px;
-            transition: 0.3s;
-        }
-
-        /* البطاقات */
-        .card {
-            background: var(--card-bg);
-            backdrop-filter: blur(15px);
-            padding: 25px;
-            border-radius: 24px;
-            width: 100%;
-            max-width: 500px;
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-            margin-bottom: 20px;
-            box-sizing: border-box;
-        }
-
+        .card { background: var(--card-bg); backdrop-filter: blur(15px); padding: 25px; border-radius: 24px; width: 100%; max-width: 500px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.3); margin-bottom: 20px; box-sizing: border-box; }
         h2 { font-weight: 900; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 15px; }
 
-        /* عرض الرمز */
-        .room-code-box {
-            background: rgba(0,0,0,0.3);
-            border: 2px dashed var(--primary);
-            padding: 15px;
-            border-radius: 18px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
+        .room-code-box { background: rgba(0,0,0,0.3); border: 2px dashed var(--primary); padding: 15px; border-radius: 18px; display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 20px; }
         #room-code-value { font-size: 1.8rem; font-weight: 900; color: var(--gold); letter-spacing: 4px; }
         .copy-icon { cursor: pointer; color: var(--text-dim); font-size: 1.2rem; }
 
-        /* قائمة اللاعبين */
-        .player-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(255,255,255,0.05);
-            padding: 12px 18px;
-            border-radius: 15px;
-            margin-bottom: 10px;
-            border-right: 4px solid transparent;
-            transition: 0.3s;
-            cursor: pointer;
-        }
+        .player-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 12px 18px; border-radius: 15px; margin-bottom: 10px; border-right: 4px solid transparent; transition: 0.3s; cursor: pointer; }
         .player-item:hover { background: rgba(255,255,255,0.1); transform: scale(1.02); }
         .player-item.is-host { border-right-color: var(--gold); }
         .player-item.is-me { background: rgba(99, 102, 241, 0.15); border-right-color: var(--primary); }
 
         .kick-btn { background: var(--error); color: white; border: none; padding: 5px 10px; border-radius: 8px; cursor: pointer; }
 
-        /* زر البدء */
-        .start-btn {
-            width: 100%;
-            padding: 18px;
-            border-radius: 18px;
-            border: none;
-            background: var(--accent-gradient);
-            color: white;
-            font-weight: 900;
-            font-size: 1.2rem;
-            cursor: pointer;
-            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
-            transition: 0.3s;
-        }
+        .start-btn { width: 100%; padding: 18px; border-radius: 18px; border: none; background: var(--accent-gradient); color: white; font-weight: 900; font-size: 1.2rem; cursor: pointer; box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3); transition: 0.3s; }
         .start-btn:disabled { opacity: 0.3; transform: none; box-shadow: none; cursor: not-allowed; }
 
-        /* مودال البروفايل */
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(8px);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        .modal-content {
-            background: #1e293b;
-            width: 100%;
-            max-width: 380px;
-            border-radius: 30px;
-            padding: 30px;
-            position: relative;
-            text-align: center;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
+        /* المودال والشارات */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
+        .modal-content { background: #1e293b; width: 100%; max-width: 380px; border-radius: 30px; padding: 30px; position: relative; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
         .close-modal { position: absolute; top: 20px; left: 20px; color: var(--text-dim); font-size: 1.5rem; cursor: pointer; }
         
-        /* شارات اللاعب */
-        .badges-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
-            margin: 15px 0;
-        }
-        .badge-icon {
-            width: 40px;
-            height: 40px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            border: 1px solid rgba(255,255,255,0.1);
-            position: relative;
-        }
-        .badge-icon:hover::after {
-            content: attr(data-title);
-            position: absolute;
-            bottom: -30px;
-            font-size: 0.7rem;
-            background: black;
-            padding: 2px 8px;
-            border-radius: 5px;
-            white-space: nowrap;
-        }
+        .badges-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 15px 0; }
+        .badge-icon { width: 45px; height: 45px; background: rgba(255,255,255,0.05); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s; position: relative; }
+        
+        /* تلوين الشارات */
+        .badge-dev { color: #f87171; border-color: #f87171; }
+        .badge-pro { color: #fbbf24; border-color: #fbbf24; }
+        .badge-expert { color: #60a5fa; border-color: #60a5fa; }
+        .badge-rich { color: #34d399; border-color: #34d399; }
 
-        /* بطاقة الدور */
-        #role-card {
-            text-align: center;
-            padding: 40px 20px;
-        }
+        #role-card { text-align: center; padding: 40px 20px; }
         .role-title { font-size: 2.5rem; font-weight: 900; margin-bottom: 10px; }
         .role-word { font-size: 2rem; background: rgba(0,0,0,0.2); padding: 10px 20px; border-radius: 15px; display: inline-block; margin: 20px 0; border: 1px solid var(--primary); color: var(--gold); }
-
     </style>
 </head>
 
@@ -197,65 +83,57 @@
 
 <div class="nav-header">
     <a href="#" class="leave-btn" onclick="leaveRoom(event)">
-        <i class="fas fa-sign-out-alt"></i> مغادرة
+        <i class="fas fa-sign-out-alt"></i> مغادرة الغرفة
     </a>
 </div>
 
 <div class="card" id="waiting-lobby">
     <h2>🎮 غرفة الانتظار</h2>
-    
     <div class="room-code-box">
         <span id="room-code-value">------</span>
         <i class="fas fa-copy copy-icon" onclick="copyCode()"></i>
     </div>
-
-    <div style="margin-bottom: 20px; font-size: 0.9rem; color: var(--text-dim);">
-        <i class="fas fa-info-circle"></i> بانتظار المضيف لبدء اللعبة...
+    <div id="lobby-status" style="margin-bottom: 20px; font-size: 0.9rem; color: var(--text-dim);">
+        <i class="fas fa-sync fa-spin"></i> جاري جلب البيانات...
     </div>
-
     <div style="text-align: right; margin-bottom: 15px;">
-        <h4 style="margin-bottom: 10px;"><i class="fas fa-users"></i> اللاعبين المتصلين (<span id="player-count">0</span>)</h4>
+        <h4 style="margin-bottom: 10px;"><i class="fas fa-users"></i> اللاعبين (<span id="player-count">0</span>/10)</h4>
         <div id="players-list-container"></div>
     </div>
-
     <button class="start-btn" id="start-game-btn" onclick="startGame()" style="display: none;" disabled>
-        ابدأ اللعب الآن <i class="fas fa-play-circle"></i>
+        ابدأ اللعبة الآن <i class="fas fa-play-circle"></i>
     </button>
 </div>
 
 <div class="card" id="role-display-card" style="display:none;">
     <div id="role-card">
-        <div class="role-title" id="role-title">أنت مدني 😇</div>
-        <div class="role-word" id="role-word">التفاح</div>
-        <p id="role-instructions" style="color: var(--text-dim);">اشرح الكلمة بدون ذكر اسمها صراحة!</p>
-        <button class="start-btn" onclick="hideRoleCard()" style="margin-top: 30px; background: var(--primary);">فهمت، العودة للغرفة</button>
+        <div class="role-title" id="role-title">---</div>
+        <div class="role-word" id="role-word">---</div>
+        <p id="role-instructions" style="color: var(--text-dim);">---</p>
+        <button class="start-btn" onclick="hideRoleCard()" style="margin-top: 30px; background: var(--primary);">إخفاء والعودة للدردشة</button>
     </div>
 </div>
 
 <div id="profile-modal" class="modal">
     <div class="modal-content">
         <i class="fas fa-times close-modal" onclick="closeProfile()"></i>
-        <div id="modal-avatar" style="font-size: 4rem; margin-bottom: 15px;">👤</div>
-        <h3 id="modal-name" style="font-weight: 900; margin-bottom: 5px;">---</h3>
+        <div id="modal-avatar" style="font-size: 4rem; margin-bottom: 15px; color: var(--primary);"><i class="fas fa-user-circle"></i></div>
+        <h3 id="modal-name">---</h3>
         <div id="modal-id" style="color: var(--text-dim); font-size: 0.8rem; margin-bottom: 15px;">ID: ---</div>
-        
-        <div style="font-weight: bold; font-size: 0.9rem; color: var(--gold);">الشارات المحققة</div>
-        <div class="badges-container" id="modal-badges">
-            </div>
-
+        <div style="font-weight: bold; font-size: 0.9rem; color: var(--gold); margin-bottom: 10px;">الشارات المستحقة</div>
+        <div class="badges-container" id="modal-badges"></div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;">
             <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 12px;">
                 <div style="font-size: 0.7rem; color: var(--text-dim);">المستوى</div>
                 <div id="modal-level" style="font-weight: 900;">1</div>
             </div>
             <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 12px;">
-                <div style="font-size: 0.7rem; color: var(--text-dim);">الفوز</div>
+                <div style="font-size: 0.7rem; color: var(--text-dim);">انتصارات المحتال</div>
                 <div id="modal-wins" style="font-weight: 900;">0</div>
             </div>
         </div>
-
-        <button class="start-btn" style="margin-top: 20px; font-size: 1rem; padding: 12px;" onclick="alert('سيتوفر قريباً!')">
-            🎁 إرسال هدية
+        <button class="start-btn" style="margin-top: 20px; font-size: 1rem; padding: 12px;" onclick="alert('سيتم إضافة نظام الهدايا قريباً!')">
+            <i class="fas fa-gift"></i> إرسال هدية
         </button>
     </div>
 </div>
@@ -265,14 +143,15 @@ let currentUID;
 let roomCode;
 let roomData = null;
 let allUsersData = {}; 
-const DEV_UID = 'clansp245@gmail.com'; // إيميل المطور للتمييز
+const DEV_EMAIL = 'clansp245@gmail.com';
 
-// تهيئة الغرفة
+// الكلمات الافتراضية في حال فشل جلب الإعدادات
+const defaultWords = ["تفاح", "بيتزا", "لندن", "ميسي", "طائرة", "قهوة", "مدرسة", "نمر", "هاتف"];
+
 async function initLobby() {
     const urlParams = new URLSearchParams(window.location.search);
     roomCode = urlParams.get('id');
     if (!roomCode) return window.location.href = "index.html";
-    
     document.getElementById('room-code-value').innerText = roomCode;
 
     firebase.auth().onAuthStateChanged(user => {
@@ -284,9 +163,12 @@ async function initLobby() {
 
 function startRoomListener() {
     db.collection('rooms').doc(roomCode).onSnapshot(async doc => {
-        if (!doc.exists) return;
+        if (!doc.exists) {
+            alert("تم إغلاق الغرفة");
+            window.location.href = "index.html";
+            return;
+        }
         roomData = doc.data();
-        
         await fetchPlayersDetails(roomData.players);
         
         if (roomData.status === 'playing') {
@@ -297,15 +179,10 @@ function startRoomListener() {
     });
 }
 
-// جلب بيانات اللاعبين مع الشارات
 async function fetchPlayersDetails(uids) {
     const promises = uids.map(uid => db.collection('users').doc(uid).get());
     const docs = await Promise.all(promises);
-    docs.forEach(doc => {
-        if (doc.exists) {
-            allUsersData[doc.id] = doc.data();
-        }
-    });
+    docs.forEach(doc => { if (doc.exists) allUsersData[doc.id] = doc.data(); });
 }
 
 function updateUI() {
@@ -313,35 +190,60 @@ function updateUI() {
     container.innerHTML = '';
     const players = roomData.players || [];
     document.getElementById('player-count').innerText = players.length;
+    document.getElementById('lobby-status').innerHTML = isHost() ? '<i class="fas fa-crown" style="color:var(--gold)"></i> أنت مضيف الغرفة' : '<i class="fas fa-hourglass-half"></i> بانتظار المضيف...';
 
     players.forEach(uid => {
         const data = allUsersData[uid] || {};
-        const isHost = roomData.hostUID === uid;
-        const isMe = currentUID === uid;
-        
+        const isPlayerHost = roomData.hostUID === uid;
         const div = document.createElement('div');
-        div.className = `player-item ${isHost ? 'is-host' : ''} ${isMe ? 'is-me' : ''}`;
+        div.className = `player-item ${isPlayerHost ? 'is-host' : ''} ${currentUID === uid ? 'is-me' : ''}`;
         div.onclick = () => openProfile(uid);
-        
         div.innerHTML = `
             <div style="display: flex; align-items: center; gap: 10px;">
-                <span>${isHost ? '👑' : '👤'}</span>
+                <i class="fas ${isPlayerHost ? 'fa-crown' : 'fa-user'}" style="color: ${isPlayerHost ? 'var(--gold)' : 'var(--text-dim)'}"></i>
                 <span style="font-weight: bold;">${data.displayName || 'لاعب'}</span>
             </div>
-            ${roomData.hostUID === currentUID && !isMe ? `<button class="kick-btn" onclick="event.stopPropagation(); kick('${uid}')">طرد</button>` : ''}
+            ${isHost() && uid !== currentUID ? `<button class="kick-btn" onclick="event.stopPropagation(); kick('${uid}')"><i class="fas fa-user-slash"></i></button>` : ''}
         `;
         container.appendChild(div);
     });
 
-    // إظهار زر البدء للمضيف
     const startBtn = document.getElementById('start-game-btn');
-    if (roomData.hostUID === currentUID) {
+    if (isHost()) {
         startBtn.style.display = 'block';
         startBtn.disabled = players.length < 3;
     }
 }
 
-// دالة فتح البروفايل وعرض الشارات
+function isHost() { return roomData && roomData.hostUID === currentUID; }
+
+// دالة بدء اللعبة (الحل البرمجي)
+async function startGame() {
+    if (!isHost()) return;
+    const players = roomData.players;
+    const word = defaultWords[Math.floor(Math.random() * defaultWords.length)];
+    
+    // اختيار محتال واحد عشوائياً
+    const impostorIndex = Math.floor(Math.random() * players.length);
+    const roles = {};
+
+    players.forEach((uid, index) => {
+        roles[uid] = {
+            role: (index === impostorIndex) ? 'impostor' : 'civilian',
+            word: (index === impostorIndex) ? '???' : word
+        };
+    });
+
+    try {
+        await db.collection('rooms').doc(roomCode).update({
+            status: 'playing',
+            currentGameData: { roles: roles, actualWord: word }
+        });
+    } catch (e) {
+        alert("فشل بدء اللعبة: " + e.message);
+    }
+}
+
 function openProfile(uid) {
     const data = allUsersData[uid] || {};
     document.getElementById('modal-name').innerText = data.displayName || 'لاعب';
@@ -349,68 +251,73 @@ function openProfile(uid) {
     document.getElementById('modal-level').innerText = data.level || 1;
     document.getElementById('modal-wins').innerText = data.impostorWins || 0;
     
-    // نظام الشارات
     const badgesBox = document.getElementById('modal-badges');
     badgesBox.innerHTML = '';
     
-    // تعريف الشارات بناءً على البيانات
-    const badges = [];
-    if (data.email === DEV_UID) badges.push({icon: '🛠️', title: 'مطور اللعبة'});
-    if (data.proExpiryTime > Date.now()) badges.push({icon: '💎', title: 'عضو VIP'});
-    if ((data.impostorWins || 0) > 10) badges.push({icon: '🔥', title: 'محترف'});
-    if ((data.totalCoins || 0) > 5000) badges.push({icon: '💰', title: 'ثري'});
+    // إضافة شارات أيقونات بدلاً من إيموجي
+    const badgeConfigs = [];
+    if (data.email === DEV_EMAIL) badgeConfigs.push({icon: 'fa-code', class: 'badge-dev', title: 'مطور'});
+    if (data.proExpiryTime > (Date.now()/1000)) badgeConfigs.push({icon: 'fa-gem', class: 'badge-pro', title: 'برو'});
+    if ((data.impostorWins || 0) > 10) badgeConfigs.push({icon: 'fa-fire', class: 'badge-expert', title: 'خبير'});
+    if ((data.totalCoins || 0) > 5000) badgeConfigs.push({icon: 'fa-coins', class: 'badge-rich', title: 'ثري'});
 
-    if (badges.length === 0) {
-        badgesBox.innerHTML = '<div style="color:var(--text-dim); font-size:0.8rem;">لا توجد شارات بعد</div>';
-    } else {
-        badges.forEach(b => {
-            const span = document.createElement('div');
-            span.className = 'badge-icon';
-            span.setAttribute('data-title', b.title);
-            span.innerHTML = b.icon;
-            badgesBox.appendChild(span);
-        });
-    }
+    badgeConfigs.forEach(b => {
+        const div = document.createElement('div');
+        div.className = `badge-icon ${b.class}`;
+        div.title = b.title;
+        div.innerHTML = `<i class="fas ${b.icon}"></i>`;
+        badgesBox.appendChild(div);
+    });
 
     document.getElementById('profile-modal').style.display = 'flex';
 }
 
-function closeProfile() {
-    document.getElementById('profile-modal').style.display = 'none';
-}
-
 function displayRole() {
+    if (!roomData.currentGameData) return;
     const roleData = roomData.currentGameData.roles[currentUID];
     document.getElementById('waiting-lobby').style.display = 'none';
-    document.getElementById('role-display-card').style.display = 'block';
+    const displayCard = document.getElementById('role-display-card');
+    displayCard.style.display = 'block';
     
     const title = document.getElementById('role-title');
     const word = document.getElementById('role-word');
+    const instr = document.getElementById('role-instructions');
     
     if (roleData.role === 'impostor') {
         title.innerText = "أنت المحتال 😈";
         title.style.color = "var(--error)";
-        word.innerText = "أنت لا تعرف الكلمة!";
+        word.innerText = "؟؟؟";
+        instr.innerText = "حاول معرفة الكلمة من وصف الآخرين دون أن تنكشف!";
     } else {
         title.innerText = "أنت مدني 😇";
         title.style.color = "var(--success)";
         word.innerText = roleData.word;
+        instr.innerText = "صف الكلمة بذكاء واكشف المحتال الذي لا يعرفها!";
     }
 }
 
-function hideRoleCard() {
+function closeProfile() { document.getElementById('profile-modal').style.display = 'none'; }
+function hideRoleCard() { 
     document.getElementById('role-display-card').style.display = 'none';
     document.getElementById('waiting-lobby').style.display = 'block';
 }
 
 function copyCode() {
     navigator.clipboard.writeText(roomCode);
-    alert("تم نسخ رمز الغرفة");
+    alert("تم نسخ رمز الغرفة!");
+}
+
+async function kick(uid) {
+    if (confirm("هل تريد طرد هذا اللاعب؟")) {
+        await db.collection('rooms').doc(roomCode).update({
+            players: firebase.firestore.FieldValue.arrayRemove(uid)
+        });
+    }
 }
 
 async function leaveRoom(e) {
     e.preventDefault();
-    if (confirm("هل تريد مغادرة الغرفة؟")) {
+    if (confirm("هل تريد المغادرة؟")) {
         await db.collection('rooms').doc(roomCode).update({
             players: firebase.firestore.FieldValue.arrayRemove(currentUID)
         });
