@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏆 قائمة المتصدرين</title>
+    <title>🏆 قائمة المتصدرين الاحترافية</title>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -34,8 +34,6 @@
             align-items: center;
         }
 
-        h2 { font-weight: 900; font-size: 2rem; color: var(--accent); margin-bottom: 30px; text-shadow: 0 0 15px rgba(52, 211, 153, 0.3); }
-
         .leaderboard-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -44,18 +42,13 @@
             max-width: 1100px;
         }
 
-        /* تصميم الكرت الزجاجي */
         .leaderboard-card {
             background: var(--glass-bg);
             backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
             border: 1px solid var(--glass-border);
             padding: 25px;
             border-radius: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
-
-        h3 { text-align: center; color: var(--gold); margin-bottom: 20px; font-size: 1.3rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; }
 
         .player-item {
             display: flex;
@@ -66,177 +59,166 @@
             border-radius: 15px;
             transition: 0.3s;
             cursor: pointer;
-            border: 1px solid transparent;
         }
 
-        .player-item:hover {
-            background: rgba(255, 255, 255, 0.08);
-            transform: scale(1.02);
-            border-color: var(--primary);
-        }
+        .player-item:hover { background: rgba(255, 255, 255, 0.08); transform: translateX(-5px); }
 
-        .rank { width: 35px; font-weight: 900; font-size: 1.2rem; color: var(--accent); }
-
-        /* الألوان للمراكز الثلاثة الأولى */
-        .player-item:nth-child(2) .rank { color: #ffd700; } /* ذهبي */
-        .player-item:nth-child(3) .rank { color: #c0c0c0; } /* فضي */
-        .player-item:nth-child(4) .rank { color: #cd7f32; } /* برونزي */
+        .rank { width: 35px; font-weight: 900; color: var(--accent); }
 
         .info { flex-grow: 1; margin-right: 10px; }
         .name { display: block; font-weight: 700; color: #fff; }
-        .public-uid { font-size: 0.75rem; color: #94a3b8; font-family: monospace; }
+        .value { font-weight: 900; color: var(--gold); }
 
-        .value { font-weight: 900; color: var(--gold); display: flex; align-items: center; gap: 5px; }
+        /* الأيقونات بدلاً من الإيموجي */
+        .badge-icon { margin-left: 5px; font-size: 0.9rem; }
+        .icon-dev { color: #f87171; } /* أحمر للمطور */
+        .icon-pro { color: #fbbf24; } /* ذهبي للبرو */
+        .icon-legend { color: #a855f7; } /* بنفسجي للأسطورة */
 
-        /* الشارات الصغيرة في القائمة */
-        .mini-badge { font-size: 0.7rem; background: var(--primary); color: white; padding: 2px 6px; border-radius: 5px; margin-right: 5px; }
-
-        /* النافذة المنبثقة (Modal) للبروفايل */
+        /* النافذة المنبثقة */
         .modal {
             display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(8px);
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(10px);
             z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+            align-items: center; justify-content: center;
         }
         .modal-content {
             background: #1e293b;
-            width: 100%;
-            max-width: 400px;
-            border-radius: 30px;
-            padding: 30px;
-            text-align: center;
-            position: relative;
-            border: 1px solid var(--primary);
+            width: 90%; max-width: 380px;
+            border-radius: 30px; padding: 30px;
+            text-align: center; border: 1px solid var(--primary);
         }
-        .close-modal { position: absolute; top: 20px; left: 20px; color: #94a3b8; cursor: pointer; font-size: 1.5rem; }
 
-        .profile-img {
-            width: 100px; height: 100px; background: var(--accent);
-            border-radius: 50%; margin: 0 auto 15px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 3rem; border: 4px solid var(--primary);
+        .btn-add {
+            width: 100%; margin-top: 20px; padding: 15px;
+            border-radius: 15px; border: none;
+            background: var(--primary); color: white;
+            font-weight: 900; cursor: pointer; transition: 0.3s;
         }
-        .badges-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 15px; }
-        .badge-tag { background: rgba(99, 102, 241, 0.2); border: 1px solid var(--primary); padding: 5px 12px; border-radius: 10px; font-size: 0.8rem; color: #fff; }
-
-        #loading { text-align: center; margin-top: 50px; }
+        .btn-add:disabled { background: #475569; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
-    <h2><i class="fas fa-trophy"></i> قاعة المشاهير</h2>
+    <h2 style="color: var(--accent); font-weight: 900;"><i class="fas fa-medal"></i> قمة المحتالين</h2>
 
-    <div id="loading">
-        <i class="fas fa-spinner fa-spin fa-3x" style="color: var(--accent);"></i>
-        <p>جاري استدعاء الأساطير...</p>
+    <div id="loading" style="text-align:center; margin-bottom: 20px;">
+        <i class="fas fa-circle-notch fa-spin fa-2x"></i>
     </div>
 
     <div class="leaderboard-container">
         <div id="coins-leaderboard" class="leaderboard-card">
-            <h3><i class="fas fa-coins"></i> كبار الأثرياء</h3>
+            <h3 style="color: var(--gold);"><i class="fas fa-coins"></i> بنك المدينة</h3>
         </div>
         
         <div id="xp-leaderboard" class="leaderboard-card">
-            <h3><i class="fas fa-star"></i> أقوى المحتالين (XP)</h3>
+            <h3 style="color: #a855f7;"><i class="fas fa-bolt"></i> الخبرة القتالية</h3>
         </div>
     </div>
 
     <div id="profileModal" class="modal">
         <div class="modal-content">
-            <span class="close-modal" onclick="closeModal()">&times;</span>
-            <div class="profile-img" id="modal-img"><i class="fas fa-user"></i></div>
-            <h2 id="modal-name" style="margin-bottom: 5px;">---</h2>
-            <p id="modal-uid" style="color: var(--gold); font-family: monospace;"></p>
+            <div id="modal-badges" style="margin-bottom: 10px; font-size: 1.2rem;"></div>
+            <h2 id="modal-name">---</h2>
+            <p id="modal-uid" style="color: var(--text-dim); font-size: 0.8rem;"></p>
             
-            <div id="modal-stats" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;">
+            <div id="modal-stats" style="display: flex; justify-content: space-around; margin: 20px 0;">
                 </div>
 
-            <div class="badges-container" id="modal-badges">
-                </div>
-
-            <button onclick="addFriendAction()" style="width: 100%; margin-top: 20px; padding: 12px; border-radius: 12px; border: none; background: var(--primary); color: white; font-weight: 900; cursor: pointer;">
+            <button id="add-friend-btn" class="btn-add" onclick="handleAddFriend()">
                 <i class="fas fa-user-plus"></i> إضافة صديق
             </button>
+            <button onclick="closeModal()" style="background:none; border:none; color:#94a3b8; margin-top:15px; cursor:pointer;">إغلاق</button>
         </div>
     </div>
 
 <script>
+    let selectedUserUid = null;
     const ADMIN_EMAIL = "clansp245@gmail.com";
-    const usersRef = db.collection('users');
+
+    // دالة تحويل البيانات لأيقونات
+    function getUserBadgesIcons(user) {
+        let icons = "";
+        if (user.email === ADMIN_EMAIL) icons += '<i class="fas fa-user-shield badge-icon icon-dev" title="المطور"></i>';
+        if (user.proExpiryTime > Date.now()) icons += '<i class="fas fa-crown badge-icon icon-pro" title="عضو برو"></i>';
+        if (user.xp > 5000) icons += '<i class="fas fa-fire badge-icon icon-legend" title="أسطورة"></i>';
+        return icons;
+    }
 
     async function loadLeaderboards() {
+        const usersRef = db.collection('users');
         const coinsSnap = await usersRef.orderBy('totalCoins', 'desc').limit(10).get();
         const xpSnap = await usersRef.orderBy('xp', 'desc').limit(10).get();
         
         document.getElementById('loading').style.display = 'none';
         
         renderList('coins-leaderboard', coinsSnap, 'totalCoins', 'fa-coins');
-        renderList('xp-leaderboard', xpSnap, 'xp', 'fa-star');
+        renderList('xp-leaderboard', xpSnap, 'xp', 'fa-bolt');
     }
 
     function renderList(containerId, snapshot, field, icon) {
         const container = document.getElementById(containerId);
         let index = 1;
-        
         snapshot.forEach(doc => {
             const user = doc.data();
-            const playerDiv = document.createElement('div');
-            playerDiv.className = 'player-item';
-            playerDiv.onclick = () => openProfile(user);
+            const div = document.createElement('div');
+            div.className = 'player-item';
+            div.onclick = () => openProfile(user, doc.id);
             
-            playerDiv.innerHTML = `
-                <span class="rank">${index++}</span>
+            div.innerHTML = `
+                <span class="rank">#${index++}</span>
                 <div class="info">
-                    <span class="name">${user.displayName || 'لاعب مجهول'} ${user.email === ADMIN_EMAIL ? '👑' : ''}</span>
-                    <span class="public-uid">${user.publicUid || '---'}</span>
+                    <span class="name">${user.displayName} ${getUserBadgesIcons(user)}</span>
                 </div>
                 <span class="value">${user[field].toLocaleString()} <i class="fas ${icon}"></i></span>
             `;
-            container.appendChild(playerDiv);
+            container.appendChild(div);
         });
     }
 
-    // فتح بروفايل اللاعب
-    function openProfile(user) {
-        document.getElementById('modal-name').innerText = user.displayName || "لاعب";
-        document.getElementById('modal-uid').innerText = user.publicUid || "بدون ID";
-        document.getElementById('modal-stats').innerHTML = `
-            <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px;">
-                <div style="font-size: 0.7rem; color: #94a3b8;">الكوينز</div>
-                <div style="color: var(--gold); font-weight: 900;">${user.totalCoins || 0}</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px;">
-                <div style="font-size: 0.7rem; color: #94a3b8;">المستوى</div>
-                <div style="color: var(--accent); font-weight: 900;">${user.level || 1}</div>
-            </div>
-        `;
-
-        // إضافة الشارات (Badges)
-        const badgesBox = document.getElementById('modal-badges');
-        badgesBox.innerHTML = '';
+    function openProfile(user, uid) {
+        selectedUserUid = uid;
+        document.getElementById('modal-name').innerText = user.displayName;
+        document.getElementById('modal-uid').innerText = user.publicUid;
+        document.getElementById('modal-badges').innerHTML = getUserBadgesIcons(user);
         
-        if (user.email === ADMIN_EMAIL) badgesBox.innerHTML += '<span class="badge-tag" style="border-color: #ef4444;">🛠️ المطور</span>';
-        if (isPro(user)) badgesBox.innerHTML += '<span class="badge-tag" style="border-color: var(--gold);">👑 عضو PRO</span>';
-        if ((user.xp || 0) > 10000) badgesBox.innerHTML += '<span class="badge-tag">🔥 أسطوري</span>';
+        // عرض الـ XP والمستوى الحقيقي
+        document.getElementById('modal-stats').innerHTML = `
+            <div><i class="fas fa-star" style="color:var(--accent)"></i><br>مستوى ${user.level || 1}</div>
+            <div><i class="fas fa-bolt" style="color:#a855f7"></i><br>${user.xp || 0} XP</div>
+        `;
         
         document.getElementById('profileModal').style.display = 'flex';
     }
 
-    function closeModal() { document.getElementById('profileModal').style.display = 'none'; }
+    async function handleAddFriend() {
+        const btn = document.getElementById('add-friend-btn');
+        const originalContent = btn.innerHTML;
+        
+        // ظهور الساعة الرملية والتعطيل
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-hourglass-half fa-spin"></i> جاري الإرسال...';
 
-    function addFriendAction() {
-        alert("سيتم إضافة نظام الأصدقاء في التحديث القادم!");
+        try {
+            await sendFriendRequest(selectedUserUid);
+            btn.innerHTML = '<i class="fas fa-check"></i> تم إرسال الطلب';
+            setTimeout(closeModal, 1500);
+        } catch (e) {
+            alert(e.message);
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+        }
     }
 
-    firebase.auth().onAuthStateChanged(user => {
-        if (user) loadLeaderboards();
-        else window.location.href = "auth.html";
-    });
+    function closeModal() { 
+        document.getElementById('profileModal').style.display = 'none';
+        document.getElementById('add-friend-btn').disabled = false;
+        document.getElementById('add-friend-btn').innerHTML = '<i class="fas fa-user-plus"></i> إضافة صديق';
+    }
+
+    auth.onAuthStateChanged(user => { if(user) loadLeaderboards(); });
 </script>
 </body>
 </html>
