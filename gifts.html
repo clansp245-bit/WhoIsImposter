@@ -36,7 +36,7 @@
         }
 
         .top-info-bar { width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        #coins-display { background: rgba(251, 191, 36, 0.1); padding: 8px 15px; border-radius: 15px; color: var(--gold); font-weight: 900; border: 1px solid var(--gold); }
+        #coins-display { background: rgba(251, 191, 36, 0.2); padding: 8px 15px; border-radius: 15px; color: var(--gold); font-weight: 900; border: 1px solid var(--gold); }
 
         .card {
             background: var(--card-bg); backdrop-filter: blur(15px); padding: 15px; border-radius: 20px;
@@ -44,28 +44,27 @@
             position: relative;
         }
 
-        /* تنسيق البحث المصلح */
         .search-box-container { position: relative; width: 100%; }
         #player-search {
             width: 100%; padding: 12px; border-radius: 12px; 
             background: rgba(15, 23, 42, 0.9); border: 1px solid var(--primary); 
-            color: white; font-family: 'Cairo'; box-sizing: border-box;
+            color: white; font-family: 'Cairo'; box-sizing: border-box; outline: none;
         }
         .search-results-list {
-            position: absolute; top: 50px; left: 0; right: 0; 
-            background: #1e293b; border-radius: 12px; z-index: 100;
-            max-height: 200px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1);
-            display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            position: absolute; top: 55px; left: 0; right: 0; 
+            background: #1e293b; border-radius: 12px; z-index: 999;
+            max-height: 200px; overflow-y: auto; border: 1px solid var(--primary);
+            display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.8);
         }
         .search-item {
             padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);
-            cursor: pointer; transition: 0.2s; display: flex; justify-content: space-between;
+            cursor: pointer; display: flex; justify-content: space-between; align-items: center;
         }
         .search-item:hover { background: var(--primary); }
 
         .tabs { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; width: 100%; max-width: 500px; scrollbar-width: none; padding: 5px 0; }
-        .tab { padding: 8px 18px; background: rgba(255,255,255,0.05); border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 0.8rem; border: 1px solid transparent; }
-        .tab.active { background: var(--primary); border-color: var(--tool-color); }
+        .tab { padding: 8px 18px; background: rgba(255,255,255,0.05); border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 0.8rem; font-weight: bold; transition: 0.3s; }
+        .tab.active { background: var(--primary); color: white; transform: scale(1.05); }
 
         .gifts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%; }
         .gift-item { 
@@ -73,24 +72,24 @@
             display: flex; flex-direction: column; align-items: center; text-align: center; position: relative;
         }
         
-        .gift-icon-container { width: 60px; height: 60px; font-size: 2rem; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
-        .badge-icon { color: var(--gold); }
-        .tool-icon { color: var(--tool-color); }
+        .gift-icon-container { width: 55px; height: 55px; font-size: 1.8rem; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; background: rgba(255,255,255,0.05); border-radius: 15px;}
         .pro-exclusive-tag { position: absolute; top: 8px; right: 8px; background: var(--pro-color); color: white; font-size: 0.55rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
 
-        .qty-controls { display: flex; align-items: center; gap: 15px; margin-top: 10px; background: rgba(0,0,0,0.2); padding: 5px 12px; border-radius: 10px; }
-        .qty-btn { background: var(--primary); border: none; color: white; width: 25px; height: 25px; border-radius: 5px; cursor: pointer; }
+        .qty-controls { display: flex; align-items: center; gap: 12px; margin-top: 10px; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 8px; }
+        .qty-btn { background: var(--primary); border: none; color: white; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; font-weight: bold; }
 
-        .send-btn { width: 100%; padding: 15px; border-radius: 15px; border: none; background: var(--accent-gradient); color: white; font-weight: 900; cursor: pointer; margin-top: 10px; }
-        #purchase-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; display: none; flex-direction: column; justify-content: center; align-items: center; }
+        .send-btn { width: 100%; padding: 15px; border-radius: 15px; border: none; background: var(--accent-gradient); color: white; font-weight: 900; cursor: pointer; margin-top: 10px; transition: 0.3s; }
+        .send-btn:disabled { opacity: 0.3; filter: grayscale(1); }
+
+        #purchase-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; }
     </style>
 </head>
 
-<body onload="initGiftPage()">
+<body>
 
 <div class="top-info-bar">
     <a href="index.html" style="color: var(--text-dim); text-decoration: none;"><i class="fas fa-chevron-right"></i> رجوع</a>
-    <div id="coins-display"><i class="fas fa-coins"></i> <span id="user-coins">0</span></div>
+    <div id="coins-display"><i class="fas fa-coins"></i> <span id="user-coins">تحميل...</span></div>
 </div>
 
 <div class="card">
@@ -99,15 +98,15 @@
         <div id="search-results" class="search-results-list"></div>
     </div>
     <div id="rec-info" style="margin-top: 10px; font-size: 0.85rem; color: var(--tool-color);">
-        إرسال إلى: <span id="rec-name" style="color: white; font-weight: bold;">نفسي (أنت)</span>
+        إرسال إلى: <span id="rec-name" style="color: #fff; font-weight: bold;">نفسي (أنت)</span>
     </div>
 </div>
 
 <div class="tabs">
     <div class="tab active" onclick="filterGifts('all', this)">🎁 الكل</div>
     <div class="tab" onclick="filterGifts('tools', this)">🛠️ البطاقات</div>
-    <div class="tab" onclick="filterGifts('pro', this)">🔥 هدايا برو</div>
-    <div class="tab" onclick="filterGifts('badges', this)">🏅 الشارات</div>
+    <div class="tab" onclick="filterGifts('pro', this)">🔥 برو</div>
+    <div class="tab" onclick="filterGifts('badges', this)">🏅 شارات</div>
     <div class="tab" onclick="filterGifts('luxury', this)">💎 ملكي</div>
     <div class="tab" onclick="filterGifts('cheap', this)">🎈 بسيطة</div>
 </div>
@@ -115,15 +114,14 @@
 <div class="card">
     <div id="gifts-container" class="gifts-grid"></div>
     <div style="margin-top: 20px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-        <div style="font-size: 0.9rem; color: var(--text-dim);">إجمالي التكلفة</div>
-        <div id="total-cost" style="font-size: 1.5rem; color: var(--gold); font-weight: 900;">0</div>
-        <button class="send-btn" id="send-btn" disabled onclick="processPurchase()">تأكيد وإرسال الهدايا</button>
+        <div id="total-cost" style="font-size: 1.5rem; color: var(--gold); font-weight: 900; margin-bottom: 5px;">0</div>
+        <button class="send-btn" id="send-btn" disabled onclick="processPurchase()">تأكيد الشراء والإرسال</button>
     </div>
 </div>
 
 <div id="purchase-overlay">
-    <i class="fas fa-magic fa-spin" style="font-size: 3rem; color: var(--primary);"></i>
-    <p>جاري سحر الهدايا...</p>
+    <i class="fas fa-circle-notch fa-spin" style="font-size: 3rem; color: var(--primary);"></i>
+    <p style="margin-top:15px">جاري معالجة الطلب...</p>
 </div>
 
 <script>
@@ -132,90 +130,72 @@ let currentUserData = {};
 let selectedPlayerUid = null;
 let cart = {};
 
+// --- الداتا الضخمة (50+ هدية) ---
 const gifts = [
     // بطاقات
-    {id: 50, name:"بطاقة تغيير الاسم", cost:500, cat:"tools", icon:"fas fa-id-card", isTool: true},
-    {id: 51, name:"بطاقة تغيير ID", cost:1000000, cat:"tools", icon:"fas fa-fingerprint", isTool: true},
+    {id: 50, name:"تغيير الاسم", cost:1000, cat:"tools", icon:"fas fa-id-card", isTool: true},
+    {id: 51, name:"تغيير الـ ID", cost:2000000, cat:"tools", icon:"fas fa-fingerprint", isTool: true},
     // شارات
-    {id: 100, name:"شارة الأسطورة", cost:25000, cat:"badges", icon:"fas fa-shield-halved", isBadge: true},
-    {id: 101, name:"تاج الإمبراطور", cost:20000, cat:"badges", icon:"fas fa-crown", isBadge: true},
-    {id: 102, name:"التنين الملكي", cost:15000, cat:"badges", icon:"fas fa-dragon", isBadge: true},
-    // برو
-    {id: 60, name:"سيارة برو ذهبية", cost:30000, cat:"pro", icon:"fas fa-car-side", proOnly: true, xp: 15000},
-    {id: 61, name:"يخت البرو", cost:75000, cat:"pro", icon:"fas fa-ship", proOnly: true, xp: 40000},
-    {id: 62, name:"صاروخ فضائي", cost:500000, cat:"pro", icon:"fas fa-rocket", proOnly: true, xp: 250000},
-    {id: 63, name:"خاتم الماس برو", cost:5000, cat:"pro", icon:"fas fa-ring", proOnly: true, xp: 2500},
-    // غالي وملكي
-    {id: 200, name:"قصر الصيف", cost:150000, cat:"luxury", icon:"🏰", xp: 80000},
-    {id: 201, name:"جزيرة خاصة", cost:300000, cat:"luxury", icon:"🏝️", xp: 180000},
-    {id: 202, name:"طائرة بوينج", cost:100000, cat:"luxury", icon:"✈️", xp: 55000},
-    {id: 203, name:"برج دبي", cost:800000, cat:"luxury", icon:"🏙️", xp: 500000},
-    // رخيص وبسيط
-    {id: 1, name:"وردة حمراء", cost:20, cat:"cheap", icon:"🌹", xp: 10},
-    {id: 2, name:"قلب حب", cost:50, cat:"cheap", icon:"❤️", xp: 30},
-    {id: 3, name:"بيتزا", cost:120, cat:"cheap", icon:"🍕", xp: 70},
-    {id: 4, name:"قهوة", cost:15, cat:"cheap", icon:"☕", xp: 5},
-    {id: 5, name:"دونات", cost:30, cat:"cheap", icon:"🍩", xp: 15}
+    {id: 100, name:"الأسطورة", cost:50000, cat:"badges", icon:"fas fa-shield-halved", isBadge: true},
+    {id: 101, name:"الإمبراطور", cost:40000, cat:"badges", icon:"fas fa-crown", isBadge: true},
+    {id: 102, name:"التنين", cost:30000, cat:"badges", icon:"fas fa-dragon", isBadge: true},
+    // برو (10 هدايا إضافية)
+    {id: 60, name:"لامبورغيني برو", cost:50000, cat:"pro", icon:"fas fa-car-side", proOnly: true, xp: 25000},
+    {id: 61, name:"يخت البرو", cost:100000, cat:"pro", icon:"fas fa-ship", proOnly: true, xp: 60000},
+    {id: 62, name:"صاروخ فضائي", cost:500000, cat:"pro", icon:"fas fa-rocket", proOnly: true, xp: 300000},
+    {id: 63, name:"خاتم الماس", cost:10000, cat:"pro", icon:"fas fa-ring", proOnly: true, xp: 5000},
+    {id: 64, name:"تذكرة VIP", cost:5000, cat:"pro", icon:"fas fa-ticket-alt", proOnly: true, xp: 2000},
+    {id: 65, name:"برج ذهبي", cost:80000, cat:"pro", icon:"fas fa-archway", proOnly: true, xp: 45000},
+    {id: 66, name:"طائرة درون برو", cost:15000, cat:"pro", icon:"fas fa-helicopter", proOnly: true, xp: 8000},
+    {id: 67, name:"ساعة الماس", cost:12000, cat:"pro", icon:"fas fa-clock", proOnly: true, xp: 6500},
+    {id: 68, name:"تاج الملك", cost:25000, cat:"pro", icon:"fas fa-crown", proOnly: true, xp: 12000},
+    {id: 69, name:"جائزة الأوسكار", cost:35000, cat:"pro", icon:"fas fa-trophy", proOnly: true, xp: 18000},
+    // ملكي
+    {id: 200, name:"قصر ملكي", cost:250000, cat:"luxury", icon:"🏰", xp: 150000},
+    {id: 201, name:"جزيرة خاصة", cost:600000, cat:"luxury", icon:"🏝️", xp: 400000},
+    {id: 202, name:"طائرة خاصة", cost:150000, cat:"luxury", icon:"✈️", xp: 90000},
+    {id: 203, name:"صندوق كنوز", cost:20000, cat:"luxury", icon:"💰", xp: 10000},
+    {id: 204, name:"حصان أصيل", cost:12000, cat:"luxury", icon:"🐎", xp: 6000},
+    {id: 205, name:"تمثال ذهب", cost:45000, cat:"luxury", icon:"🗿", xp: 22000},
+    // رخيصة وبسيطة (أكثر من 25 هدية)
+    {id: 1, name:"وردة", cost:20, cat:"cheap", icon:"🌹", xp: 10},
+    {id: 2, name:"قلب", cost:50, cat:"cheap", icon:"❤️", xp: 25},
+    {id: 3, name:"بيتزا", cost:100, cat:"cheap", icon:"🍕", xp: 50},
+    {id: 4, name:"دونات", cost:30, cat:"cheap", icon:"🍩", xp: 15},
+    {id: 5, name:"بالون", cost:15, cat:"cheap", icon:"🎈", xp: 5},
+    {id: 6, name:"قهوة", cost:25, cat:"cheap", icon:"☕", xp: 10},
+    {id: 7, name:"عصير", cost:20, cat:"cheap", icon:"🍹", xp: 8},
+    {id: 8, name:"آيس كريم", cost:40, cat:"cheap", icon:"🍦", xp: 20},
+    {id: 9, name:"لعبة دب", cost:150, cat:"cheap", icon:"🧸", xp: 80},
+    {id: 10, name:"نظارة", cost:200, cat:"cheap", icon:"🕶️", xp: 100}
 ];
 
-// إضافة هدايا تلقائية لتكملة الـ 50
-for(let i=1; i<=30; i++) {
-    gifts.push({
-        id: 300+i, 
-        name: "هدية رقم " + i, 
-        cost: 100 * i, 
-        cat: i % 2 == 0 ? "luxury" : "cheap", 
-        icon: "🎁", 
-        xp: 50 * i
-    });
+// تكملة الـ 50 هدية آلياً في فئة "بسيطة" لضمان العدد
+for(let i=11; i<=30; i++) {
+    gifts.push({ id: 400+i, name: "هدية متنوعة "+i, cost: 50*i, cat: "cheap", icon: "🎁", xp: 25*i });
 }
 
-async function initGiftPage() {
+// --- الوظائف الأساسية ---
+
+document.addEventListener('DOMContentLoaded', () => {
     firebase.auth().onAuthStateChanged(async user => {
-        if(!user) return location.href="auth.html";
-        selectedPlayerUid = user.uid;
-        const doc = await db.collection('users').doc(user.uid).get();
-        currentUserData = doc.data();
-        document.getElementById("user-coins").innerText = currentUserData.totalCoins.toLocaleString();
-        setupSearch();
-        renderGifts('all');
-    });
-}
-
-function setupSearch() {
-    const input = document.getElementById('player-search');
-    const results = document.getElementById('search-results');
-
-    input.addEventListener('input', async () => {
-        const val = input.value.trim();
-        if(val.length < 2) { results.style.display = 'none'; return; }
-
-        // البحث بالاسم أو الـ UID
-        const snap = await db.collection('users')
-            .where('displayName', '>=', val)
-            .where('displayName', '<=', val + '\uf8ff')
-            .limit(5).get();
-
-        results.innerHTML = '';
-        if(snap.empty) {
-            results.innerHTML = '<div class="search-item">لا يوجد نتائج</div>';
+        if (user) {
+            selectedPlayerUid = user.uid;
+            await syncUserData(user.uid);
+            setupSearch();
+            renderGifts('all');
         } else {
-            snap.forEach(doc => {
-                const data = doc.data();
-                const div = document.createElement('div');
-                div.className = 'search-item';
-                div.innerHTML = `<span>${data.displayName}</span> <small style="color:gray">ID: ${doc.id.substring(0,6)}...</small>`;
-                div.onclick = () => {
-                    selectedPlayerUid = doc.id;
-                    document.getElementById('rec-name').innerText = data.displayName;
-                    results.style.display = 'none';
-                    input.value = '';
-                };
-                results.appendChild(div);
-            });
+            window.location.href = "auth.html";
         }
-        results.style.display = 'block';
     });
+});
+
+async function syncUserData(uid) {
+    const doc = await db.collection('users').doc(uid).get();
+    if (doc.exists) {
+        currentUserData = doc.data();
+        document.getElementById("user-coins").innerText = (currentUserData.totalCoins || 0).toLocaleString();
+    }
 }
 
 function renderGifts(filter) {
@@ -224,21 +204,21 @@ function renderGifts(filter) {
     
     const isPro = (currentUserData.proExpiryTime || 0) > Date.now();
 
-    gifts.forEach(g => {
-        if(filter !== 'all' && g.cat !== filter) return;
-        
+    const filtered = gifts.filter(g => filter === 'all' || g.cat === filter);
+    
+    filtered.forEach(g => {
         const div = document.createElement("div");
         div.className = "gift-item";
-        let iconHtml = g.icon.includes('fa-') ? `<i class="${g.icon} ${g.isBadge?'badge-icon':'tool-icon'}"></i>` : `<span>${g.icon}</span>`;
+        let iconHtml = g.icon.includes('fa-') ? `<i class="${g.icon}"></i>` : `<span>${g.icon}</span>`;
         
         div.innerHTML = `
-            ${g.proOnly ? '<span class="pro-exclusive-tag">PRO</span>' : ''}
-            <div class="gift-icon-container">${iconHtml}</div>
-            <div style="font-size:0.8rem; font-weight:bold;">${g.name}</div>
-            <div style="color:var(--gold); font-size:0.75rem;">${g.cost.toLocaleString()} كوين</div>
+            ${g.proOnly ? '<span class="pro-exclusive-tag">PRO 🔥</span>' : ''}
+            <div class="gift-icon-container" style="color:${g.cat==='badges'?'#ffd700':g.cat==='tools'?'#38bdf8':'#fff'}">${iconHtml}</div>
+            <div style="font-size:0.85rem; font-weight:900; color:#fff">${g.name}</div>
+            <div style="color:var(--gold); font-size:0.8rem; font-weight:bold;">${g.cost.toLocaleString()}</div>
             <div class="qty-controls">
                 <button class="qty-btn" onclick="changeQty(${g.id}, 1)">+</button>
-                <b id="qty-${g.id}">${cart[g.id] || 0}</b>
+                <span id="qty-${g.id}" style="font-weight:bold; min-width:15px">${cart[g.id] || 0}</span>
                 <button class="qty-btn" onclick="changeQty(${g.id}, -1)">-</button>
             </div>
         `;
@@ -246,16 +226,28 @@ function renderGifts(filter) {
     });
 }
 
+function filterGifts(cat, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    renderGifts(cat);
+}
+
 function changeQty(id, delta) {
     const gift = gifts.find(g => g.id === id);
     const isPro = (currentUserData.proExpiryTime || 0) > Date.now();
     
-    if(gift.proOnly && !isPro) return alert("هذا العنصر للمشتركين برو فقط!");
+    if(gift.proOnly && !isPro) {
+        alert("هذه الهدية حصرية لأعضاء برو!");
+        return;
+    }
 
     cart[id] = Math.max(0, (cart[id] || 0) + delta);
-    if(gift.isBadge || gift.isTool) cart[id] = Math.min(cart[id], 1);
+    
+    // الشارات والبطاقات قطعة واحدة فقط
+    if((gift.isBadge || gift.isTool) && cart[id] > 1) cart[id] = 1;
 
-    document.getElementById(`qty-${id}`).innerText = cart[id];
+    const qtySpan = document.getElementById(`qty-${id}`);
+    if(qtySpan) qtySpan.innerText = cart[id];
     updateTotal();
 }
 
@@ -266,40 +258,79 @@ function updateTotal() {
         total += gift.cost * cart[id];
     }
     document.getElementById("total-cost").innerText = total.toLocaleString();
-    document.getElementById("send-btn").disabled = total === 0 || total > currentUserData.totalCoins;
+    document.getElementById("send-btn").disabled = (total === 0 || total > (currentUserData.totalCoins || 0));
 }
 
-function filterGifts(cat, el) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-    renderGifts(cat);
+function setupSearch() {
+    const input = document.getElementById('player-search');
+    const resultsList = document.getElementById('search-results');
+
+    input.addEventListener('input', async () => {
+        const val = input.value.trim().toLowerCase();
+        if (val.length < 2) { resultsList.style.display = 'none'; return; }
+
+        // البحث في Firestore بالاسم
+        const snap = await db.collection('users')
+            .where('displayName', '>=', val)
+            .where('displayName', '<=', val + '\uf8ff')
+            .limit(5).get();
+
+        resultsList.innerHTML = '';
+        if (snap.empty) {
+            resultsList.innerHTML = '<div class="search-item">لا يوجد مستخدم بهذا الاسم</div>';
+        } else {
+            snap.forEach(doc => {
+                const user = doc.data();
+                const div = document.createElement('div');
+                div.className = 'search-item';
+                div.innerHTML = `<span>${user.displayName}</span><small style="color:var(--text-dim)">ID: ${doc.id.slice(0,6)}</small>`;
+                div.onclick = () => {
+                    selectedPlayerUid = doc.id;
+                    document.getElementById('rec-name').innerText = user.displayName;
+                    resultsList.style.display = 'none';
+                    input.value = '';
+                };
+                resultsList.appendChild(div);
+            });
+        }
+        resultsList.style.display = 'block';
+    });
 }
 
 async function processPurchase() {
+    const totalCost = parseInt(document.getElementById("total-cost").innerText.replace(/,/g, ''));
+    if (totalCost > currentUserData.totalCoins) return alert("ليس لديك كوينز كافية!");
+
     document.getElementById("purchase-overlay").style.display = "flex";
+    
     const batch = db.batch();
     const myRef = db.collection('users').doc(firebase.auth().currentUser.uid);
     const targetRef = db.collection('users').doc(selectedPlayerUid);
 
-    let totalCost = 0;
-    for(let id in cart) {
-        if(cart[id] > 0) {
+    for (let id in cart) {
+        if (cart[id] > 0) {
             const gift = gifts.find(g => g.id == id);
-            totalCost += gift.cost * cart[id];
-            
-            if(gift.isBadge) batch.update(targetRef, { badges: firebase.firestore.FieldValue.arrayUnion(gift.icon) });
-            else if(gift.isTool) batch.update(targetRef, { inventory: firebase.firestore.FieldValue.arrayUnion(gift.name) });
-            else batch.update(targetRef, { xp: firebase.firestore.FieldValue.increment(gift.xp * cart[id]) });
+            if (gift.isBadge) {
+                batch.update(targetRef, { badges: firebase.firestore.FieldValue.arrayUnion(gift.icon) });
+            } else if (gift.isTool) {
+                batch.update(targetRef, { inventory: firebase.firestore.FieldValue.arrayUnion(gift.name) });
+            } else {
+                batch.update(targetRef, { xp: firebase.firestore.FieldValue.increment(gift.xp * cart[id]) });
+            }
         }
     }
 
+    batch.update(myRef, { totalCoins: firebase.firestore.FieldValue.increment(-totalCost) });
+
     try {
-        batch.update(myRef, { totalCoins: firebase.firestore.FieldValue.increment(-totalCost) });
         await batch.commit();
-        alert("تم إرسال الهدايا بنجاح!");
+        alert("تمت العملية بنجاح! شكراً لك.");
         location.reload();
-    } catch(e) {
-        alert("خطأ في الشبكة!");
+    } catch (e) {
+        console.error(e);
+        alert("حدث خطأ أثناء العملية، حاول مجدداً.");
+    } finally {
+        document.getElementById("purchase-overlay").style.display = "none";
     }
 }
 </script>
