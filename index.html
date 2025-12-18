@@ -13,9 +13,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">  
 
 <style>  
-    /* -------------------------------------------------- */  
-    /* التنسيقات العامة والقديمة */  
-    /* -------------------------------------------------- */  
     body {  
         font-family: 'Cairo', sans-serif;  
         background-color: #0f172a;   
@@ -30,360 +27,91 @@
         position: relative;   
     }  
 
-    /* -------------------------------------------------- */  
-    /* تنسيقات الشريط العلوي */  
-    /* -------------------------------------------------- */  
+    /* الشريط العلوي */
+    #pro-plans-btn { position: absolute; top: 20px; left: 20px; font-size: 24px; color: #ffd700; cursor: pointer; transition: color 0.3s; }
+    #gifts-btn { position: absolute; top: 20px; right: 150px; font-size: 24px; color: #34d399; cursor: pointer; transition: color 0.3s; }
+    #coin-display { position: absolute; top: 20px; right: 20px; font-size: 1.1rem; font-weight: 700; color: #94a3b8; }
 
-    /* التاج (أعلى اليسار) */  
-    #pro-plans-btn {  
-        position: absolute;  
-        top: 20px;  
-        left: 20px;  
-        font-size: 24px;  
-        color: #ffd700;   
-        cursor: pointer;  
-        transition: color 0.3s;  
-    }  
-    
-    /* 🎁 أيقونة الهدايا الجديدة (بجانب الكوينز) 🎁 */
-    #gifts-btn {
-        position: absolute;
-        top: 20px;
-        right: 150px; /* تم تعديل الموضع ليناسب الكوينز */
-        font-size: 24px;
-        color: #34d399; /* لون الهدية */
-        cursor: pointer;
-        transition: color 0.3s;
-    }
+    /* الملف الشخصي والمستوى */
+    #user-name-display { font-size: 1.5rem; font-weight: 700; color: #34d399; margin-top: 50px; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; text-decoration: none; cursor: pointer; }
+    #user-name-display .pro-tag { color: #ffd700; margin-right: 8px; font-size: 1.2em; }
+    #level-xp-display { color:#94a3b8; font-size:0.9rem; margin-bottom: 5px; font-weight: 700; }
 
-    /* الكوينز (أعلى اليمين) */  
-    #coin-display {  
-        position: absolute;  
-        top: 20px;  
-        right: 20px;  
-        font-size: 1.1rem;  
-        font-weight: 700;  
-        color: #94a3b8;  
-    }  
-      
-    /* عرض اسم المستخدم (رابط لصفحة البروفايل) */  
-    #user-name-display {  
-        font-size: 1.5rem;  
-        font-weight: 700;  
-        color: #34d399;   
-        margin-top: 50px;   
-        margin-bottom: 5px;  
-        display: flex;  
-        align-items: center;  
-        justify-content: center;  
-        text-decoration: none;  
-        cursor: pointer;  
-    }  
-    #user-name-display:hover {  
-        color: #10b981;  
-    }  
-    #user-name-display .pro-tag {  
-        color: #ffd700;  
-        margin-right: 8px;  
-        font-size: 1.2em;  
-    }  
-      
-    /* عرض المستوى والخبرة */  
-    #level-xp-display {  
-        color:#94a3b8;   
-        font-size:0.9rem;   
-        margin-bottom: 5px;  
-        font-weight: 700;  
-    }  
+    /* شريط الخبرة */
+    #xp-bar-container { width: 90%; max-width: 450px; height: 12px; background-color: #334155; border-radius: 6px; margin: 10px auto; overflow: hidden; }
+    #xp-bar { height: 100%; width: 0%; background-color: #6366f1; border-radius: 6px; transition: width 0.5s ease-in-out; }
+    #xp-next-level-info { color: #94a3b8; font-size: 0.8rem; font-weight: 700; margin-bottom: 25px; }
 
-    /* -------------------------------------------------- */
-    /* تنسيق شريط الخبرة الجديد */
-    /* -------------------------------------------------- */
-    #xp-bar-container {
-        width: 90%;
-        max-width: 450px;
-        height: 12px;
-        background-color: #334155; 
-        border-radius: 6px;
-        margin: 10px auto 10px auto; 
-        overflow: hidden;
-    }
-    #xp-bar {
-        height: 100%;
-        width: 0%; 
-        background-color: #6366f1; 
-        border-radius: 6px;
-        transition: width 0.5s ease-in-out;
-    }
-    #xp-next-level-info {
-        color: #94a3b8;
-        font-size: 0.8rem;
-        font-weight: 700;
-        margin-bottom: 25px; 
-    }
-    /* -------------------------------------------------- */
+    .card { background-color: #1e293b; padding: 25px; border-radius: 12px; max-width: 450px; width: 90%; margin: 10px auto; box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2); text-align: right; }
 
+    /* الأزرار العلوية في الكارد */
+    .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .nav-btn { padding: 10px; font-size: 0.9rem; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; color: white; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-leaderboard { background-color: #f59e0b; }
+    .btn-friends { background-color: #10b981; }
+    .btn-settings { background-color: #6366f1; }
+    .btn-online { background-color: #8b5cf6; }
 
-    h1 {  
-        font-size: 2.5rem;  
-        font-weight: 700;  
-        margin-top: 20px;  
-        margin-bottom: 30px;  
-        color: #f1f5f9;   
-    }  
+    #player-input { font-family: 'Cairo', sans-serif; width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; font-size: 16px; background-color: #334155; color: #f1f5f9; margin-bottom: 10px; box-sizing: border-box; }
+    #add-player-btn { padding: 12px; font-size: 16px; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; width: 100%; background-color: #34d399; color: white; }
 
-    .card {  
-        background-color: #1e293b;   
-        padding: 30px;  
-        border-radius: 12px;  
-        max-width: 450px;  
-        width: 90%;  
-        margin: 10px auto;  
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 10px 15px rgba(0, 0, 0, 0.2);  
-        text-align: right;  
-    }  
+    /* قائمة اللاعبين - حل مشكلة الاسم الطويل */
+    #player-list { list-style: none; padding: 0; margin-top: 20px; max-height: 200px; overflow-y: auto; }
+    #player-list li { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; margin-bottom: 8px; background-color: #334155; border-radius: 8px; }
+    .player-name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70%; font-weight: bold; }
+    .delete-btn { background: none; border: none; color: #ff4f4f; cursor: pointer; font-size: 1.1rem; }
 
-    #player-input {  
-        font-family: 'Cairo', sans-serif;  
-        width: calc(100% - 24px);   
-        padding: 12px;  
-        border-radius: 8px;  
-        border: 1px solid #334155;  
-        font-size: 16px;  
-        background-color: #334155;   
-        color: #f1f5f9;  
-        margin-bottom: 10px;  
-    }  
+    #start-game-btn { margin-top: 20px; padding: 15px; font-size: 18px; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; transition: 0.3s; background-color: #6366f1; color: white; width: 100%; }
+    #start-game-btn:disabled { background-color: #475569; cursor: not-allowed; }
+    #sign-out-btn { position: absolute; bottom: 20px; right: 20px; background: none; border: none; color: #ff4f4f; cursor: pointer; font-size: 0.9rem; }
 
-    #add-player-btn, #settings-btn-card {  
-        padding: 10px 20px;  
-        font-size: 16px;  
-        font-weight: 700;  
-        border: none;  
-        border-radius: 8px;   
-        cursor: pointer;  
-        transition: background-color 0.3s;  
-        width: 100%;  
-        margin-top: 10px;  
-    }  
-    #add-player-btn {  
-        background-color: #34d399;   
-        color: #ffffff;  
-    }  
-    #add-player-btn:hover {  
-        background-color: #10b981;   
-    }  
-    #settings-btn-card {   
-        background-color: #6366f1;   
-        color: #ffffff;  
-        margin-bottom: 20px;   
-    }  
-    #settings-btn-card:hover {  
-        background-color: #4f46e5;  
-    }  
-
-    #player-list {  
-        list-style: none;  
-        padding: 0;  
-        margin-top: 20px;  
-        max-height: 200px;  
-        overflow-y: auto;  
-    }  
-    #player-list li {  
-        display: flex;  
-        justify-content: space-between;  
-        align-items: center;  
-        padding: 10px 15px;  
-        margin-bottom: 8px;  
-        background-color: #334155;  
-        border-radius: 8px;  
-        font-size: 1rem;  
-    }  
-      
-    .delete-btn {  
-        background: none;  
-        border: none;  
-        color: #ff4f4f;   
-        cursor: pointer;  
-        font-size: 1.1rem;  
-        transition: color 0.3s;  
-    }  
-
-    #start-game-btn {   
-        margin-top: 30px;   
-        padding: 12px 30px;  
-        font-size: 18px;  
-        font-weight: 700;  
-        border: none;  
-        border-radius: 8px;   
-        cursor: pointer;  
-        transition: background-color 0.3s, transform 0.2s;  
-        background-color: #6366f1;  
-        color: #ffffff;  
-        width: 100%;  
-    }  
-    #start-game-btn:hover:enabled {  
-        background-color: #4f46e5;   
-        transform: translateY(-2px);  
-    }  
-    #start-game-btn:disabled {  
-        background-color: #475569;  
-        cursor: not-allowed;  
-    }  
-      
-    #sign-out-btn {  
-        position: absolute;  
-        bottom: 20px;  
-        right: 20px;   
-        background: none;  
-        border: none;  
-        color: #ff4f4f;  
-        cursor: pointer;  
-        font-size: 0.9rem;  
-        transition: color 0.3s;  
-    }  
-
-    .alert-message {  
-        color: #ffcc00;  
-        margin-top: 15px;  
-        font-size: 0.9rem;  
-    }  
-
-    /* -------------------- أنيميشن الهدايا الواردة -------------------- */
-    #incoming-gifts-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.9);
-        display: none;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 10000;
-        animation: fadeIn 0.5s;
-    }
-
-    #gifts-modal {
-        background: #1e293b;
-        padding: 30px;
-        border-radius: 15px;
-        max-width: 90%;
-        width: 400px;
-        text-align: center;
-        box-shadow: 0 0 40px rgba(99, 102, 241, 0.7);
-        transform: scale(0.8);
-        animation: scaleIn 0.5s forwards;
-    }
-
-    #gifts-modal h2 {
-        color: #ffd700;
-        margin-bottom: 20px;
-    }
-
-    .gift-entry {
-        background: #334155;
-        padding: 10px;
-        margin-bottom: 10px;
-        border-radius: 8px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-weight: 700;
-    }
-
-    .gift-entry .sender {
-        color: #34d399;
-        font-size: 0.9rem;
-    }
-
-    #close-gifts-btn {
-        margin-top: 20px;
-        background: #6366f1;
-        color: white;
-        padding: 10px 20px;
-        width: auto;
-        cursor: pointer;
-        border: none;
-        border-radius: 8px;
-        font-family: 'Cairo', sans-serif;
-    }
-
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes scaleIn { 
-        to { transform: scale(1); } 
-        0% { opacity: 0; }
-        50% { opacity: 1; }
-    }
-
-
+    /* أنيميشن الهدايا */
+    #incoming-gifts-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+    #gifts-modal { background: #1e293b; padding: 30px; border-radius: 15px; width: 350px; text-align: center; border: 2px solid #ffd700; }
 </style>
-
 </head>  
+
 <body onload="checkAuthState()">  
 
-<a href="plans.html" id="pro-plans-btn" title="خطط العضوية المتميزة (Pro)">  
-    <i class="fas fa-crown"></i>  
-</a>  
-
-<a href="gifts.html" id="gifts-btn" title="متجر الهدايا وإرسالها">
-    <i class="fas fa-gift"></i>
-</a>
+<a href="plans.html" id="pro-plans-btn" title="الاشتراك"><i class="fas fa-crown"></i></a>  
+<a href="gifts.html" id="gifts-btn" title="الهدايا"><i class="fas fa-gift"></i></a>
   
-<div id="coin-display">  
-    <i class="fas fa-coins"></i> الإجمالي: <span id="total-coins-value">0</span>  
-</div>  
+<div id="coin-display"><i class="fas fa-coins"></i> كوينز: <span id="total-coins-value">0</span></div>  
 
-<a href="profile.html" id="user-name-display">  
-    جاري التحميل...  
-</a>  
+<a href="profile.html" id="user-name-display">جاري التحميل...</a>  
+<div id="level-xp-display">المستوى <span id="user-level">1</span> | <span id="user-xp">0</span> XP</div>  
 
-<div id="level-xp-display">  
-    المستوى <span id="user-level">1</span> | خبرة <span id="user-xp">0</span> XP  
-</div>  
-
-<div id="xp-bar-container">
-    <div id="xp-bar"></div>
-</div>
+<div id="xp-bar-container"><div id="xp-bar"></div></div>
 <div id="xp-next-level-info">جاري التحميل...</div>
 
-<h1>ابدأ لعبة المدني المحتال</h1>  
+<h1>المدني المحتال</h1>  
 
 <div class="card">  
-      
-    <button id="settings-btn-card" onclick="location.href = 'settings.html'">  
-        <i class="fas fa-cog"></i> الإعدادات  
-    </button>  
-       <button id="settings-btn-card" onclick="location.href = 'online.html'">  
-        <i class="fas fa-users"></i> اللعب مع الأصدقاء  
-    </button>  
-    <label for="player-input" style="font-weight: 700; color: #f1f5f9;">أضف أسماء اللاعبين:</label>  
-      
-    <input type="text" id="player-input" placeholder="اسم اللاعب">  
-    <button id="add-player-btn" onclick="addPlayer()">إضافة لاعب</button>  
+    <div class="action-grid">
+        <button class="nav-btn btn-leaderboard" onclick="location.href='leaderboard.html'"><i class="fas fa-trophy"></i> المتصدرين</button>
+        <button class="nav-btn btn-friends" onclick="location.href='friends.html'"><i class="fas fa-user-plus"></i> الأصدقاء</button>
+        <button class="nav-btn btn-settings" onclick="location.href='settings.html'"><i class="fas fa-cog"></i> الإعدادات</button>
+        <button class="nav-btn btn-online" onclick="location.href='online.html'"><i class="fas fa-globe"></i> أونلاين</button>
+    </div>
 
-    <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 15px;">يجب أن يكون لديك 3 لاعبين على الأقل.</p>  
+    <label style="font-weight: 700;">أضف أسماء اللاعبين:</label>  
+    <input type="text" id="player-input" placeholder="اسم اللاعب">  
+    <button id="add-player-btn" onclick="addPlayer()">إضافة لاعب <i class="fas fa-plus"></i></button>  
+
+    <ul id="player-list"></ul>  
       
-    <ul id="player-list">  
-        </ul>  
-      
-    <div id="player-count-alert" class="alert-message" style="display: none;">  
-        الحد الأدنى للعب هو 3 لاعبين.  
-    </div>  
+    <div id="player-count-alert" style="color:#ff4f4f; font-size:0.8rem; margin-top:10px; display:none;">يجب إضافة 3 لاعبين على الأقل!</div>
 
     <button id="start-game-btn" disabled onclick="saveAndStartGame()">ابدأ اللعبة <i class="fas fa-play"></i></button>  
-
 </div>  
   
 <button id="sign-out-btn" onclick="signOutUser()">تسجيل الخروج <i class="fas fa-sign-out-alt"></i></button>
 
 <div id="incoming-gifts-overlay">
     <div id="gifts-modal">
-        <h2>🎉 هدايا جديدة وصلت إليك!</h2>
-        <div id="new-gifts-list">
-            </div>
-        <button id="close-gifts-btn" onclick="clearNewGifts()">تم الفتح</button>
+        <h2>🎉 هدايا جديدة!</h2>
+        <div id="new-gifts-list"></div>
+        <button id="add-player-btn" style="margin-top:20px" onclick="clearNewGifts()">شكراً!</button>
     </div>
 </div>
 
@@ -393,261 +121,108 @@
     const playerList = document.getElementById("player-list");  
     const playerInput = document.getElementById("player-input");  
     const startGameBtn = document.getElementById("start-game-btn");   
-    const playerCountAlert = document.getElementById("player-count-alert");  
     const userNameDisplay = document.getElementById("user-name-display");   
   
-    // ----------------------------------  
-    // دوال المصادقة والكوينزات وعرضها  
-    // ----------------------------------  
-      
-    // 🚨 افتراض: isPro و getRequiredXPForLevel و loadUserData و checkAndLevelUp موجودة في auth.js
-    function isProUser(data) {  
-        // هذا مجرد دالة وهمية، افترض أنها موجودة في auth.js
-        return data.proExpiryTime > Date.now(); 
-    }  
-  
-    // دالة وهمية (يجب أن تكون في auth.js)
-    function getRequiredXPForLevel(level) {
-        if (level === 1) return 100;
-        if (level < 10) return 100 * level;
-        return 1000 + (level - 10) * 200;
-    }
-
     async function checkAuthState() {  
          firebase.auth().onAuthStateChanged(async (user) => {  
             if (user) {  
-                // 1. تحميل البيانات
                 let data = await loadUserData();   
                 if (data) {  
                     currentUserData = data;
+                    if (currentUserData.newGifts?.length > 0) displayIncomingGifts(currentUserData.newGifts);
                     
-                    // 🚨 التحقق من الهدايا الجديدة قبل أي شيء آخر
-                    const newGifts = currentUserData.newGifts || [];
-                    if (newGifts.length > 0) {
-                        displayIncomingGifts(newGifts);
-                    }
+                    if (typeof checkAndLevelUp === 'function') await checkAndLevelUp(currentUserData);
                     
-                    // 2. التحقق من رفع المستوى (افتراض وجودها في auth.js)
-                    const leveledUp = typeof checkAndLevelUp === 'function' ? await checkAndLevelUp(currentUserData) : false;
-                    
-                    if (leveledUp) {
-                         alert(`تهانينا! لقد وصلت إلى المستوى ${currentUserData.level}!`);
-                    }
+                    const nameToDisplay = currentUserData.displayName || user.email.split('@')[0];
+                    userNameDisplay.innerHTML = `${currentUserData.proExpiryTime > Date.now() ? '<i class="fas fa-crown pro-tag"></i>' : ''} ${nameToDisplay}`; 
                   
-                    // 3. تحديث الاسم
-                    const nameToDisplay = currentUserData.displayName || user.email?.split('@')[0] || "مستخدم جديد";
-                    displayUserName(nameToDisplay); 
-                  
-                    // 4. تحديث الكوينز والمستوى والـ XP فوراً
-                    displayTotalCoins();   
+                    document.getElementById("total-coins-value").innerText = currentUserData.totalCoins || 0;
                     displayLevelAndXP();   
-                    
-                    // 5. تحميل اللاعبين
-                    await loadPlayers();   
+                    players = currentUserData.players || [];
+                    renderPlayers();   
                 }  
-            } else {  
-                window.location.href = "auth.html";  
-            }  
+            } else { window.location.href = "auth.html"; }  
         });  
     }  
-  
-    function displayUserName(name) {  
-        const isPro = isProUser(currentUserData);  
-        const proTag = isPro   
-            ? '<i class="fas fa-crown pro-tag" title="عضو متميز (Pro)"></i>'  
-            : '';  
-              
-        userNameDisplay.innerHTML = `${proTag} ${name}`;  
-    }  
-  
-    function displayTotalCoins() {  
-        document.getElementById("total-coins-value").innerText = currentUserData.totalCoins || 0;  
-    }  
-  
-    // ----------------------------------
-    // منطق المستويات والخبرة (تحديث)
-    // ----------------------------------
 
-    function calculateLevelProgress(xp, level) {
-        let xpGainedUpToPreviousLevel = 0;
-        
-        for (let i = 1; i < level; i++) {
-            xpGainedUpToPreviousLevel += getRequiredXPForLevel(i); 
-        }
-        
-        const xpRequiredForCurrentLevel = getRequiredXPForLevel(level);
-        const xpProgress = xp - xpGainedUpToPreviousLevel;
-        const percentage = (xpProgress / xpRequiredForCurrentLevel) * 100;
-
-        return {
-            xpProgress: xpProgress,
-            xpNeeded: xpRequiredForCurrentLevel,
-            percentage: Math.min(percentage, 100) 
-        };
-    }
-  
     function displayLevelAndXP() {  
         const level = currentUserData.level || 1;  
         const xp = currentUserData.xp || 0;
+        let required = (typeof getRequiredXPForLevel === 'function') ? getRequiredXPForLevel(level) : (level * 100);
         
-        const progress = calculateLevelProgress(xp, level);
-          
+        // حساب الـ XP الحالي بالنسبة للمستوى
+        let currentLevelXP = xp; 
+        // ملاحظة: إذا كانت الدالة في auth.js تحسب الـ XP التراكمي، يفضل تعديل الحساب هنا.
+        
+        const percent = Math.min((currentLevelXP / required) * 100, 100);
         document.getElementById("user-level").innerText = level;  
         document.getElementById("user-xp").innerText = xp;
-        
-        const xpBar = document.getElementById("xp-bar");
-        xpBar.style.width = `${progress.percentage}%`;
-
-        const xpNextLevelInfo = document.getElementById("xp-next-level-info");
-        const xpRemaining = progress.xpNeeded - progress.xpProgress;
-        
-        if (progress.percentage >= 100) {
-            xpNextLevelInfo.innerHTML = `🌟 **المستوى ${level} مكتمل!** لديك مكافأة تنتظرك.`;
-        } else {
-            xpNextLevelInfo.innerHTML = `متبقي: **${xpRemaining}** XP للمستوى ${level + 1}`;
-        }
-    }
-      
-    // ----------------------------------  
-    // منطق الهدايا الواردة (الجديد)  
-    // ---------------------------------- 
-
-    function displayIncomingGifts(gifts) {
-        const overlay = document.getElementById("incoming-gifts-overlay");
-        const giftsList = document.getElementById("new-gifts-list");
-        giftsList.innerHTML = '';
-        
-        gifts.forEach(g => {
-            const div = document.createElement('div');
-            div.className = 'gift-entry';
-            div.innerHTML = `
-                <span>${g.icon || '🎁'} ${g.giftName} (x${g.count})</span>
-                <span class="sender">من: ${g.senderName || 'غير معروف'}</span>
-            `;
-            giftsList.appendChild(div);
-        });
-
-        overlay.style.display = 'flex';
+        document.getElementById("xp-bar").style.width = percent + "%";
+        document.getElementById("xp-next-level-info").innerHTML = `متبقي ${required - currentLevelXP} XP للمستوى التالي`;
     }
 
-    async function clearNewGifts() {
-        const overlay = document.getElementById("incoming-gifts-overlay");
-        overlay.style.display = 'none';
-
-        const user = firebase.auth().currentUser;
-        if (!user) return;
-
-        // حذف حقل newGifts من قاعدة البيانات
-        try {
-            const userRef = firebase.firestore().collection("users").doc(user.uid);
-            await userRef.update({
-                newGifts: firebase.firestore.FieldValue.delete()
-            });
-            currentUserData.newGifts = []; // تحديث محلياً
-        } catch (error) {
-            console.error("Error clearing newGifts:", error);
-            alert("حدث خطأ في مسح سجل الهدايا.");
-        }
-    }
-    
-    // ----------------------------------  
-    // منطق اللاعبين (يستخدم Firestore)  
-    // ----------------------------------  
-      
     function renderPlayers() {  
         playerList.innerHTML = '';  
         players.forEach((player, index) => {  
             const li = document.createElement('li');  
             li.innerHTML = `  
-                <span>${player}</span>  
+                <span class="player-name-text">${player}</span>  
                 <button class="delete-btn" onclick="removePlayer(${index})"><i class="fas fa-trash"></i></button>  
             `;  
             playerList.appendChild(li);  
         });  
-          
-        if (players.length >= 3) {  
-            startGameBtn.disabled = false;  
-            playerCountAlert.style.display = 'none';  
-        } else {  
-            startGameBtn.disabled = true;  
-            playerCountAlert.style.display = 'block';  
-        }  
+        startGameBtn.disabled = players.length < 3;
+        document.getElementById("player-count-alert").style.display = players.length < 3 ? 'block' : 'none';
     }  
-  
-    // 🚨 افتراض أن saveUserData تأخذ جميع الحقول المطلوبة وتحفظها
-    async function savePlayersToFirestore() {  
-        const user = firebase.auth().currentUser;  
-        if (!user) return;   
-          
-        // تحديث حقل players فقط
-        await firebase.firestore().collection("users").doc(user.uid).set({
-            players: players
-        }, {merge: true}); 
 
-        currentUserData.players = players;
-    }  
-  
     async function addPlayer() {  
-        const playerName = playerInput.value.trim();  
-        if (playerName && playerName.length > 0 && !players.includes(playerName)) {  
-            players.push(playerName);  
+        const name = playerInput.value.trim();  
+        if (name && !players.includes(name)) {  
+            players.push(name);  
             playerInput.value = '';  
             renderPlayers();  
-            await savePlayersToFirestore();   
-        } else if (players.includes(playerName)) {  
-            alert("هذا الاسم موجود بالفعل!");  
-        } else if (playerName.length === 0) {  
-             alert("الرجاء إدخال اسم اللاعب.");  
+            await updateFirestorePlayers();
         }  
     }  
-      
+
     async function removePlayer(index) {  
         players.splice(index, 1);  
         renderPlayers();  
-        await savePlayersToFirestore();   
+        await updateFirestorePlayers();
     }  
-      
-    async function loadPlayers() {  
-        const savedPlayers = currentUserData.players;  
-        if (Array.isArray(savedPlayers)) {  
-            players = savedPlayers;  
-        } else {  
-            players = [];  
-        }  
-        renderPlayers();  
-    }  
-      
+
+    async function updateFirestorePlayers() {
+        const user = firebase.auth().currentUser;
+        if (user) {
+            await firebase.firestore().collection("users").doc(user.uid).update({ players: players });
+        }
+    }
+
     async function saveAndStartGame() {  
-        if (players.length < 3) {  
-            alert("يجب إضافة 3 لاعبين على الأقل قبل بدء اللعبة.");  
-            return;  
-        }  
-          
-        await savePlayersToFirestore();   
-          
-        localStorage.setItem("players", JSON.stringify(players));   
-          
-        location.href = "game.html";   
+        if (players.length >= 3) {
+            localStorage.setItem("players", JSON.stringify(players));   
+            location.href = "game.html";   
+        }
     }  
-  
-    playerInput.addEventListener('keypress', (event) => {  
-        if (event.key === 'Enter') {  
-            event.preventDefault();  
-            addPlayer();  
-        }  
-    });  
-      
+
     function signOutUser() {  
-        if (confirm("هل أنت متأكد من تسجيل الخروج؟")) {  
-            firebase.auth().signOut().then(() => {  
-                localStorage.clear();  
-                window.location.href = "auth.html";  
-            }).catch((error) => {  
-                alert("حدث خطأ أثناء تسجيل الخروج: " + error.message);  
-            });  
+        if (confirm("هل تريد الخروج؟")) {  
+            firebase.auth().signOut().then(() => { location.href = "auth.html"; });  
         }  
-    }  
-  
+    }
+
+    // دوال الهدايا
+    function displayIncomingGifts(gifts) {
+        const list = document.getElementById("new-gifts-list");
+        list.innerHTML = gifts.map(g => `<div style="margin:10px; padding:10px; background:#334155; border-radius:8px">🎁 ${g.giftName} من ${g.senderName}</div>`).join('');
+        document.getElementById("incoming-gifts-overlay").style.display = 'flex';
+    }
+
+    async function clearNewGifts() {
+        document.getElementById("incoming-gifts-overlay").style.display = 'none';
+        const user = firebase.auth().currentUser;
+        if (user) await firebase.firestore().collection("users").doc(user.uid).update({ newGifts: [] });
+    }
 </script>  
 </body>  
 </html>
