@@ -225,7 +225,6 @@ function setupSearch() {
         const q = input.value.trim();
         const results = document.getElementById("search-results");
         if (q.length < 3) { results.innerHTML = ""; return; }
-        // دالة البحث من auth.js (تأكد من وجودها)
         const snap = await firebase.firestore().collection("users").where("displayName", ">=", q).where("displayName", "<=", q + '\uf8ff').limit(5).get();
         results.innerHTML = "";
         snap.forEach(doc => {
@@ -245,7 +244,7 @@ function setupSearch() {
     });
 }
 
-// الدالة الأهم: تنفيذ عملية الشراء والخصم الحقيقية
+// الدالة المصححة لحل خطأ "Firestore transactions require all reads to be executed before all writes"
 async function sendGifts() {
     const btn = document.getElementById("send-gift-btn");
     let totalCost = parseInt(document.getElementById("total-cost-display").innerText);
@@ -263,34 +262,42 @@ async function sendGifts() {
         const recipientRef = db.collection("users").doc(selectedPlayer.uid);
 
         await db.runTransaction(async (transaction) => {
+            // 1. مرحلة القراءة (Reads) - يجب أن تكون في البداية دائماً
             const senderDoc = await transaction.get(senderRef);
+            const recipientDoc = await transaction.get(recipientRef);
+
+            if (!senderDoc.exists) throw "حساب المرسل غير موجود";
+            if (!recipientDoc.exists) throw "حساب المستلم غير موجود";
+
             if (senderDoc.data().totalCoins < totalCost) throw "رصيد غير كافٍ";
 
-            // 1. خصم الكوينز من المرسل
+            // 2. مرحلة الحسابات
+            const currentExpiry = recipientDoc.data().proExpiryTime || 0;
+            const now = Date.now();
+            const base = currentExpiry > now ? currentExpiry : now;
+            const newExpiry = base + (totalDays * 24 * 60 * 60 * 1000);
+
+            // 3. مرحلة الكتابة (Writes) - تأتي بعد الانتهاء من جميع القراءات
+            // تحديث المرسل (خصم الكوينز)
             transaction.update(senderRef, { 
                 totalCoins: firebase.firestore.FieldValue.increment(-totalCost) 
             });
 
-            // 2. تحديث المستلم
+            // تحديث المستلم (إضافة XP أو Pro)
             let updateData = {};
             if (totalXP > 0) updateData.xp = firebase.firestore.FieldValue.increment(totalXP);
-            
-            if (totalDays > 0) {
-                const recipientDoc = await transaction.get(recipientRef);
-                const currentExpiry = recipientDoc.data().proExpiryTime || 0;
-                const now = Date.now();
-                const base = currentExpiry > now ? currentExpiry : now;
-                updateData.proExpiryTime = base + (totalDays * 24 * 60 * 60 * 1000);
-            }
+            if (totalDays > 0) updateData.proExpiryTime = newExpiry;
 
             transaction.update(recipientRef, updateData);
         });
 
-        // نجاح العملية
+        // تحديث الرصيد في الواجهة المحلية
         currentUserData.totalCoins -= totalCost;
         document.getElementById("user-coins").innerText = currentUserData.totalCoins;
+        
         showAnim();
     } catch (e) {
+        console.error("خطأ في العملية:", e);
         alert("فشلت العملية: " + e);
         btn.disabled = false;
         btn.innerText = "إرسال الهدايا";
