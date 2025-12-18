@@ -24,6 +24,7 @@
             --gold: #ffd700;
             --pro-color: #f472b6;
             --tool-color: #38bdf8;
+            --xp-color: #10b981;
         }
 
         body {
@@ -44,30 +45,30 @@
             position: relative;
         }
 
-        /* تنسيق البحث */
         .search-container { position: relative; width: 100%; }
         #player-search { width: 100%; padding: 12px; border-radius: 10px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; font-family: 'Cairo'; box-sizing: border-box; }
         .search-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #1e293b; border-radius: 10px; z-index: 100; max-height: 150px; overflow-y: auto; display: none; border: 1px solid var(--primary); margin-top: 5px; }
         .search-item { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; font-size: 0.85rem; }
         .search-item:hover { background: var(--primary); }
 
-        .tabs { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; width: 100%; max-width: 500px; scrollbar-width: none; }
-        .tab { padding: 8px 15px; background: rgba(255,255,255,0.05); border-radius: 20px; cursor: pointer; white-space: nowrap; font-weight: 700; font-size: 0.8rem; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; width: 100%; max-width: 500px; scrollbar-width: none; padding-bottom: 5px; }
+        .tab { padding: 8px 15px; background: rgba(255,255,255,0.05); border-radius: 20px; cursor: pointer; white-space: nowrap; font-weight: 700; font-size: 0.75rem; }
         .tab.active { background: var(--primary); color: white; }
 
         .gifts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%; }
         .gift-item { 
-            background: rgba(255, 255, 255, 0.03); padding: 15px 5px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.05);
+            background: rgba(255, 255, 255, 0.03); padding: 12px 5px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.05);
             display: flex; flex-direction: column; align-items: center; text-align: center; position: relative;
         }
         
-        .gift-icon-container { width: 60px; height: 60px; border-radius: 20px; background: rgba(255,255,255,0.05); display: flex; justify-content: center; align-items: center; font-size: 1.8rem; margin-bottom: 8px; }
+        .gift-icon-container { width: 55px; height: 55px; border-radius: 18px; background: rgba(255,255,255,0.05); display: flex; justify-content: center; align-items: center; font-size: 1.6rem; margin-bottom: 8px; }
         .badge-icon { color: var(--gold); }
         .tool-icon { color: var(--tool-color); }
-        .pro-exclusive-tag { position: absolute; top: 5px; left: 5px; background: var(--pro-color); color: white; font-size: 0.6rem; padding: 2px 6px; border-radius: 5px; font-weight: 900; }
+        .pro-exclusive-tag { position: absolute; top: 5px; left: 5px; background: var(--pro-color); color: white; font-size: 0.55rem; padding: 2px 6px; border-radius: 5px; font-weight: 900; }
 
-        .gift-name { font-weight: 900; font-size: 0.85rem; color: #fff; }
-        .gift-price { color: var(--gold); font-weight: 900; font-size: 0.8rem; margin-top: 5px; }
+        .gift-name { font-weight: 800; font-size: 0.85rem; color: #fff; line-height: 1.2; }
+        .gift-xp { color: var(--xp-color); font-size: 0.7rem; font-weight: bold; margin-bottom: 4px; }
+        .gift-price { color: var(--gold); font-weight: 900; font-size: 0.8rem; }
 
         .qty-controls { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
         .qty-btn { width: 25px; height: 25px; border: none; background: var(--primary); color: white; border-radius: 5px; cursor: pointer; font-weight: 900; }
@@ -86,7 +87,7 @@
     <div id="coins-display"><i class="fas fa-coins"></i> <span id="user-coins">0</span></div>
 </div>
 
-<h2 style="font-weight: 900; color: #fff;">💎 المتجر الملكي</h2>
+<h2 style="font-weight: 900; color: #fff; margin: 10px 0;">💎 المتجر الملكي</h2>
 
 <div class="card">
     <div class="search-container">
@@ -98,9 +99,12 @@
 
 <div class="tabs">
     <div class="tab active" onclick="filterGifts('all', this)">الكل</div>
-    <div class="tab" onclick="filterGifts('tools', this)">الأدوات</div>
-    <div class="tab" onclick="filterGifts('badges', this)">شارات</div>
-    <div class="tab" onclick="filterGifts('pro', this)">هدايا البرو 🔥</div>
+    <div class="tab" onclick="filterGifts('luxury', this)">ملكي 💎</div>
+    <div class="tab" onclick="filterGifts('medium', this)">متوسط ⚖️</div>
+    <div class="tab" onclick="filterGifts('cheap', this)">بسيط ✨</div>
+    <div class="tab" onclick="filterGifts('pro', this)">برو 🔥</div>
+    <div class="tab" onclick="filterGifts('tools', this)">أدوات 🛠️</div>
+    <div class="tab" onclick="filterGifts('badges', this)">شارات 🏅</div>
 </div>
 
 <div class="card">
@@ -123,56 +127,50 @@ let selectedPlayerUid = null;
 let cart = {};
 
 const gifts = [
-    // --- الأدوات ---
-    {id: 50, name:"بطاقة الاسم", cost:1000, cat:"tools", icon:"fas fa-id-card", isTool: true},
-    {id: 51, name:"بطاقة الـ ID", cost:1000000, cat:"tools", icon:"fas fa-fingerprint", isTool: true},
+    // --- الأدوات (لا تعطي XP) ---
+    {id: 50, name:"بطاقة الاسم", cost:1000, cat:"tools", icon:"fas fa-id-card", isTool: true, xp: 0},
+    {id: 51, name:"بطاقة الـ ID", cost:1000000, cat:"tools", icon:"fas fa-fingerprint", isTool: true, xp: 0},
 
-    // --- البرو (15 هدية) ---
-    {id: 60, name:"التاج الملكي", cost:5000, cat:"pro", icon:"fas fa-crown", proOnly: true, xp: 2000},
-    {id: 61, name:"سيارة ذهبية", cost:25000, cat:"pro", icon:"fas fa-car-side", proOnly: true, xp: 12000},
-    {id: 62, name:"خاتم الماس برو", cost:4000, cat:"pro", icon:"fas fa-ring", proOnly: true, xp: 1500},
-    {id: 63, name:"يخت ملكي", cost:80000, cat:"pro", icon:"fas fa-ship", proOnly: true, xp: 45000},
-    {id: 64, name:"صاروخ فضائي", cost:500000, cat:"pro", icon:"fas fa-rocket", proOnly: true, xp: 250000},
-    {id: 65, name:"برج ذهبي", cost:30000, cat:"pro", icon:"fas fa-archway", proOnly: true, xp: 15000},
-    {id: 66, name:"طائرة خاصة", cost:120000, cat:"pro", icon:"fas fa-plane", proOnly: true, xp: 70000},
-    {id: 67, name:"ميدالية VIP", cost:2000, cat:"pro", icon:"fas fa-award", proOnly: true, xp: 1000},
-    {id: 68, name:"ساعة الماس", cost:9000, cat:"pro", icon:"fas fa-clock", proOnly: true, xp: 5000},
-    {id: 69, name:"جائزة نوبل", cost:15000, cat:"pro", icon:"fas fa-trophy", proOnly: true, xp: 8000},
-    {id: 70, name:"درع الكريستال", cost:6000, cat:"pro", icon:"fas fa-shield-cat", proOnly: true, xp: 3000},
-    {id: 71, name:"مفتاح الجنة", cost:40000, cat:"pro", icon:"fas fa-key", proOnly: true, xp: 20000},
-    {id: 72, name:"قلادة النور", cost:3500, cat:"pro", icon:"fas fa-circle-notch", proOnly: true, xp: 1500},
+    // --- الشارات (لا تعطي XP) ---
+    {id: 100, name:"الأسطورة", cost:20000, cat:"badges", icon:"fas fa-shield-halved", isBadge: true, xp: 0},
+    {id: 101, name:"التنين", cost:15000, cat:"badges", icon:"fas fa-dragon", isBadge: true, xp: 0},
 
-    // --- شارات ---
-    {id: 100, name:"الأسطورة", cost:20000, cat:"badges", icon:"fas fa-shield-halved", isBadge: true},
-    {id: 101, name:"التنين", cost:15000, cat:"badges", icon:"fas fa-dragon", isBadge: true},
-    {id: 102, name:"المحارب", cost:10000, cat:"badges", icon:"fas fa-hand-fist", isBadge: true},
+    // --- هدايا ملكية (Luxury) ---
+    {id: 200, name:"قصر الصيف", cost:50000, cat:"luxury", icon:"🏰", xp: 25000},
+    {id: 201, name:"جزيرة خاصة", cost:150000, cat:"luxury", icon:"🏝️", xp: 80000},
+    {id: 202, name:"طائرة خاصة", cost:100000, cat:"luxury", icon:"✈️", xp: 50000},
+    {id: 203, name:"يخت ملكي", cost:75000, cat:"luxury", icon:"🚢", xp: 35000},
 
-    // --- هدايا عامة (35 هدية) ---
-    {id: 1, name:"وردة", cost:20, cat:"all", icon:"🌹", xp: 10},
-    {id: 2, name:"قلب", cost:50, cat:"all", icon:"❤️", xp: 30},
-    {id: 3, name:"شوكولاتة", cost:100, cat:"all", icon:"🍫", xp: 60},
-    {id: 4, name:"بيتزا", cost:250, cat:"all", icon:"🍕", xp: 150},
-    {id: 5, name:"دب لعبة", cost:400, cat:"all", icon:"🧸", xp: 200},
-    {id: 6, name:"عطر فاخر", cost:1200, cat:"all", icon:"🧴", xp: 700},
-    {id: 7, name:"لابتوب", cost:5000, cat:"all", icon:"💻", xp: 2500},
-    {id: 8, name:"هاتف", cost:3000, cat:"all", icon:"📱", xp: 1500},
-    {id: 9, name:"نظارة", cost:600, cat:"all", icon:"🕶️", xp: 300},
-    {id: 10, name:"ساعة", cost:1500, cat:"all", icon:"⌚", xp: 800},
-    {id: 11, name:"سيارة", cost:20000, cat:"all", icon:"🚗", xp: 10000},
-    {id: 12, name:"منزل", cost:100000, cat:"all", icon:"🏠", xp: 60000},
-    {id: 13, name:"بيانو", cost:8000, cat:"all", icon:"🎹", xp: 4500},
-    {id: 14, name:"كاميرا", cost:2500, cat:"all", icon:"📷", xp: 1200},
-    {id: 15, name:"غيتار", cost:1800, cat:"all", icon:"🎸", xp: 900},
-    {id: 16, name:"قهوة", cost:15, cat:"all", icon:"☕", xp: 5},
-    {id: 17, name:"ايس كريم", cost:30, cat:"all", icon:"🍦", xp: 15},
-    {id: 18, name:"كعكة", cost:200, cat:"all", icon:"🎂", xp: 100},
-    {id: 19, name:"بالون", cost:10, cat:"all", icon:"🎈", xp: 5},
-    {id: 20, name:"تذكرة سفر", cost:3500, cat:"all", icon:"✈️", xp: 2000},
-    {id: 21, name:"دراجة", cost:1200, cat:"all", icon:"🚲", xp: 600},
-    {id: 22, name:"كرة قدم", cost:150, cat:"all", icon:"⚽", xp: 80},
-    {id: 23, name:"روبوت", cost:4500, cat:"all", icon:"🤖", xp: 2200},
-    {id: 24, name:"تلسكوب", cost:3200, cat:"all", icon:"🔭", xp: 1800}
+    // --- هدايا متوسطة (Medium) ---
+    {id: 300, name:"سيارة رياضية", cost:10000, cat:"medium", icon:"🏎️", xp: 4500},
+    {id: 301, name:"ساعة الماس", cost:8000, cat:"medium", icon:"⌚", xp: 3500},
+    {id: 302, name:"خاتم ذهب", cost:5000, cat:"medium", icon:"💍", xp: 2000},
+    {id: 303, name:"لابتوب", cost:3000, cat:"medium", icon:"💻", xp: 1200},
+
+    // --- هدايا بسيطة (Cheap) ---
+    {id: 1, name:"وردة", cost:20, cat:"cheap", icon:"🌹", xp: 10},
+    {id: 2, name:"قلب", cost:50, cat:"cheap", icon:"❤️", xp: 25},
+    {id: 3, name:"قهوة", cost:15, cat:"cheap", icon:"☕", xp: 5},
+    {id: 4, name:"دونات", cost:30, cat:"cheap", icon:"🍩", xp: 15},
+    {id: 5, name:"بالون", cost:10, cat:"cheap", icon:"🎈", xp: 4},
+
+    // --- هدايا البرو (Pro) ---
+    {id: 60, name:"التاج الأرجواني", cost:12000, cat:"pro", icon:"fas fa-crown", proOnly: true, xp: 6000},
+    {id: 61, name:"سيارة نيون", cost:18000, cat:"pro", icon:"fas fa-car-side", proOnly: true, xp: 9000},
+    {id: 62, name:"درع الفارس", cost:7000, cat:"pro", icon:"fas fa-shield-alt", proOnly: true, xp: 3500}
 ];
+
+// توليد هدايا تلقائية لتكملة العدد (تجنباً للتكرار اليدوي)
+for(let i=1; i<=30; i++) {
+    gifts.push({
+        id: 500+i,
+        name: `هدية منوعة ${i}`,
+        cost: 100 * i,
+        cat: i > 20 ? "luxury" : (i > 10 ? "medium" : "cheap"),
+        icon: "🎁",
+        xp: 50 * i
+    });
+}
 
 async function initGiftPage() {
     firebase.auth().onAuthStateChanged(async user => {
@@ -201,7 +199,8 @@ function renderGifts(filter) {
             ${g.proOnly ? '<span class="pro-exclusive-tag">PRO</span>' : ''}
             <div class="gift-icon-container">${iconContent}</div>
             <div class="gift-name">${g.name}</div>
-            <div class="gift-price">${g.cost.toLocaleString()}</div>
+            <div class="gift-xp">${g.xp > 0 ? `+${g.xp} XP` : 'بدون XP'}</div>
+            <div class="gift-price">${g.cost.toLocaleString()} كوينز</div>
             <div class="qty-controls">
                 <button class="qty-btn" onclick="changeQty(${g.id}, 1)">+</button>
                 <span id="qty-${g.id}">${cart[g.id] || 0}</span>
