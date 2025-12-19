@@ -20,107 +20,92 @@
             --glass-bg: rgba(30, 41, 59, 0.6);
             --glass-border: rgba(255, 255, 255, 0.1);
             --gold: #ffd700;
+            --default-purple: #6d28d9;
+            /* ألوان ندرة الشارات */
+            --rarity-dev: linear-gradient(45deg, #ff4757, #990000);
+            --rarity-pro: linear-gradient(45deg, #ffd700, #b8860b); 
+            --rarity-legend: linear-gradient(45deg, #fbbf24, #d97706);
+            --rarity-silver: linear-gradient(45deg, #94a3b8, #475569); 
+            --rarity-rare: linear-gradient(45deg, #3b82f6, #1e3a8a);
         }
 
         body {
             font-family: 'Cairo', sans-serif;
             background-color: #0a0f1e;
             background-image: radial-gradient(circle at top right, #1e1b4b, transparent);
-            color: #f1f5f9;
-            padding: 20px;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            color: #f1f5f9; padding: 20px; min-height: 100vh;
+            display: flex; flex-direction: column; align-items: center;
         }
 
         .leaderboard-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 25px;
-            width: 100%;
-            max-width: 1100px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px; width: 100%; max-width: 1100px;
         }
 
         .leaderboard-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(15px);
-            border: 1px solid var(--glass-border);
-            padding: 25px;
-            border-radius: 24px;
+            background: var(--glass-bg); backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border); padding: 25px; border-radius: 24px;
         }
 
         .player-item {
-            display: flex;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.03);
-            margin-bottom: 10px;
-            padding: 10px 15px;
-            border-radius: 15px;
-            transition: 0.3s;
-            cursor: pointer;
-            min-height: 70px;
+            display: flex; align-items: center; background: rgba(255, 255, 255, 0.03);
+            margin-bottom: 10px; padding: 10px 15px; border-radius: 15px;
+            transition: 0.3s; cursor: pointer; min-height: 75px;
         }
-
         .player-item:hover { background: rgba(255, 255, 255, 0.08); transform: translateX(-5px); }
 
         .rank { width: 35px; font-weight: 900; color: var(--accent); font-size: 1.1rem; flex-shrink: 0; }
 
-        /* الحل النهائي للأفاتار الدائري */
+        /* الأفاتار مع الصورة الافتراضية البنفسجية */
         .avatar-frame {
-            width: 45px;
-            height: 45px;
-            min-width: 45px;
-            min-height: 45px;
-            border-radius: 50%;
-            border: 2px solid var(--primary);
-            margin-left: 12px;
-            overflow: hidden;
-            background: #1e293b;
-            flex-shrink: 0; /* يمنع الانضغاط ليصبح بيضاوي */
+            width: 50px; height: 50px; min-width: 50px; border-radius: 50%;
+            border: 2px solid var(--primary); margin-left: 12px;
+            overflow: hidden; background: var(--default-purple);
+            flex-shrink: 0; display: flex; align-items: center; justify-content: center;
         }
-        .avatar-frame img { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: cover; 
-            aspect-ratio: 1 / 1; 
-        }
+        .avatar-frame img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-frame i.default-icon { font-size: 1.6rem; color: white; }
 
-        .info { flex-grow: 1; min-width: 0; } /* min-width لمنع تمدد النصوص */
-        .name-wrapper { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
-        .name { font-weight: 700; color: #fff; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .info { flex-grow: 1; min-width: 0; }
+        .name-wrapper { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .name { font-weight: 700; color: #fff; font-size: 1rem; }
         .value { font-weight: 900; color: var(--gold); flex-shrink: 0; margin-right: 10px; }
 
-        /* الشارات */
-        .badge-icon { font-size: 0.9rem; margin: 0 1px; }
-        .icon-dev { color: #f87171; }
+        /* الشارات الملونة بخلفياتها */
+        .badges-list { display: flex; gap: 5px; align-items: center; margin-top: 4px; }
+        .badge-circle {
+            width: 22px; height: 22px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.65rem; border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* قوالب الألوان */
+        .bg-dev { background: var(--rarity-dev); }
+        .bg-pro { background: var(--rarity-pro); }
+        .bg-legend { background: var(--rarity-legend); }
+        .bg-silver-s { background: var(--rarity-silver); }
+        .bg-rare { background: var(--rarity-rare); }
 
         /* النافذة المنبثقة */
         .modal {
-            display: none;
-            position: fixed; inset: 0;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
-            align-items: center; justify-content: center;
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+            z-index: 1000; align-items: center; justify-content: center;
         }
         .modal-content {
-            background: #1e293b;
-            width: 90%; max-width: 380px;
-            border-radius: 30px; padding: 30px;
-            text-align: center; border: 1px solid var(--primary);
+            background: #1e293b; width: 90%; max-width: 380px;
+            border-radius: 30px; padding: 30px; text-align: center; border: 1px solid var(--primary);
         }
-        .modal-avatar {
-            width: 100px; height: 100px;
-            border-radius: 50%; border: 4px solid var(--primary);
-            margin: 0 auto 15px; object-fit: cover; aspect-ratio: 1/1;
+        .modal-avatar-frame {
+            width: 100px; height: 100px; border-radius: 50%; border: 4px solid var(--primary);
+            margin: 0 auto 15px; background: var(--default-purple);
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
         }
 
         .btn-add {
-            width: 100%; margin-top: 20px; padding: 15px;
-            border-radius: 15px; border: none;
-            background: var(--primary); color: white;
-            font-weight: 900; cursor: pointer;
+            width: 100%; margin-top: 20px; padding: 15px; border-radius: 15px; border: none;
+            background: var(--primary); color: white; font-weight: 900; cursor: pointer;
         }
     </style>
 </head>
@@ -144,13 +129,15 @@
 
     <div id="profileModal" class="modal">
         <div class="modal-content">
-            <img id="modal-img" src="" class="modal-avatar" alt="Avatar">
-            <div id="modal-badges" style="margin-bottom: 10px; font-size: 1.4rem;"></div>
+            <div class="modal-avatar-frame">
+                <img id="modal-img" src="" style="width:100%; height:100%; object-fit:cover; display:none;">
+                <i id="modal-default-icon" class="fas fa-user" style="font-size:3rem; color:white;"></i>
+            </div>
+            <div id="modal-badges" style="display:flex; justify-content:center; gap:10px; margin-bottom:15px;"></div>
             <h2 id="modal-name" style="margin: 0;">---</h2>
-            <p id="modal-uid" style="color: var(--text-dim); font-size: 0.8rem; margin-top: 5px;"></p>
+            <p id="modal-uid" style="color: #94a3b8; font-size: 0.8rem; margin-top: 5px;"></p>
             
-            <div id="modal-stats" style="display: flex; justify-content: space-around; margin: 25px 0; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 20px;">
-                </div>
+            <div id="modal-stats" style="display: flex; justify-content: space-around; margin: 25px 0; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 20px;"></div>
 
             <button id="add-friend-btn" class="btn-add" onclick="handleAddFriend()">
                 <i class="fas fa-user-plus"></i> إضافة صديق
@@ -160,128 +147,112 @@
     </div>
 
 <script>
-    // إعدادات الشارات الموحدة
-    const ALL_BADGES_CONFIG = [
-        { id: "falcon_badge", icon: "fa-feather-alt", name: "الصقر", color: "#6366f1" },
-        { id: "pro_badge", icon: "fa-crown", name: "شارة البرو", color: "#f472b6" },
-        { id: "gold_s_badge", icon: "fa-crown", name: "سيزون ذهبي", color: "#fbbf24" },
-        { id: "silver_s_badge", icon: "fa-award", name: "سيزون فضي", color: "#cbd5e1" },
-        { id: "rich_badge", icon: "fa-gem", name: "ثري", color: "#22d3ee" },
-        { id: "legend_badge", icon: "fa-shield-halved", name: "الأسطورة", color: "#ffd700" },
-        { id: "dragon_badge", icon: "fa-dragon", name: "التنين", color: "#ff4500" }
-    ];
+    // تهيئة الشارات بالألوان والخلفيات المطلوبة
+    const BADGES_CONFIG = {
+        "dev_badge": { icon: "fa-code", bg: "bg-dev", name: "المطور" },
+        "pro_badge": { icon: "fa-crown", bg: "bg-pro", name: "برو" },
+        "gold_s_badge": { icon: "fa-1", bg: "bg-legend", name: "سيزون 1 ذهبي" },
+        "silver_s_badge": { icon: "fa-1", bg: "bg-silver-s", name: "سيزون 1 فضي" },
+        "legend_badge": { icon: "fa-shield-halved", bg: "bg-legend", name: "الأسطورة" },
+        "dragon_badge": { icon: "fa-dragon", bg: "bg-rare", name: "التنين" },
+        "falcon_badge": { icon: "fa-feather-alt", bg: "bg-rare", name: "الصقر" }
+    };
 
-    let selectedUserUid = null;
     const ADMIN_EMAIL = "clansp245@gmail.com";
 
-    // دالة جلب الشارات المصممة لتعمل مع نظام التجهيز (Equipped)
-    function getUserBadgesIcons(user) {
-        let icons = "";
+    // دالة إنشاء الشارات المجهزة فقط
+    function renderEquippedBadges(user) {
+        let html = "";
         
-        // شارة المطور (تعتمد على الايميل)
+        // شارة المطور الثابتة
         if (user.email === ADMIN_EMAIL) {
-            icons += '<i class="fas fa-user-shield badge-icon icon-dev" title="المطور"></i>';
+            html += `<div class="badge-circle bg-dev" title="مطور"><i class="fas fa-code" style="color:white"></i></div>`;
         }
 
-        // عرض الشارات الـ 5 المجهزة من قبل المستخدم
+        // إظهار الشارات المجهزة (Equipped) فقط
         if (user.equippedBadges && Array.isArray(user.equippedBadges)) {
             user.equippedBadges.forEach(badgeId => {
-                const config = ALL_BADGES_CONFIG.find(c => c.id === badgeId);
+                const config = BADGES_CONFIG[badgeId];
                 if (config) {
-                    icons += `<i class="fas ${config.icon} badge-icon" style="color:${config.color}" title="${config.name}"></i>`;
+                    html += `<div class="badge-circle ${config.bg}" title="${config.name}"><i class="fas ${config.icon}" style="color:white"></i></div>`;
                 }
             });
         }
-        return icons;
+        return html;
     }
 
     async function loadLeaderboards() {
         try {
             const usersRef = db.collection('users');
-            // جلب أفضل 10 في الكوينز
-            const coinsSnap = await usersRef.orderBy('totalCoins', 'desc').limit(10).get();
-            // جلب أفضل 10 في الـ XP
-            const xpSnap = await usersRef.orderBy('xp', 'desc').limit(10).get();
+            const [coinsSnap, xpSnap] = await Promise.all([
+                usersRef.orderBy('totalCoins', 'desc').limit(10).get(),
+                usersRef.orderBy('xp', 'desc').limit(10).get()
+            ]);
             
             document.getElementById('loading').style.display = 'none';
-            
             renderList('coins-leaderboard', coinsSnap, 'totalCoins', 'fa-coins');
             renderList('xp-leaderboard', xpSnap, 'xp', 'fa-bolt');
-        } catch (error) {
-            console.error("Error loading leaderboard: ", error);
-        }
+        } catch (e) { console.error(e); }
     }
 
     function renderList(containerId, snapshot, field, icon) {
         const container = document.getElementById(containerId);
-        let index = 1;
+        let rank = 1;
         snapshot.forEach(doc => {
             const user = doc.data();
-            const div = document.createElement('div');
-            div.className = 'player-item';
-            div.onclick = () => openProfile(user, doc.id);
+            const item = document.createElement('div');
+            item.className = 'player-item';
+            item.onclick = () => openProfile(user, doc.id);
             
-            const avatarUrl = user.photoURL || 'https://via.placeholder.com/150';
+            // منطق الصورة الافتراضية
+            const hasPhoto = user.photoURL && user.photoURL !== "";
+            const avatarContent = hasPhoto ? 
+                `<img src="${user.photoURL}">` : 
+                `<i class="fas fa-user default-icon"></i>`;
             
-            div.innerHTML = `
-                <span class="rank">#${index++}</span>
-                <div class="avatar-frame">
-                    <img src="${avatarUrl}" alt="Avatar">
-                </div>
+            item.innerHTML = `
+                <span class="rank">#${rank++}</span>
+                <div class="avatar-frame">${avatarContent}</div>
                 <div class="info">
                     <div class="name-wrapper">
                         <span class="name">${user.displayName || 'لاعب مجهول'}</span>
-                        <div class="badges-list">${getUserBadgesIcons(user)}</div>
                     </div>
+                    <div class="badges-list">${renderEquippedBadges(user)}</div>
                 </div>
                 <span class="value">${(user[field] || 0).toLocaleString()} <i class="fas ${icon}"></i></span>
             `;
-            container.appendChild(div);
+            container.appendChild(item);
         });
     }
 
     function openProfile(user, uid) {
-        selectedUserUid = uid;
-        const avatarUrl = user.photoURL || 'https://via.placeholder.com/150';
-        
-        document.getElementById('modal-img').src = avatarUrl;
+        const hasPhoto = user.photoURL && user.photoURL !== "";
+        const modalImg = document.getElementById('modal-img');
+        const modalIcon = document.getElementById('modal-default-icon');
+
+        if(hasPhoto) {
+            modalImg.src = user.photoURL; modalImg.style.display = 'block';
+            modalIcon.style.display = 'none';
+        } else {
+            modalImg.style.display = 'none'; modalIcon.style.display = 'block';
+        }
+
         document.getElementById('modal-name').innerText = user.displayName || 'لاعب مجهول';
         document.getElementById('modal-uid').innerText = "ID: " + (user.customID || user.publicUid || "------");
-        document.getElementById('modal-badges').innerHTML = getUserBadgesIcons(user);
+        document.getElementById('modal-badges').innerHTML = renderEquippedBadges(user);
         
         const level = Math.floor(Math.sqrt((user.xp || 0) / 100)) + 1;
-
         document.getElementById('modal-stats').innerHTML = `
-            <div><i class="fas fa-star" style="color:var(--accent); font-size: 1.2rem;"></i><br><small>المستوى</small><br><b>${level}</b></div>
-            <div><i class="fas fa-bolt" style="color:#a855f7; font-size: 1.2rem;"></i><br><small>XP</small><br><b>${(user.xp || 0).toLocaleString()}</b></div>
-            <div><i class="fas fa-coins" style="color:var(--gold); font-size: 1.2rem;"></i><br><small>كوينز</small><br><b>${(user.totalCoins || 0).toLocaleString()}</b></div>
+            <div><small>المستوى</small><br><b>${level}</b></div>
+            <div><small>XP</small><br><b>${(user.xp || 0).toLocaleString()}</b></div>
+            <div><small>كوينز</small><br><b>${(user.totalCoins || 0).toLocaleString()}</b></div>
         `;
         
         document.getElementById('profileModal').style.display = 'flex';
     }
 
-    async function handleAddFriend() {
-        const btn = document.getElementById('add-friend-btn');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-hourglass-half fa-spin"></i> جاري الإرسال...';
+    function closeModal() { document.getElementById('profileModal').style.display = 'none'; }
 
-        try {
-            // ملاحظة: تأكد من وجود دالة sendFriendRequest في ملف auth.js
-            await sendFriendRequest(selectedUserUid);
-            btn.innerHTML = '<i class="fas fa-check"></i> تم إرسال الطلب';
-            setTimeout(closeModal, 1500);
-        } catch (e) {
-            alert(e.message || "حدث خطأ في إرسال الطلب");
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-user-plus"></i> إضافة صديق';
-        }
-    }
-
-    function closeModal() { 
-        document.getElementById('profileModal').style.display = 'none';
-    }
-
-    // بدء العمل عند التأكد من تسجيل الدخول
     auth.onAuthStateChanged(user => { if(user) loadLeaderboards(); });
 </script>
 </body>
