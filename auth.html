@@ -52,7 +52,6 @@
         }
 
         h2 { font-weight: 900; margin-bottom: 25px; color: var(--accent); text-align: center; }
-
         label { display: block; margin-top: 15px; color: #94a3b8; font-size: 0.85rem; font-weight: bold; }
 
         input {
@@ -163,9 +162,9 @@
     const errorMsg = document.getElementById("error-msg");
     const resetModal = document.getElementById("resetModal");
 
-    // التحقق من وجود مستخدم مسجل مسبقاً
+    // التحقق من حالة المستخدم (موجودة في auth.js كـ auth)
     function checkActiveUser() {
-        firebase.auth().onAuthStateChanged(user => {
+        auth.onAuthStateChanged(user => {
             if (user) window.location.href = "index.html";
         });
     }
@@ -176,74 +175,66 @@
         setTimeout(() => { errorMsg.style.display = 'none'; }, 5000);
     }
 
-    // --- وظائف استعادة الحساب ---
     function openResetModal() { resetModal.style.display = 'flex'; }
     function closeResetModal() { resetModal.style.display = 'none'; }
 
+    // --- وظيفة استعادة كلمة السر ---
     async function handleResetPassword() {
         const email = document.getElementById("resetEmail").value.trim();
         const msg = document.getElementById("reset-msg");
         if (!email) { msg.innerText = "أدخل الإيميل أولاً"; return; }
-
         try {
-            await firebase.auth().sendPasswordResetEmail(email);
-            msg.innerText = "✅ تم إرسال الرابط! تفقد بريدك الوارد.";
+            await auth.sendPasswordResetEmail(email);
+            msg.innerText = "✅ تم إرسال الرابط بنجاح!";
             msg.style.color = "#34d399";
         } catch (e) {
-            msg.innerText = "❌ فشل الإرسال: تأكد من صحة الإيميل";
+            msg.innerText = "❌ خطأ في الإرسال";
             msg.style.color = "#ef4444";
         }
     }
 
-    // --- إنشاء حساب جديد ---
+    // --- إنشاء حساب جديد (مهم جداً للربط بـ Firestore) ---
     async function handleSignUp() {
         const email = emailInput.value.trim();
         const password = passwordInput.value;
         
         if (!email || password.length < 6) {
-            return displayError("يجب أن تكون كلمة المرور 6 أحرف على الأقل");
+            return displayError("كلمة المرور يجب أن تكون 6 أحرف فأكثر");
         }
 
         try {
-            await firebase.auth().createUserWithEmailAndPassword(email, password);
+            // 1. إنشاء الحساب في Authentication
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            // 2. استدعاء الدالة من auth.js لإنشاء بيانات المستخدم في Firestore
+            await createFirestoreUserEntry(userCredential.user);
+            
             alert("تم إنشاء الحساب بنجاح!");
             window.location.href = "index.html";
         } catch (e) {
             if (e.code === 'auth/email-already-in-use') {
-                displayError("هذا البريد مسجل بالفعل، قم بتسجيل الدخول");
+                displayError("هذا الحساب موجود بالفعل");
             } else {
-                displayError("خطأ في الإنشاء: " + e.message);
+                displayError("حدث خطأ: " + e.message);
             }
         }
     }
 
-    // --- تسجيل الدخول (التصحيح الأساسي) ---
+    // --- تسجيل الدخول ---
     async function handleSignIn() {
         const email = emailInput.value.trim();
         const pass = passwordInput.value;
         
-        if(!email || !pass) return displayError("يرجى ملء كافة الحقول");
+        if(!email || !pass) return displayError("الرجاء إدخال البيانات");
 
         try {
-            // استخدام Firebase Auth المباشر هنا لحل مشكلة الحساب الثاني
-            await firebase.auth().signInWithEmailAndPassword(email, pass);
-            console.log("تم تسجيل الدخول بنجاح");
+            await auth.signInWithEmailAndPassword(email, pass);
             window.location.href = "index.html";
         } catch (e) {
             console.error("Login Error:", e.code);
-            // تخصيص رسائل الخطأ لتكون واضحة
             switch (e.code) {
-                case 'auth/user-not-found':
-                    displayError("لا يوجد حساب بهذا البريد الإلكتروني");
-                    break;
-                case 'auth/wrong-password':
-                    displayError("كلمة السر خاطئة، حاول مرة أخرى");
-                    break;
-                case 'auth/invalid-email':
-                    displayError("صيغة البريد الإلكتروني غير صحيحة");
-                    break;
-                default:
-                    displayError("فشل الدخول: تأكد من بياناتك واتصالك بالإنترنت");
+                case 'auth/user-not-found': displayError("الحساب غير موجود"); break;
+                case 'auth/wrong-password': displayError("كلمة السر خاطئة"); break;
+                default: displayError("فشل الدخول، تأكد من بياناتك");
             }
         }
     }
@@ -252,10 +243,12 @@
     async function handleGoogleSignIn() {
         try {
             const provider = new firebase.auth.GoogleAuthProvider();
-            await firebase.auth().signInWithPopup(provider);
+            const result = await auth.signInWithPopup(provider);
+            // التأكد من وجود سجل للمستخدم في Firestore
+            await createFirestoreUserEntry(result.user);
             window.location.href = "index.html";
         } catch (e) {
-            displayError("فشل تسجيل الدخول عبر Google");
+            displayError("فشل الدخول عبر Google");
         }
     }
 </script>
