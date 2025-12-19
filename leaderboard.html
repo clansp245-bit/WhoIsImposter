@@ -21,7 +21,6 @@
             --glass-border: rgba(255, 255, 255, 0.1);
             --gold: #ffd700;
             --default-purple: #6d28d9;
-            /* ألوان ندرة الشارات */
             --rarity-dev: linear-gradient(45deg, #ff4757, #990000);
             --rarity-pro: linear-gradient(45deg, #ffd700, #b8860b); 
             --rarity-legend: linear-gradient(45deg, #fbbf24, #d97706);
@@ -34,7 +33,7 @@
             background-color: #0a0f1e;
             background-image: radial-gradient(circle at top right, #1e1b4b, transparent);
             color: #f1f5f9; padding: 20px; min-height: 100vh;
-            display: flex; flex-direction: column; align-items: center;
+            display: flex; flex-direction: column; align-items: center; margin: 0;
         }
 
         .leaderboard-container {
@@ -49,45 +48,50 @@
 
         .player-item {
             display: flex; align-items: center; background: rgba(255, 255, 255, 0.03);
-            margin-bottom: 10px; padding: 10px 15px; border-radius: 15px;
-            transition: 0.3s; cursor: pointer; min-height: 75px;
+            margin-bottom: 12px; padding: 12px 15px; border-radius: 18px;
+            transition: 0.3s; cursor: pointer; border: 1px solid transparent;
         }
-        .player-item:hover { background: rgba(255, 255, 255, 0.08); transform: translateX(-5px); }
+        .player-item:hover { 
+            background: rgba(255, 255, 255, 0.08); 
+            transform: translateX(-5px);
+            border-color: var(--primary);
+        }
 
         .rank { width: 35px; font-weight: 900; color: var(--accent); font-size: 1.1rem; flex-shrink: 0; }
 
-        /* الأفاتار مع الصورة الافتراضية البنفسجية */
+        /* الأفاتار - حماية الشكل الدائري */
         .avatar-frame {
-            width: 50px; height: 50px; min-width: 50px; border-radius: 50%;
-            border: 2px solid var(--primary); margin-left: 12px;
+            width: 50px; height: 50px; min-width: 50px; min-height: 50px;
+            border-radius: 50%; border: 2px solid var(--primary); margin-left: 12px;
             overflow: hidden; background: var(--default-purple);
             flex-shrink: 0; display: flex; align-items: center; justify-content: center;
         }
         .avatar-frame img { width: 100%; height: 100%; object-fit: cover; }
         .avatar-frame i.default-icon { font-size: 1.6rem; color: white; }
 
-        .info { flex-grow: 1; min-width: 0; }
-        .name-wrapper { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .name { font-weight: 700; color: #fff; font-size: 1rem; }
-        .value { font-weight: 900; color: var(--gold); flex-shrink: 0; margin-right: 10px; }
+        .info { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+        .name { font-weight: 700; color: #fff; font-size: 1rem; margin-bottom: 4px; display: block; }
 
-        /* الشارات الملونة بخلفياتها */
-        .badges-list { display: flex; gap: 5px; align-items: center; margin-top: 4px; }
+        /* الشارات - حماية الشكل الدائري تماماً */
+        .badges-list { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
         .badge-circle {
-            width: 22px; height: 22px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.65rem; border: 1px solid rgba(255,255,255,0.2);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            width: 24px; height: 24px; min-width: 24px; min-height: 24px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; border: 1px solid rgba(255,255,255,0.3);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+            flex-shrink: 0; /* يمنع تحولها لشكل بيضاوي */
+            aspect-ratio: 1 / 1;
         }
 
-        /* قوالب الألوان */
         .bg-dev { background: var(--rarity-dev); }
         .bg-pro { background: var(--rarity-pro); }
         .bg-legend { background: var(--rarity-legend); }
         .bg-silver-s { background: var(--rarity-silver); }
         .bg-rare { background: var(--rarity-rare); }
 
-        /* النافذة المنبثقة */
+        .value { font-weight: 900; color: var(--gold); flex-shrink: 0; margin-right: 10px; font-size: 0.9rem; }
+
+        /* Modal Styles */
         .modal {
             display: none; position: fixed; inset: 0;
             background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
@@ -102,16 +106,13 @@
             margin: 0 auto 15px; background: var(--default-purple);
             display: flex; align-items: center; justify-content: center; overflow: hidden;
         }
-
-        .btn-add {
-            width: 100%; margin-top: 20px; padding: 15px; border-radius: 15px; border: none;
-            background: var(--primary); color: white; font-weight: 900; cursor: pointer;
-        }
     </style>
 </head>
 <body>
 
-    <h2 style="color: var(--accent); font-weight: 900; margin-bottom: 30px;"><i class="fas fa-medal"></i> قمة المحتالين</h2>
+    <h2 style="color: var(--accent); font-weight: 900; margin-bottom: 30px; margin-top: 20px;">
+        <i class="fas fa-medal"></i> قمة المحتالين
+    </h2>
 
     <div id="loading" style="text-align:center; margin-bottom: 20px;">
         <i class="fas fa-circle-notch fa-spin fa-2x"></i>
@@ -119,11 +120,15 @@
 
     <div class="leaderboard-container">
         <div id="coins-leaderboard" class="leaderboard-card">
-            <h3 style="color: var(--gold); margin-bottom: 20px;"><i class="fas fa-coins"></i> بنك المدينة</h3>
+            <h3 style="color: var(--gold); margin-bottom: 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <i class="fas fa-coins"></i> أغنى 10 لاعبين
+            </h3>
         </div>
         
         <div id="xp-leaderboard" class="leaderboard-card">
-            <h3 style="color: #a855f7; margin-bottom: 20px;"><i class="fas fa-bolt"></i> الخبرة القتالية</h3>
+            <h3 style="color: #a855f7; margin-bottom: 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <i class="fas fa-bolt"></i> أقوى 10 محاربين
+            </h3>
         </div>
     </div>
 
@@ -133,26 +138,20 @@
                 <img id="modal-img" src="" style="width:100%; height:100%; object-fit:cover; display:none;">
                 <i id="modal-default-icon" class="fas fa-user" style="font-size:3rem; color:white;"></i>
             </div>
-            <div id="modal-badges" style="display:flex; justify-content:center; gap:10px; margin-bottom:15px;"></div>
+            <div id="modal-badges" style="display:flex; justify-content:center; gap:10px; margin-bottom:15px; flex-wrap: wrap;"></div>
             <h2 id="modal-name" style="margin: 0;">---</h2>
             <p id="modal-uid" style="color: #94a3b8; font-size: 0.8rem; margin-top: 5px;"></p>
-            
-            <div id="modal-stats" style="display: flex; justify-content: space-around; margin: 25px 0; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 20px;"></div>
-
-            <button id="add-friend-btn" class="btn-add" onclick="handleAddFriend()">
-                <i class="fas fa-user-plus"></i> إضافة صديق
-            </button>
-            <button onclick="closeModal()" style="background:none; border:none; color:#94a3b8; margin-top:15px; cursor:pointer; font-weight: bold;">إغلاق</button>
+            <div id="modal-stats" style="display: flex; justify-content: space-around; margin: 20px 0; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 20px;"></div>
+            <button onclick="closeModal()" style="background:var(--primary); border:none; color:white; padding: 10px 30px; border-radius: 10px; cursor:pointer; font-weight: bold; width: 100%;">إغلاق</button>
         </div>
     </div>
 
 <script>
-    // تهيئة الشارات بالألوان والخلفيات المطلوبة
     const BADGES_CONFIG = {
         "dev_badge": { icon: "fa-code", bg: "bg-dev", name: "المطور" },
         "pro_badge": { icon: "fa-crown", bg: "bg-pro", name: "برو" },
-        "gold_s_badge": { icon: "fa-1", bg: "bg-legend", name: "سيزون 1 ذهبي" },
-        "silver_s_badge": { icon: "fa-1", bg: "bg-silver-s", name: "سيزون 1 فضي" },
+        "gold_s_badge": { icon: "fa-1", bg: "bg-legend", name: "سيزون ذهبي" },
+        "silver_s_badge": { icon: "fa-1", bg: "bg-silver-s", name: "سيزون فضي" },
         "legend_badge": { icon: "fa-shield-halved", bg: "bg-legend", name: "الأسطورة" },
         "dragon_badge": { icon: "fa-dragon", bg: "bg-rare", name: "التنين" },
         "falcon_badge": { icon: "fa-feather-alt", bg: "bg-rare", name: "الصقر" }
@@ -160,16 +159,11 @@
 
     const ADMIN_EMAIL = "clansp245@gmail.com";
 
-    // دالة إنشاء الشارات المجهزة فقط
     function renderEquippedBadges(user) {
         let html = "";
-        
-        // شارة المطور الثابتة
         if (user.email === ADMIN_EMAIL) {
             html += `<div class="badge-circle bg-dev" title="مطور"><i class="fas fa-code" style="color:white"></i></div>`;
         }
-
-        // إظهار الشارات المجهزة (Equipped) فقط
         if (user.equippedBadges && Array.isArray(user.equippedBadges)) {
             user.equippedBadges.forEach(badgeId => {
                 const config = BADGES_CONFIG[badgeId];
@@ -188,7 +182,6 @@
                 usersRef.orderBy('totalCoins', 'desc').limit(10).get(),
                 usersRef.orderBy('xp', 'desc').limit(10).get()
             ]);
-            
             document.getElementById('loading').style.display = 'none';
             renderList('coins-leaderboard', coinsSnap, 'totalCoins', 'fa-coins');
             renderList('xp-leaderboard', xpSnap, 'xp', 'fa-bolt');
@@ -204,19 +197,14 @@
             item.className = 'player-item';
             item.onclick = () => openProfile(user, doc.id);
             
-            // منطق الصورة الافتراضية
             const hasPhoto = user.photoURL && user.photoURL !== "";
-            const avatarContent = hasPhoto ? 
-                `<img src="${user.photoURL}">` : 
-                `<i class="fas fa-user default-icon"></i>`;
+            const avatarContent = hasPhoto ? `<img src="${user.photoURL}">` : `<i class="fas fa-user default-icon"></i>`;
             
             item.innerHTML = `
                 <span class="rank">#${rank++}</span>
                 <div class="avatar-frame">${avatarContent}</div>
                 <div class="info">
-                    <div class="name-wrapper">
-                        <span class="name">${user.displayName || 'لاعب مجهول'}</span>
-                    </div>
+                    <span class="name">${user.displayName || 'لاعب مجهول'}</span>
                     <div class="badges-list">${renderEquippedBadges(user)}</div>
                 </div>
                 <span class="value">${(user[field] || 0).toLocaleString()} <i class="fas ${icon}"></i></span>
@@ -247,12 +235,10 @@
             <div><small>XP</small><br><b>${(user.xp || 0).toLocaleString()}</b></div>
             <div><small>كوينز</small><br><b>${(user.totalCoins || 0).toLocaleString()}</b></div>
         `;
-        
         document.getElementById('profileModal').style.display = 'flex';
     }
 
     function closeModal() { document.getElementById('profileModal').style.display = 'none'; }
-
     auth.onAuthStateChanged(user => { if(user) loadLeaderboards(); });
 </script>
 </body>
