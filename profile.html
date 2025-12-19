@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>👤 ملفي الملكي المطور</title>
+    <title>👤 ملفي الملكي الأسطوري</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -20,10 +20,8 @@
             --bg-body: #0a0f1e;
             --card-bg: rgba(30, 41, 59, 0.7);
             --gold: #ffd700;
-            --silver: #cbd5e1;
-            /* ألوان الندرة للشارات */
             --rarity-dev: linear-gradient(45deg, #ff4757, #990000);
-            --rarity-pro: linear-gradient(45deg, #f472b6, #7c3aed);
+            --rarity-pro: linear-gradient(45deg, #ffd700, #b8860b); /* خلفية ذهبي للبرو */
             --rarity-legend: linear-gradient(45deg, #fbbf24, #d97706);
             --rarity-rare: linear-gradient(45deg, #3b82f6, #1e3a8a);
         }
@@ -44,14 +42,19 @@
         }
 
         .profile-header { text-align: center; }
-        .avatar-container { width: 110px; height: 110px; margin: 0 auto 15px; position: relative; }
-        #profile-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary); background: #1e293b; }
+        .avatar-container { width: 110px; height: 110px; margin: 0 auto 15px; position: relative; cursor: pointer; }
+        #profile-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary); background: #1e293b; transition: 0.3s; }
+        #profile-img:hover { opacity: 0.8; transform: scale(1.05); }
 
-        /* شارات الهيدر (بدون خلفية لتكون أكثر سلاسة) */
-        .badge-display { display: flex; justify-content: center; gap: 10px; margin: 10px 0; height: 35px; }
-        .active-badge { font-size: 1.6rem; filter: drop-shadow(0 0 5px rgba(0,0,0,0.5)); }
+        /* شارات الهيدر بالخلفيات */
+        .badge-display { display: flex; justify-content: center; gap: 10px; margin: 10px 0; min-height: 40px; }
+        .header-badge-circle {
+            width: 35px; height: 35px; border-radius: 50%; display: flex; 
+            align-items: center; justify-content: center; font-size: 1rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2);
+        }
 
-        /* خزانة الشارات بخلفيات ملونة */
+        /* خزانة الشارات */
         .badges-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 12px; margin-top: 15px; }
         .badge-slot {
             border-radius: 18px; padding: 12px 5px; text-align: center; cursor: pointer; transition: 0.3s;
@@ -60,34 +63,31 @@
         .badge-slot i { font-size: 1.5rem; display: block; margin-bottom: 5px; color: white; }
         .badge-slot span { font-size: 0.65rem; font-weight: bold; display: block; color: white; }
 
-        /* ستايلات الندرة في الخزانة */
+        /* ستايلات الندرة */
         .bg-dev { background: var(--rarity-dev); }
         .bg-pro { background: var(--rarity-pro); }
+        .bg-pro i { color: #ffffff !important; } /* تاج أبيض */
         .bg-legend { background: var(--rarity-legend); }
         .bg-rare { background: var(--rarity-rare); }
         
         .badge-slot.equipped { border-color: #fff; transform: scale(1.05); box-shadow: 0 0 15px rgba(255,255,255,0.3); }
         .badge-slot.locked { opacity: 0.15; filter: grayscale(1); cursor: not-allowed; background: #000; }
 
-        /* الهوية والنسخ */
         .id-badge-container { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; }
         .id-badge { color: var(--gold); font-weight: 900; background: rgba(255,215,0,0.1); padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(255,215,0,0.2); }
-        .copy-icon { cursor: pointer; font-size: 0.9rem; color: var(--text-dim); transition: 0.2s; }
-        .copy-icon:hover { color: white; transform: scale(1.2); }
-
-        /* أزرار وتنسيقات */
+        
         .input-group { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; display: flex; overflow: hidden; margin-top: 10px; }
         #nameInput { background: transparent; border: none; padding: 15px; color: white; font-family: 'Cairo'; flex-grow: 1; outline: none; }
         .btn-save { background: var(--accent-gradient); border: none; color: white; padding: 0 20px; font-weight: 900; cursor: pointer; }
-        .btn-save:disabled { opacity: 0.2; }
         .btn-back { width: 100%; max-width: 500px; padding: 15px; background: rgba(255,255,255,0.05); color: white; border-radius: 15px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); font-family: 'Cairo'; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="card profile-header">
-    <div class="avatar-container">
-        <img id="profile-img" src="https://via.placeholder.com/150">
+    <div class="avatar-container" onclick="document.getElementById('upload-photo').click()">
+        <img id="profile-img" src="https://via.placeholder.com/150" title="اضغط لتغيير الصورة">
+        <input type="file" id="upload-photo" style="display:none" accept="image/*" onchange="handlePhotoUpload(this)">
     </div>
     
     <div id="active-badges-container" class="badge-display"></div>
@@ -96,43 +96,42 @@
     
     <div class="id-badge-container">
         <span id="user-id-display" class="id-badge">---</span>
-        <i class="fas fa-copy copy-icon" onclick="copyUserID()" title="نسخ المعرف"></i>
+        <i class="fas fa-copy" style="cursor:pointer; color:var(--silver)" onclick="copyUserID()"></i>
     </div>
 </div>
 
 <div class="card">
-    <h3 style="margin:0; font-size: 1rem; color: var(--gold);"><i class="fas fa-medal"></i> خزانة الشارات الملكية</h3>
+    <h3 style="margin:0; font-size: 1rem; color: var(--gold);"><i class="fas fa-medal"></i> خزانة الشارات</h3>
     <div id="badges-library" class="badges-grid"></div>
 </div>
 
 <div class="card">
-    <h3 style="margin:0; font-size: 1rem; color: var(--primary);"><i class="fas fa-user-edit"></i> تعديل البيانات</h3>
+    <h3 style="margin:0; font-size: 1rem; color: var(--primary);"><i class="fas fa-user-edit"></i> الإعدادات</h3>
     <div style="margin-top:10px">
-        <small id="name-status" style="display:block; margin-bottom:5px; font-size:0.7rem; color: var(--text-dim);"></small>
+        <small id="name-status" style="display:block; margin-bottom:5px; font-size:0.7rem; color: var(--silver);"></small>
         <div class="input-group">
-            <input id="nameInput" type="text" placeholder="اسمك الجديد...">
+            <input id="nameInput" type="text" placeholder="تغيير الاسم...">
             <button id="saveBtn" class="btn-save" disabled onclick="handleSaveName()">حفظ</button>
         </div>
     </div>
-    <button id="idBtn" class="btn-save" style="width:100%; height:45px; border-radius:12px; margin-top:15px; background:var(--gold); color:#000;" disabled onclick="handleChangeID()">استخدام بطاقة الـ ID المميز</button>
+    <button id="idBtn" class="btn-save" style="width:100%; height:45px; border-radius:12px; margin-top:15px; background:var(--gold); color:#000;" disabled onclick="handleChangeID()">استخدام بطاقة ID</button>
 </div>
 
 <button class="btn-back" onclick="location.href='index.html'">العودة للرئيسية</button>
 
 <script>
-// --- قاعدة بيانات الشارات الشاملة ---
 const ALL_GAME_BADGES = {
     "dev_badge": { name: "مطور", icon: "fa-code", bg: "bg-dev" },
-    "pro_badge": { name: "تاج البرو", icon: "fa-crown", bg: "bg-pro" },
+    "pro_badge": { name: "برو", icon: "fa-crown", bg: "bg-pro" },
     "gold_s_badge": { name: "سيزون 1", icon: "fa-regular fa-1", bg: "bg-legend" },
     "silver_s_badge": { name: "سيزون 1", icon: "fa-regular fa-1", bg: "bg-rare" },
-    "legend_badge": { name: "الأسطورة", icon: "fa-shield-halved", bg: "bg-legend" }, // شارة المتجر
-    "dragon_badge": { name: "التنين", icon: "fa-dragon", bg: "bg-rare" }, // شارة المتجر
+    "legend_badge": { name: "الأسطورة", icon: "fa-shield-halved", bg: "bg-legend" },
+    "dragon_badge": { name: "التنين", icon: "fa-dragon", bg: "bg-rare" },
     "falcon_badge": { name: "الصقر", icon: "fa-feather-alt", bg: "bg-rare" }
 };
 
 let userDoc = null;
-const MY_ID = "IMP-VVVC-2JZ7"; // آيديك كمطور
+const SUPER_ID = "REX-999"; 
 
 auth.onAuthStateChanged(user => {
     if (!user) return;
@@ -145,11 +144,12 @@ auth.onAuthStateChanged(user => {
 });
 
 function refreshUI() {
+    const currentID = userDoc.customID || userDoc.publicUid || "";
     document.getElementById("display-name").innerText = userDoc.displayName || "لاعب";
-    document.getElementById("user-id-display").innerText = userDoc.customID || userDoc.publicUid || "---";
+    document.getElementById("user-id-display").innerText = currentID;
     if (userDoc.photoURL) document.getElementById('profile-img').src = userDoc.photoURL;
 
-    // 1. عرض الشارات المجهزة في الأعلى
+    // 1. عرض شارات الهيدر بخلفياتها
     const activeCont = document.getElementById("active-badges-container");
     activeCont.innerHTML = "";
     const equipped = userDoc.equippedBadges || [];
@@ -157,32 +157,24 @@ function refreshUI() {
     equipped.forEach(bKey => {
         const badge = ALL_GAME_BADGES[bKey];
         if(badge) {
-            // تلوين الأيقونة في الأعلى حسب النوع
-            let colorClass = "white";
-            if(badge.bg === 'bg-dev') colorClass = "#ff4757";
-            if(badge.bg === 'bg-pro') colorClass = "#f472b6";
-            if(badge.bg === 'bg-legend') colorClass = "#fbbf24";
-
-            activeCont.innerHTML += `<i class="fas ${badge.icon} active-badge" style="color:${colorClass}" title="${badge.name}"></i>`;
+            activeCont.innerHTML += `
+                <div class="header-badge-circle ${badge.bg}">
+                    <i class="fas ${badge.icon}" style="color:white"></i>
+                </div>`;
         }
     });
 
-    // 2. تحديث الخزانة مع الخلفيات
+    // 2. تحديث الخزانة
     const libraryCont = document.getElementById("badges-library");
     libraryCont.innerHTML = "";
-    
-    // الشارات التي يملكها اللاعب (نحول الأيقونات القادمة من المتجر لمفاتيح برمجية)
     let owned = userDoc.badges || [];
     
-    // إضافة شارة المطور والبرو والآيدي المميز تلقائياً
-    if(userDoc.customID === MY_ID && !owned.includes("dev_badge")) owned.push("dev_badge");
-    if(userDoc.proExpiryTime > Date.now() && !owned.includes("pro_badge")) owned.push("pro_badge");
+    // ميزة REX-999: امتلاك كل شيء
+    const hasFullAccess = (currentID === SUPER_ID);
 
     Object.keys(ALL_GAME_BADGES).forEach(key => {
         const bInfo = ALL_GAME_BADGES[key];
-        
-        // التحقق من الملكية بطريقتين (المفتاح البرمجي أو أيقونة المتجر)
-        const isOwned = owned.includes(key) || owned.includes(`fas ${bInfo.icon}`) || owned.includes(`fa-regular ${bInfo.icon}`);
+        const isOwned = hasFullAccess || owned.includes(key) || owned.includes(`fas ${bInfo.icon}`);
         const isEquipped = equipped.includes(key);
 
         const slot = document.createElement("div");
@@ -195,14 +187,40 @@ function refreshUI() {
         libraryCont.appendChild(slot);
     });
 
-    // 3. فحص البطاقات
+    // 3. البطاقات
     const inv = userDoc.inventory || [];
     const nCards = inv.filter(i => i === "بطاقة الاسم").length;
     const iCards = inv.filter(i => i === "بطاقة الـ ID").length;
-    
     document.getElementById("saveBtn").disabled = nCards === 0;
     document.getElementById("idBtn").disabled = iCards === 0;
-    document.getElementById("name-status").innerText = nCards > 0 ? `متاح لك التغيير (${nCards} بطاقة)` : "لا تملك بطاقة اسم";
+    document.getElementById("name-status").innerText = `البطاقات المتاحة: ${nCards}`;
+}
+
+async function handlePhotoUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    // تصغير حجم الصورة برمجياً قبل الرفع لضمان عدم فشل التحديث
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = async () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 200; canvas.height = 200;
+            ctx.drawImage(img, 0, 0, 200, 200);
+            const base64 = canvas.toDataURL('image/jpeg', 0.7);
+            
+            try {
+                await db.collection('users').doc(auth.currentUser.uid).update({ photoURL: base64 });
+                alert("تم تحديث صورة الملف الشخصي!");
+            } catch (err) {
+                alert("خطأ في تحديث الصورة");
+            }
+        };
+    };
+    reader.readAsDataURL(file);
 }
 
 async function toggleBadge(badgeKey) {
@@ -210,53 +228,34 @@ async function toggleBadge(badgeKey) {
     if (equipped.includes(badgeKey)) {
         equipped = equipped.filter(item => item !== badgeKey);
     } else {
-        if (equipped.length >= 5) return alert("الحد الأقصى 5 شارات فقط!");
+        if (equipped.length >= 5) return alert("الحد 5 شارات");
         equipped.push(badgeKey);
     }
     await db.collection('users').doc(auth.currentUser.uid).update({ equippedBadges: equipped });
 }
 
 function copyUserID() {
-    const id = document.getElementById("user-id-display").innerText;
-    navigator.clipboard.writeText(id).then(() => {
-        alert("تم نسخ المعرف الملكي بنجاح: " + id);
-    });
+    navigator.clipboard.writeText(document.getElementById("user-id-display").innerText);
+    alert("تم النسخ!");
 }
 
 async function handleSaveName() {
     const n = document.getElementById("nameInput").value.trim();
-    if(n.length < 3) return alert("الاسم قصير جداً");
+    if(n.length < 3) return;
     let inv = [...userDoc.inventory];
-    const idx = inv.indexOf("بطاقة الاسم");
-    inv.splice(idx, 1);
+    inv.splice(inv.indexOf("بطاقة الاسم"), 1);
     await db.collection('users').doc(auth.currentUser.uid).update({ displayName: n, inventory: inv });
-    alert("تم تحديث اسمك الملكي ✨");
 }
 
 async function handleChangeID() {
-    const nid = prompt("أدخل الـ ID المميز الذي ترغب به:");
-    if(!nid || nid.length < 3) return;
-    
+    const nid = prompt("الـ ID الجديد:");
+    if(!nid) return;
     const check = await db.collection('users').where('customID', '==', nid).get();
-    if(!check.empty) return alert("هذا المعرف مأخوذ بالفعل!");
-
+    if(!check.empty) return alert("مستعمل!");
     let inv = [...userDoc.inventory];
-    const idx = inv.indexOf("بطاقة الـ ID");
-    inv.splice(idx, 1);
+    inv.splice(inv.indexOf("بطاقة الـ ID"), 1);
     await db.collection('users').doc(auth.currentUser.uid).update({ customID: nid, inventory: inv });
-    alert("تم تفعيل الآيدي المميز بنجاح! 🏅");
-}
-
-async function handlePhotoUpload(input) {
-    const file = input.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-        await db.collection('users').doc(auth.currentUser.uid).update({ photoURL: e.target.result });
-    };
-    reader.readAsDataURL(file);
 }
 </script>
 </body>
 </html>
-
