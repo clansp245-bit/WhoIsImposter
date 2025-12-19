@@ -119,9 +119,14 @@
         cursor: pointer;
         transition: 0.3s;
     }
-    .word-category.selected { background: var(--primary); border-color: var(--primary); box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); }
+    .word-category.selected { background: var(--primary); border-color: var(--primary); box-shadow: 0 0 15px rgba(99, 102, 241, 0.2); }
+    .word-category.pro-category.selected { background: #854d0e; border-color: var(--gold); }
+    
     .word-category.pro-category { border-right: 4px solid var(--gold); }
     .word-category:not(.unlocked).pro-category { opacity: 0.4; cursor: not-allowed; }
+
+    /* تعديل علامة الشيك مارك الذهبية */
+    .pro-category input[type="checkbox"] { accent-color: var(--gold) !important; }
 
     .save-btn {
         background: var(--accent-gradient);
@@ -197,28 +202,6 @@
 </div>
 
 <script>
-// --- الدوال المساعدة ---
-async function updateRewards(userData, coins, days, gems) {
-    const user = firebase.auth().currentUser;
-    if (!user) return;
-
-    let newCoins = (userData.totalCoins || 0) + (coins || 0);
-    let newGems = (userData.s_gems || 0) + (gems || 0);
-    
-    let currentProTime = userData.proExpiryTime || Date.now();
-    let baseTime = currentProTime > Date.now() ? currentProTime : Date.now();
-    let newProTime = baseTime + (days * 24 * 60 * 60 * 1000);
-
-    const updates = {
-        totalCoins: newCoins,
-        s_gems: newGems,
-        proExpiryTime: days > 0 ? newProTime : (userData.proExpiryTime || 0)
-    };
-
-    await firebase.firestore().collection("users").doc(user.uid).update(updates);
-    return updates;
-}
-
 const impostorsInput = document.getElementById("impostors");
 const timerInput = document.getElementById("discussionTimer");
 const noTimerCheckbox = document.getElementById("noTimerMode");
@@ -240,7 +223,7 @@ const wordCategories = {
     ]
 };
 
-function isPro(){ return (currentUserData.proExpiryTime || 0) > new Date().getTime(); }
+function isPro(){ return (currentUserData.proExpiryTime || 0) > Date.now(); }
 function toggleTimerInput(){ if(noTimerCheckbox.checked){timerInput.value=0; timerInput.disabled=true;}else{if(timerInput.value==0)timerInput.value=120;timerInput.disabled=false;} }
 
 function renderWordCategories() {
@@ -274,7 +257,10 @@ function renderWordCategories() {
 function toggleCategory(id) {
     const el = document.querySelector(`.word-category[data-id="${id}"]`);
     const cb = document.getElementById(`cat-${id}`);
-    if(el && cb) { el.classList.toggle('selected'); cb.checked = el.classList.contains('selected'); }
+    if(el && cb) { 
+        el.classList.toggle('selected'); 
+        cb.checked = el.classList.contains('selected'); 
+    }
 }
 
 function loadSelectedCategories() {
@@ -331,6 +317,7 @@ async function saveSettings(){
   location.href="index.html";
 }
 
+// --- دالة الاسترداد المحسنة لحل مشكلة الصلاحيات ---
 async function redeemCode() {
     const codeInput = document.getElementById('promocode-input');
     const code = codeInput.value.trim().toUpperCase();
@@ -343,39 +330,54 @@ async function redeemCode() {
 
     try {
         const db = firebase.firestore();
-        const res = await db.runTransaction(async t => {
-            const docRef = db.collection("promocodes").doc(code);
-            const doc = await t.get(docRef);
-            if(!doc.exists) throw "الكود غير صحيح";
-            
-            const d = doc.data();
-            const myUid = firebase.auth().currentUser.uid;
-            
-            if(!d.active) throw "هذا الكود معطل حالياً";
-            if(d.redeemedBy && d.redeemedBy.includes(myUid)) throw "استخدمت الكود سابقاً";
-            if(d.redeemedBy && d.redeemedBy.length >= d.maxUses) throw "انتهت صلاحية الكود (وصل للحد الأقصى)";
-            
-            t.update(docRef, {
-                redeemedBy: firebase.firestore.FieldValue.arrayUnion(myUid)
-            });
-            return d;
+        const user = firebase.auth().currentUser;
+        
+        // 1. جلب بيانات الكود
+        const codeRef = db.collection("promocodes").doc(code);
+        const codeDoc = await codeRef.get();
+        
+        if(!codeDoc.exists) throw "الكود غير صحيح";
+        const d = codeDoc.data();
+        
+        if(!d.active) throw "الكود معطل";
+        if(d.redeemedBy && d.redeemedBy.includes(user.uid)) throw "استخدمت الكود مسبقاً";
+        if(d.redeemedBy && d.redeemedBy.length >= (d.maxUses || 999)) throw "انتهى عدد مرات الاستخدام";
+
+        // 2. تحديث الكود (إضافة المستخدم للقائمة)
+        await codeRef.update({
+            redeemedBy: firebase.firestore.FieldValue.arrayUnion(user.uid)
         });
 
-        // تحديث جميع الجوائز بما فيها الجواهر
-        const results = await updateRewards(currentUserData, res.coins || 0, res.durationDays || 0, res.gems || 0);
+        // 3. منح الجوائز للمستخدم
+        let newCoins = (currentUserData.totalCoins || 0) + (d.coins || 0);
+        let newGems = (currentUserData.s_gems || 0) + (d.gems || 0);
         
-        // تحديث الواجهة محلياً
-        currentUserData.totalCoins = results.totalCoins;
-        currentUserData.s_gems = results.s_gems;
-        currentUserData.proExpiryTime = results.proExpiryTime;
+        let currentProTime = currentUserData.proExpiryTime || Date.now();
+        let baseTime = currentProTime > Date.now() ? currentProTime : Date.now();
+        let newProTime = d.durationDays ? (baseTime + (d.durationDays * 24 * 60 * 60 * 1000)) : (currentUserData.proExpiryTime || 0);
+
+        const userUpdates = {
+            totalCoins: newCoins,
+            s_gems: newGems,
+            proExpiryTime: newProTime
+        };
+
+        await db.collection("users").doc(user.uid).update(userUpdates);
+
+        // تحديث محلي
+        currentUserData.totalCoins = newCoins;
+        currentUserData.s_gems = newGems;
+        currentUserData.proExpiryTime = newProTime;
         
         msg.style.color = "#34d399";
-        msg.innerHTML = `✅ تم التفعيل! +${res.coins || 0} كوينز | +${res.gems || 0} جواهر`;
+        msg.innerHTML = `✅ تم التفعيل! +${d.coins || 0} كوينز | +${d.gems || 0} جواهر`;
         codeInput.value = "";
         renderWordCategories();
+        
     } catch(e) {
+        console.error(e);
         msg.style.color = "var(--danger)";
-        msg.innerText = "❌ " + e;
+        msg.innerText = "❌ " + (e.message || e);
     } finally {
         btn.disabled = false;
     }
