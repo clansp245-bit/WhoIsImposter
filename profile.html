@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>👤 ملفي الملكي المطور</title>
+    <title>👤 الملف الملكي المطور v4</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -16,248 +16,307 @@
     <style>
         :root {
             --primary: #6366f1;
-            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-            --bg-body: #0a0f1e;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --text-main: #f1f5f9;
-            --text-dim: #94a3b8;
-            --gold: #ffd700;
-            
-            /* ألوان الندرة */
-            --rarity-dev: linear-gradient(45deg, #ff0000, #330000);
+            --accent: #a855f7;
+            --bg-body: #050811;
+            --card-bg: rgba(15, 23, 42, 0.8);
+            --gold: #f59e0b;
+            --silver: #94a3b8;
+            /* ندرة الشارات */
+            --rarity-dev: linear-gradient(45deg, #ef4444, #7f1d1d);
             --rarity-pro: linear-gradient(45deg, #f472b6, #7c3aed);
-            --rarity-legendary: linear-gradient(45deg, #fbbf24, #d97706);
-            --rarity-epic: linear-gradient(45deg, #a855f7, #6366f1);
-            --rarity-rare: linear-gradient(45deg, #10b981, #059669);
+            --rarity-gold-season: linear-gradient(45deg, #fbbf24, #d97706);
+            --rarity-silver-season: linear-gradient(45deg, #cbd5e1, #64748b);
+            --rarity-rare: linear-gradient(45deg, #3b82f6, #1e3a8a);
         }
 
         body {
             font-family: 'Cairo', sans-serif;
-            background-color: var(--bg-body);
-            background-image: radial-gradient(circle at top right, #1e1b4b, transparent);
-            color: var(--text-main);
-            padding: 20px; min-height: 100vh;
-            display: flex; flex-direction: column; align-items: center; margin: 0;
+            background: var(--bg-body);
+            color: white; margin: 0; padding: 15px;
+            display: flex; flex-direction: column; align-items: center;
         }
 
         .card {
-            background: var(--card-bg); backdrop-filter: blur(15px); padding: 25px;
-            border-radius: 24px; width: 100%; max-width: 500px;
-            border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3); box-sizing: border-box;
+            background: var(--card-bg); backdrop-filter: blur(20px);
+            border-radius: 28px; width: 100%; max-width: 480px;
+            border: 1px solid rgba(255,255,255,0.08); margin-bottom: 20px;
+            padding: 25px; box-sizing: border-box; position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
 
+        /* هيدر البروفايل */
         .profile-header { text-align: center; }
-        .avatar-container { width: 110px; height: 110px; margin: 0 auto 15px; position: relative; }
-        .avatar-frame { width: 100%; height: 100%; border-radius: 50%; border: 4px solid var(--primary); overflow: hidden; background: #1e293b; }
-        #profile-img { width: 100%; height: 100%; object-fit: cover; }
-
-        /* --- نظام الشارات الجديد --- */
-        #user-badges { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+        .avatar-box { width: 120px; height: 120px; margin: 0 auto 15px; position: relative; }
+        .avatar-img { width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--primary); object-fit: cover; }
         
-        .badge-slot {
-            width: 40px; height: 40px; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem; position: relative;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.2);
+        /* شارات الهيدر */
+        #user-badges { display: flex; justify-content: center; gap: 8px; margin-top: 10px; height: 45px; }
+        .badge-icon {
+            width: 40px; height: 40px; border-radius: 12px; display: flex;
+            align-items: center; justify-content: center; font-size: 1.2rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);
+            transition: 0.3s;
         }
 
-        /* ستايلات الندرة */
-        .rarity-dev { background: var(--rarity-dev); border-color: #ff0000; box-shadow: 0 0 15px rgba(255,0,0,0.5); }
-        .rarity-pro { background: var(--rarity-pro); border-color: #f472b6; }
-        .rarity-legendary { background: var(--rarity-legendary); border-color: #fbbf24; }
-        .rarity-epic { background: var(--rarity-epic); border-color: #a855f7; }
-        .rarity-rare { background: var(--rarity-rare); border-color: #10b981; }
-
-        .badges-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 12px; margin-top: 15px; }
-        .badge-item {
-            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px; padding: 10px 5px; text-align: center; cursor: pointer;
-            transition: 0.3s; position: relative;
+        /* نظام النسخ */
+        .id-container {
+            background: rgba(0,0,0,0.3); padding: 8px 15px; border-radius: 12px;
+            display: inline-flex; align-items: center; gap: 10px; margin-top: 10px;
+            border: 1px dashed rgba(255,255,255,0.2);
         }
-        .badge-item.locked { filter: grayscale(1) opacity(0.3); cursor: not-allowed; }
-        .badge-item.selected { border-color: var(--gold); transform: scale(1.05); background: rgba(255,255,255,0.1); }
-        .badge-item i { font-size: 1.5rem; margin-bottom: 5px; display: block; }
-        .badge-item span { font-size: 0.6rem; font-weight: bold; display: block; }
+        .copy-btn { cursor: pointer; color: var(--gold); transition: 0.2s; }
+        .copy-btn:hover { transform: scale(1.2); }
+
+        /* خزانة الشارات */
+        .library-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 15px;
+        }
+        .lib-item {
+            background: rgba(255,255,255,0.05); border-radius: 15px; padding: 10px;
+            text-align: center; cursor: pointer; border: 1px solid transparent; transition: 0.3s;
+        }
+        .lib-item i { font-size: 1.4rem; display: block; margin-bottom: 5px; }
+        .lib-item span { font-size: 0.6rem; display: block; font-weight: bold; }
+        .lib-item.locked { opacity: 0.2; filter: grayscale(1); cursor: not-allowed; }
+        .lib-item.active { border-color: var(--gold); background: rgba(245, 158, 11, 0.1); }
+
+        /* خلفيات الشارات حسب الندرة */
+        .bg-dev { background: var(--rarity-dev); color: #fff; }
+        .bg-pro { background: var(--rarity-pro); color: #fff; }
+        .bg-gold { background: var(--rarity-gold-season); color: #fff; }
+        .bg-silver { background: var(--rarity-silver-season); color: #fff; }
+        .bg-rare { background: var(--rarity-rare); color: #fff; }
 
         /* الأزرار */
-        .btn-save { background: var(--accent-gradient); border: none; color: white; padding: 12px 20px; border-radius: 12px; font-weight: 900; cursor: pointer; width: 100%; margin-top: 10px; }
-        .btn-save:disabled { opacity: 0.3; }
-        .item-badge { background: rgba(99, 102, 241, 0.1); color: var(--primary); padding: 4px 12px; border-radius: 10px; font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; }
+        .action-btn {
+            width: 100%; padding: 14px; border-radius: 15px; border: none;
+            font-weight: 900; cursor: pointer; margin-top: 10px; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn-primary { background: linear-gradient(90deg, var(--primary), var(--accent)); color: white; }
+        .btn-special { background: linear-gradient(90deg, #f59e0b, #fbbf24); color: #000; }
+        .action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        input {
+            width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #334155;
+            background: #0f172a; color: white; margin-top: 10px; box-sizing: border-box;
+        }
+
+        .toast {
+            position: fixed; bottom: 20px; background: var(--primary);
+            padding: 10px 20px; border-radius: 10px; display: none; z-index: 1000;
+        }
     </style>
 </head>
 <body>
 
 <div class="card profile-header">
-    <div class="avatar-container">
-        <div class="avatar-frame"><img id="profile-img" src="https://via.placeholder.com/150"></div>
+    <div class="avatar-box">
+        <img id="profile-img" class="avatar-img" src="https://via.placeholder.com/150">
     </div>
     
     <div id="user-badges"></div>
 
-    <h2 id="display-name" style="margin: 5px 0;">...</h2>
-    <p style="font-size: 0.9rem;">ID: <span id="user-id-display" style="color:var(--gold); font-weight:900;">---</span></p>
+    <h2 id="display-name" style="margin: 15px 0 5px 0; font-weight: 900; font-size: 1.6rem;">...</h2>
+    
+    <div class="id-container">
+        <span>ID: <b id="user-id-text" style="color: var(--gold);">---</b></span>
+        <i class="fas fa-copy copy-btn" onclick="copyID()" title="نسخ"></i>
+    </div>
 </div>
 
 <div class="card">
-    <h3 style="margin:0; font-size: 1rem; color: var(--gold);"><i class="fas fa-medal"></i> خزانة الشارات الملكية</h3>
-    <div id="badges-library" class="badges-grid"></div>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin:0; font-size: 1rem; color: var(--gold);"><i class="fas fa-box-open"></i> خزانة الشارات</h3>
+        <span style="font-size: 0.7rem; opacity: 0.6;">الحد الأقصى 5</span>
+    </div>
+    <div id="badges-library" class="library-grid"></div>
 </div>
 
 <div class="card">
-    <h3 style="margin:0; font-size: 1rem; color: var(--primary);"><i class="fas fa-user-edit"></i> تعديل البيانات</h3>
-    <input id="nameInput" type="text" placeholder="اسم جديد..." style="width:100%; padding:12px; background:rgba(0,0,0,0.3); border:1px solid #444; border-radius:10px; color:white; margin-top:10px; box-sizing:border-box;">
-    <button id="saveBtn" class="btn-save" disabled onclick="handleSaveName()">حفظ الاسم الجديد</button>
+    <h3 style="margin:0 0 10px 0; font-size: 1rem; color: var(--primary);"><i class="fas fa-tools"></i> أدوات التخصيص</h3>
+    
+    <input id="nameInput" type="text" placeholder="أدخل الاسم الجديد...">
+    <button id="saveNameBtn" class="action-btn btn-primary" onclick="changeName()">
+        <i class="fas fa-id-card"></i> تغيير الاسم
+    </button>
+
+    <div id="special-id-section" style="display: none; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+        <input id="customIdInput" type="text" placeholder="أدخل ID مخصص (مثال: KING-1)">
+        <button class="action-btn btn-special" onclick="changeCustomID()">
+            <i class="fas fa-star"></i> تفعيل الآيدي المميز
+        </button>
+    </div>
 </div>
 
-<button class="btn-save" style="max-width:500px; background:#1e293b;" onclick="location.href='index.html'">العودة</button>
+<button class="action-btn" style="background: #1e293b; color: white; max-width: 480px;" onclick="location.href='index.html'">العودة للرئيسية</button>
+
+<div id="toast" class="toast">تم النسخ بنجاح!</div>
 
 <script>
-// إعدادات الشارات الشاملة (الندرة، الشروط، الأيقونات)
-const BADGE_SETTINGS = {
-    "dev_badge": { name: "المطور", icon: "fa-code", rarity: "dev", desc: "خاص بمطور النظام" },
-    "pro_badge": { name: "تاج البرو", icon: "fa-crown", rarity: "pro", desc: "لمشتركي البرو" },
-    "rich_badge": { name: "ثري (Top 10)", icon: "fa-gem", rarity: "legendary", desc: "أغنى 10 لاعبين" },
-    "active_badge": { name: "متفاعل (Top 10)", icon: "fa-fire", rarity: "epic", desc: "أكثر 10 نشاطاً" },
-    "legend_badge": { name: "الأسطورة", icon: "fa-shield-halved", rarity: "rare", desc: "شارة نادرة" },
-    "dragon_badge": { name: "التنين", icon: "fa-dragon", rarity: "rare", desc: "شارة نادرة" }
+// --- إعدادات الشارات الرهيبة ---
+const BADGE_DATA = {
+    "dev_badge": { name: "مطور", icon: "fa-code", bg: "bg-dev" },
+    "pro_badge": { name: "عضو برو", icon: "fa-crown", bg: "bg-pro" },
+    "gold_s_badge": { name: "سيزون 1 ذهبي", icon: "fa-medal", bg: "bg-gold" },
+    "silver_s_badge": { name: "سيزون 1 فضي", icon: "fa-award", bg: "bg-silver" },
+    "rich_badge": { name: "الملياردير", icon: "fa-gem", bg: "bg-rare" },
+    "falcon_badge": { name: "الصقر", icon: "fa-feather-alt", bg: "bg-rare" }
 };
 
-let userDocData = null;
+let userStats = null;
+const MY_DEV_ID = "IMP-VVVC-2JZ7"; // الآيدي الخاص بك كمطور
 
-auth.onAuthStateChanged(async user => {
+auth.onAuthStateChanged(user => {
     if (!user) return;
     
-    // فحص وتحديث الشارات التلقائية قبل العرض
-    await checkAutoBadges(user.uid);
-
     db.collection('users').doc(user.uid).onSnapshot(doc => {
         if (doc.exists) {
-            userDocData = doc.data();
+            userStats = doc.data();
+            autoSyncBadges(user.uid); // مزامنة تلقائية للرتب
             updateUI();
         }
     });
 });
 
-// دالة فحص الشارات التلقائية (البرو، المتصدرين، المطور)
-async function checkAutoBadges(uid) {
-    const userRef = db.collection('users').doc(uid);
-    const doc = await userRef.get();
-    const data = doc.data();
-    let currentBadges = data.badges || [];
-    let changed = false;
+// --- مزامنة الشارات تلقائياً ---
+async function autoSyncBadges(uid) {
+    let currentBadges = userStats.badges || [];
+    let needsUpdate = false;
 
-    // 1. شارة المطور (ضع ايميلك أو الـ ID الخاص بك هنا)
-    if(data.role === 'admin' || data.email === 'admin@gmail.com') {
-        if(!currentBadges.includes('dev_badge')) { currentBadges.push('dev_badge'); changed = true; }
+    // 1. فحص المطور
+    if (userStats.customID === MY_DEV_ID && !currentBadges.includes("dev_badge")) {
+        currentBadges.push("dev_badge"); needsUpdate = true;
     }
 
-    // 2. شارة البرو
-    const isPro = data.proExpiryTime > Date.now();
-    if(isPro && !currentBadges.includes('pro_badge')) {
-        currentBadges.push('pro_badge'); changed = true;
-    } else if(!isPro && currentBadges.includes('pro_badge')) {
-        currentBadges = currentBadges.filter(b => b !== 'pro_badge'); changed = true;
+    // 2. فحص البرو (تاج البرو ليس دائماً أصفر)
+    const isPro = userStats.proExpiryTime > Date.now();
+    if (isPro && !currentBadges.includes("pro_badge")) {
+        currentBadges.push("pro_badge"); needsUpdate = true;
+    } else if (!isPro && currentBadges.includes("pro_badge")) {
+        currentBadges = currentBadges.filter(b => b !== "pro_badge"); needsUpdate = true;
     }
 
-    // 3. شارة ثري (أفضل 10 كوينز)
-    const topCoins = await db.collection('users').orderBy('totalCoins', 'desc').limit(10).get();
-    const isTopCoin = topCoins.docs.some(d => d.id === uid);
-    if(isTopCoin && !currentBadges.includes('rich_badge')) {
-        currentBadges.push('rich_badge'); changed = true;
+    if (needsUpdate) {
+        await db.collection('users').doc(uid).update({ badges: currentBadges });
     }
-
-    // 4. شارة متفاعل (أفضل 10 XP)
-    const topXP = await db.collection('users').orderBy('xp', 'desc').limit(10).get();
-    const isTopXP = topXP.docs.some(d => d.id === uid);
-    if(isTopXP && !currentBadges.includes('active_badge')) {
-        currentBadges.push('active_badge'); changed = true;
-    }
-
-    if(changed) await userRef.update({ badges: currentBadges });
 }
 
 function updateUI() {
-    document.getElementById("display-name").innerText = userDocData.displayName || "لاعب";
-    document.getElementById("user-id-display").innerText = userDocData.customID || userDocData.publicUid || "---";
-    if (userDocData.photoURL) document.getElementById('profile-img').src = userDocData.photoURL;
+    // البيانات الأساسية
+    document.getElementById("display-name").innerText = userStats.displayName || "لاعب";
+    const user_id = userStats.customID || userStats.publicUid || "---";
+    document.getElementById("user-id-text").innerText = user_id;
+    if (userStats.photoURL) document.getElementById("profile-img").src = userStats.photoURL;
 
     // عرض الشارات المجهزة في الهيدر
-    const badgeContainer = document.getElementById("user-badges");
-    badgeContainer.innerHTML = "";
-    const equipped = userDocData.equippedBadges || [];
-    
-    equipped.forEach(bKey => {
-        const config = BADGE_SETTINGS[bKey];
-        if(config) {
-            badgeContainer.innerHTML += `
-                <div class="badge-slot rarity-${config.rarity}" title="${config.name}">
-                    <i class="fas ${config.icon}"></i>
-                </div>`;
+    const badgeBox = document.getElementById("user-badges");
+    badgeBox.innerHTML = "";
+    const equipped = userStats.equippedBadges || [];
+    equipped.forEach(key => {
+        const info = BADGE_DATA[key];
+        if(info) {
+            badgeBox.innerHTML += `<div class="badge-icon ${info.bg}"><i class="fas ${info.icon}"></i></div>`;
         }
     });
 
+    // تحديث الخزانة
     renderLibrary();
-    
-    // فحص بطاقات الاسم
-    const nameCards = (userDocData.inventory || []).filter(i => i === "بطاقة الاسم").length;
-    document.getElementById("saveBtn").disabled = nameCards === 0;
-    document.getElementById("saveBtn").innerText = nameCards > 0 ? `تغيير الاسم (متاح ${nameCards})` : "لا تملك بطاقة تغيير اسم";
+
+    // فحص البطاقات (تغيير اسم / آيدي مميز)
+    const inv = userStats.inventory || [];
+    const nameCardCount = inv.filter(i => i === "بطاقة الاسم").length;
+    document.getElementById("saveNameBtn").disabled = nameCardCount === 0;
+    document.getElementById("saveNameBtn").innerHTML = nameCardCount > 0 ? 
+        `<i class="fas fa-id-card"></i> تغيير الاسم (${nameCardCount})` : "لا تملك بطاقة اسم";
+
+    const hasSpecialIDCard = inv.includes("بطاقة آيدي مميز");
+    document.getElementById("special-id-section").style.display = hasSpecialIDCard ? "block" : "none";
 }
 
 function renderLibrary() {
-    const lib = document.getElementById("badges-library");
-    lib.innerHTML = "";
-    const owned = userDocData.badges || [];
-    const equipped = userDocData.equippedBadges || [];
+    const grid = document.getElementById("badges-library");
+    grid.innerHTML = "";
+    const owned = userStats.badges || [];
+    const equipped = userStats.equippedBadges || [];
 
-    Object.keys(BADGE_SETTINGS).forEach(key => {
-        const config = BADGE_SETTINGS[key];
+    Object.keys(BADGE_DATA).forEach(key => {
+        const info = BADGE_DATA[key];
         const isOwned = owned.includes(key);
         const isEquipped = equipped.includes(key);
 
         const div = document.createElement("div");
-        div.className = `badge-item ${!isOwned ? 'locked' : ''} ${isEquipped ? 'selected' : ''}`;
+        div.className = `lib-item ${!isOwned ? 'locked' : ''} ${isEquipped ? 'active' : ''}`;
         div.innerHTML = `
-            <i class="fas ${config.icon} ${isOwned ? 'text-white' : ''}"></i>
-            <span>${config.name}</span>
-            <small style="font-size:8px; opacity:0.6">${config.rarity.toUpperCase()}</small>
+            <i class="fas ${info.icon} ${isOwned ? info.bg : ''}" style="-webkit-background-clip: text; ${isOwned ? 'color:transparent;' : ''}"></i>
+            <span>${info.name}</span>
         `;
-
-        if(isOwned) {
-            div.onclick = () => toggleBadge(key);
-        }
-        lib.appendChild(div);
+        
+        if(isOwned) div.onclick = () => toggleBadge(key);
+        grid.appendChild(div);
     });
 }
 
 async function toggleBadge(key) {
-    let equipped = [...(userDocData.equippedBadges || [])];
+    let equipped = [...(userStats.equippedBadges || [])];
     if(equipped.includes(key)) {
         equipped = equipped.filter(k => k !== key);
     } else {
-        if(equipped.length >= 5) return alert("الحد الأقصى 5 شارات فقط!");
+        if(equipped.length >= 5) return showToast("الحد الأقصى 5 شارات!");
         equipped.push(key);
     }
     await db.collection('users').doc(auth.currentUser.uid).update({ equippedBadges: equipped });
 }
 
-async function handleSaveName() {
-    const newName = document.getElementById('nameInput').value.trim();
-    if(newName.length < 3) return alert("الاسم قصير!");
+async function changeName() {
+    const newName = document.getElementById("nameInput").value.trim();
+    if(newName.length < 3) return alert("الاسم قصير جداً");
     
-    let inv = [...(userDocData.inventory || [])];
+    let inv = [...(userStats.inventory || [])];
     const idx = inv.indexOf("بطاقة الاسم");
     if(idx > -1) {
         inv.splice(idx, 1);
-        await db.collection('users').doc(auth.currentUser.uid).update({ 
-            displayName: newName, 
-            inventory: inv 
+        await db.collection('users').doc(auth.currentUser.uid).update({
+            displayName: newName,
+            inventory: inv
         });
-        alert("تم التغيير!");
+        showToast("تم تغيير الاسم بنجاح!");
     }
 }
+
+async function changeCustomID() {
+    const newID = document.getElementById("customIdInput").value.trim();
+    if(newID.length < 3) return alert("الآيدي قصير جداً");
+
+    // فحص إذا كان الآيدي مستخدم من قبل
+    const snapshot = await db.collection('users').where('customID', '==', newID).get();
+    if(!snapshot.empty) return alert("هذا الآيدي محجوز للاعب آخر!");
+
+    let inv = [...(userStats.inventory || [])];
+    const idx = inv.indexOf("بطاقة آيدي مميز");
+    if(idx > -1) {
+        inv.splice(idx, 1);
+        await db.collection('users').doc(auth.currentUser.uid).update({
+            customID: newID,
+            inventory: inv
+        });
+        showToast("مبروك! الآيدي المميز مفعل.");
+    }
+}
+
+function copyID() {
+    const id = document.getElementById("user-id-text").innerText;
+    navigator.clipboard.writeText(id);
+    showToast("تم نسخ الآيدي: " + id);
+}
+
+function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.innerText = msg;
+    t.style.display = "block";
+    setTimeout(() => t.style.display = "none", 2500);
+}
 </script>
+
 </body>
 </html>
