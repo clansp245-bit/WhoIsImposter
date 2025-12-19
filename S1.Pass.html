@@ -218,7 +218,7 @@
     const XP_PER_LVL = 1000;
     const MAX_LVL = 30;
 
-    // --- بنك المهام الأساسي ---
+    // --- بنك المهام الأساسي (بدون تغيير) ---
     const TASK_BANK = [
         { t: "جمع 1000 كوينز", g: 1000, xp: 500, k: "totalCoins" },
         { t: "لعب 3 مباريات", g: 3, xp: 600, k: "s_matches" },
@@ -227,7 +227,7 @@
         { t: "شراء عنصر واحد", g: 1, xp: 300, k: "s_shop_buys" }
     ];
 
-    // --- مصفوفات الجوائز (Free) ---
+    // --- مصفوفات الجوائز (Free) - الحفاظ على كافة القيم الأصلية ---
     const FREE_REWARDS_MAP = [
         null, 
         {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, 
@@ -262,10 +262,10 @@
         {n: "شارة السيزون (فضية)", v: "silver_s_badge", t: "badge", i: "fa-regular fa-1", color: "#cbd5e1"} 
     ];
 
-    // --- مصفوفات الجوائز (Premium) ---
+    // --- مصفوفات الجوائز (Premium) - الحفاظ على كافة القيم الأصلية ---
     const PREM_REWARDS_MAP = [
         null, 
-        {n: "بطاقة تغيير اسم", v: "rename_card", t: "item", i: "fa-id-card"}, 
+        {n: "بطاقة تغيير اسم", v: "بطاقة الاسم", t: "item", i: "fa-id-card"}, 
         {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, 
         {n: "1000 XP", v: 1000, t: "xp", i: "fa-star"}, 
         {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, 
@@ -301,7 +301,6 @@
         auth.onAuthStateChanged(user => {
             if (!user) return;
             
-            // عداد الدقائق تلقائياً
             setInterval(() => {
                 db.collection('users').doc(user.uid).update({ s_minutes: firebase.firestore.FieldValue.increment(1) }).catch(e=>{});
             }, 60000);
@@ -310,7 +309,6 @@
                 if(!doc.exists) return;
                 uData = doc.data();
                 
-                // فحص البيانات المفقودة وإكمالها مرة واحدة فقط
                 if (uData.s_xp === undefined || !uData.active_tasks) {
                     fixInitialData(user.uid);
                 } else {
@@ -346,7 +344,6 @@
         document.getElementById('premium-footer').style.display = uData.s_premium ? 'none' : 'block';
         document.getElementById('end-season-ui').style.display = currentLvl >= MAX_LVL ? 'block' : 'none';
 
-        // رندر الجوائز
         const rList = document.getElementById('rewards-list');
         rList.innerHTML = '';
         for(let i = 1; i <= MAX_LVL; i++) {
@@ -361,7 +358,6 @@
             rList.appendChild(row);
         }
 
-        // رندر المهام
         const tList = document.getElementById('tasks-list');
         tList.innerHTML = '';
         if(uData.active_tasks) {
@@ -397,8 +393,9 @@
         const isClaimed = uData.s_claimed && uData.s_claimed.includes(rewardUniqueId);
         const canClaim = (lvl <= currentLvl) && (!isPrem || uData.s_premium);
 
+        // تعديل بسيط لضمان تمرير القيم النصية (مثل اسم البطاقة) بشكل صحيح في الجافاسكربت
         let btn = isClaimed ? `<button class="claim-btn claimed">تم</button>` :
-                  canClaim ? `<button class="claim-btn" onclick="claimReward('${rewardUniqueId}', '${item.t}', ${JSON.stringify(item.v)})">استلام</button>` :
+                  canClaim ? `<button class="claim-btn" onclick="claimReward('${rewardUniqueId}', '${item.t}', '${item.v}')">استلام</button>` :
                   `<button class="claim-btn locked"><i class="fas fa-lock"></i></button>`;
 
         return `<div class="reward-box ${isPrem ? 'premium' : ''}">
@@ -408,19 +405,25 @@
         </div>`;
     }
 
+    // --- الدالة المسؤولة عن إضافة الجوائز للملف الشخصي بشكل صحيح ---
     async function claimReward(rewardId, type, val) {
         const ref = db.collection('users').doc(auth.currentUser.uid);
         let updates = { s_claimed: firebase.firestore.FieldValue.arrayUnion(rewardId) };
 
-        if (type === 'coins') updates.totalCoins = firebase.firestore.FieldValue.increment(val);
-        if (type === 'gems') updates.s_gems = firebase.firestore.FieldValue.increment(val);
-        if (type === 'xp') updates.s_xp = firebase.firestore.FieldValue.increment(val);
+        if (type === 'coins') updates.totalCoins = firebase.firestore.FieldValue.increment(Number(val));
+        if (type === 'gems') updates.s_gems = firebase.firestore.FieldValue.increment(Number(val));
+        if (type === 'xp') updates.s_xp = firebase.firestore.FieldValue.increment(Number(val));
+        
+        // تعديل: إضافة الشارة لمصفوفة الشارات
         if (type === 'badge') updates.badges = firebase.firestore.FieldValue.arrayUnion(val);
-        if (type === 'item') updates.renameCards = firebase.firestore.FieldValue.increment(1);
+        
+        // تعديل: إضافة بطاقة الاسم لمصفوفة المخزن inventory لتعمل في الملف الملكي
+        if (type === 'item') updates.inventory = firebase.firestore.FieldValue.arrayUnion(val);
+        
         if (type === 'pro_day') {
             const now = Date.now();
             const current = uData.proExpiryTime || now;
-            updates.proExpiryTime = (current > now ? current : now) + (val * 86400000);
+            updates.proExpiryTime = (current > now ? current : now) + (Number(val) * 86400000);
         }
         await ref.update(updates);
     }
@@ -467,6 +470,7 @@
     }
     function openModal(id) { document.getElementById(id+'-modal').style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id+'-modal').style.display = 'none'; }
+    
     async function resetSeason() {
         if ((uData.totalCoins || 0) < 5000) return alert("تحتاج 5000 كوينز");
         if (confirm("هل تريد تصفير السيزون؟")) {
