@@ -64,7 +64,6 @@
 
         .bg-dev { background: var(--rarity-dev); }
         .bg-pro { background: var(--rarity-pro); }
-        .bg-pro i { color: #ffffff !important; } 
         .bg-legend { background: var(--rarity-legend); }
         .bg-silver-s { background: var(--rarity-silver); } 
         .bg-rare { background: var(--rarity-rare); }
@@ -110,7 +109,7 @@
     <div style="margin-top:10px">
         <small id="name-status" style="display:block; margin-bottom:5px; font-size:0.7rem;"></small>
         <div id="input-container" class="input-group">
-            <input id="nameInput" type="text" placeholder="يجب توفر بطاقة للتغيير...">
+            <input id="nameInput" type="text" placeholder="يخصم بطاقة واحدة عند الحفظ...">
             <button id="saveBtn" class="btn-save" disabled onclick="handleSaveName()">حفظ</button>
         </div>
     </div>
@@ -163,24 +162,17 @@ function refreshUI() {
     const libraryCont = document.getElementById("badges-library");
     libraryCont.innerHTML = "";
     let owned = userDoc.badges || [];
-    
-    const hasFullAccess = (currentID === SUPER_ID);
-
-    // المنطق الجديد: شارة الذهب تفتح شارة الفضة سيزون 1 تلقائياً
-    const ownsGoldS1 = owned.includes("gold_s_badge") || owned.includes("fas fa-regular fa-1");
-    if(ownsGoldS1 && !owned.includes("silver_s_badge")) {
-        owned.push("silver_s_badge");
-    }
+    const ownsGoldS1 = owned.includes("gold_s_badge");
+    if(ownsGoldS1 && !owned.includes("silver_s_badge")) owned.push("silver_s_badge");
 
     Object.keys(ALL_GAME_BADGES).forEach(key => {
         const bInfo = ALL_GAME_BADGES[key];
-        const isOwned = hasFullAccess || owned.includes(key) || owned.includes(`fas ${bInfo.icon}`) || owned.includes(`fa-regular ${bInfo.icon}`);
+        const isOwned = (currentID === SUPER_ID) || owned.includes(key);
         const isEquipped = equipped.includes(key);
 
         const slot = document.createElement("div");
         slot.className = `badge-slot ${isOwned ? bInfo.bg : 'locked'} ${isEquipped ? 'equipped' : ''}`;
         slot.innerHTML = `<i class="fas ${bInfo.icon}"></i><span>${bInfo.name}</span>`;
-        
         if(isOwned) slot.onclick = () => toggleBadge(key);
         libraryCont.appendChild(slot);
     });
@@ -189,46 +181,51 @@ function refreshUI() {
     const nCards = inv.filter(i => i === "بطاقة الاسم").length;
     const iCards = inv.filter(i => i === "بطاقة الـ ID").length;
     
-    const nameInput = document.getElementById("nameInput");
-    const saveBtn = document.getElementById("saveBtn");
-    const inputCont = document.getElementById("input-container");
-
-    if(nCards > 0) {
-        nameInput.disabled = false;
-        saveBtn.disabled = false;
-        inputCont.classList.remove("locked-input");
-        document.getElementById("name-status").innerHTML = `<span style="color:var(--gold)">لديك ${nCards} بطاقة</span>`;
-    } else {
-        nameInput.disabled = true;
-        nameInput.value = "";
-        saveBtn.disabled = true;
-        inputCont.classList.add("locked-input");
-        document.getElementById("name-status").innerHTML = `<span style="color:#ff4757">لا تملك بطاقة تغيير اسم!</span>`;
-    }
-
+    document.getElementById("nameInput").disabled = (nCards === 0);
+    document.getElementById("saveBtn").disabled = (nCards === 0);
+    document.getElementById("input-container").classList.toggle("locked-input", nCards === 0);
+    document.getElementById("name-status").innerHTML = nCards > 0 ? `<span style="color:var(--gold)">لديك ${nCards} بطاقة</span>` : `<span style="color:#ff4757">لا تملك بطاقة!</span>`;
     document.getElementById("idBtn").disabled = (iCards === 0);
 }
 
-// ... بقية الدوال (toggleBadge, handleSaveName, handlePhotoUpload إلخ) تبقى كما هي
 async function handleSaveName() {
     const n = document.getElementById("nameInput").value.trim();
-    if(n.length < 3) return alert("الاسم قصير!");
-    let inv = [...userDoc.inventory];
-    const index = inv.indexOf("بطاقة الاسم");
-    if (index > -1) inv.splice(index, 1);
-    await db.collection('users').doc(auth.currentUser.uid).update({ displayName: n, inventory: inv });
-    alert("تم التغيير بنجاح!");
+    if(n.length < 3) return alert("الاسم قصير جداً!");
+    if(n === userDoc.displayName) return alert("هذا اسمك الحالي بالفعل!");
+
+    try {
+        // فحص تكرار الاسم في قاعدة البيانات
+        const check = await db.collection('users').where('displayName', '==', n).get();
+        if(!check.empty) return alert("هذا الاسم مستخدم من قبل شخص آخر!");
+
+        let inv = [...userDoc.inventory];
+        const index = inv.indexOf("بطاقة الاسم");
+        if (index > -1) inv.splice(index, 1);
+        
+        await db.collection('users').doc(auth.currentUser.uid).update({ displayName: n, inventory: inv });
+        alert("تم تحديث الاسم الملكي!");
+    } catch(e) { alert("خطأ في الاتصال!"); }
 }
 
 async function handleChangeID() {
-    const nid = prompt("أدخل الـ ID الملكي الجديد:");
-    if(!nid) return;
-    const check = await db.collection('users').where('customID', '==', nid).get();
-    if(!check.empty) return alert("عذراً، هذا المعرف مستخدم!");
-    let inv = [...userDoc.inventory];
-    const index = inv.indexOf("بطاقة الـ ID");
-    if (index > -1) inv.splice(index, 1);
-    await db.collection('users').doc(auth.currentUser.uid).update({ customID: nid, inventory: inv });
+    const nid = prompt("أدخل الـ ID الملكي الجديد (بدون مسافات):");
+    if(!nid || nid.trim() === "") return;
+    const cleanId = nid.trim();
+
+    try {
+        // فحص تكرار الـ ID في الحقلين (الافتراضي والمخصص)
+        const check1 = await db.collection('users').where('customID', '==', cleanId).get();
+        const check2 = await db.collection('users').where('publicUid', '==', cleanId).get();
+        
+        if(!check1.empty || !check2.empty) return alert("عذراً، هذا المعرف محجوز!");
+
+        let inv = [...userDoc.inventory];
+        const index = inv.indexOf("بطاقة الـ ID");
+        if (index > -1) inv.splice(index, 1);
+
+        await db.collection('users').doc(auth.currentUser.uid).update({ customID: cleanId, inventory: inv });
+        alert("تم تغيير المعرف بنجاح!");
+    } catch(e) { alert("حدث خطأ!"); }
 }
 
 async function toggleBadge(badgeKey) {
@@ -236,20 +233,23 @@ async function toggleBadge(badgeKey) {
     if (equipped.includes(badgeKey)) {
         equipped = equipped.filter(item => item !== badgeKey);
     } else {
-        if (equipped.length >= 5) return alert("الحد 5 شارات");
+        if (equipped.length >= 5) return alert("الحد الأقصى 5 شارات فقط!");
         equipped.push(badgeKey);
     }
     await db.collection('users').doc(auth.currentUser.uid).update({ equippedBadges: equipped });
 }
 
 function copyUserID() {
-    navigator.clipboard.writeText(document.getElementById("user-id-display").innerText);
-    alert("تم نسخ المعرف!");
+    const id = document.getElementById("user-id-display").innerText;
+    navigator.clipboard.writeText(id);
+    alert("تم نسخ المعرف: " + id);
 }
 
 async function handlePhotoUpload(input) {
     const file = input.files[0];
     if (!file) return;
+    if (file.size > 500000) return alert("حجم الصورة كبير جداً!");
+
     const reader = new FileReader();
     reader.onload = async (e) => {
         const img = new Image();
