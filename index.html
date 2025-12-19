@@ -21,6 +21,7 @@
         --text-main: #f1f5f9;
         --text-dim: #94a3b8;
         --gold: #ffd700;
+        --season-color: #f43f5e;
     }
 
     body {  
@@ -72,6 +73,9 @@
     }
     .nav-btn i { font-size: 1.4rem; }
     .nav-btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-3px); }
+    
+    /* ستايل زر السيزون باس الخاص */
+    .btn-season { border: 1px solid rgba(244, 63, 94, 0.3); background: rgba(244, 63, 94, 0.05); }
 
     #player-input { 
         width: 100%; padding: 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); 
@@ -124,6 +128,8 @@
         <button class="nav-btn" onclick="location.href='friends.html'"><i class="fas fa-user-friends" style="color:#10b981"></i>الأصدقاء</button>
         <button class="nav-btn" onclick="location.href='settings.html'"><i class="fas fa-cog" style="color:#94a3b8"></i>الإعدادات</button>
         <button class="nav-btn" onclick="location.href='online.html'"><i class="fas fa-globe" style="color:#6366f1"></i>أونلاين</button>
+        <button class="nav-btn btn-season" onclick="location.href='seasonpass.html'"><i class="fas fa-star" style="color:var(--season-color)"></i>سيزون باس</button>
+        <button class="nav-btn" onclick="alert('قريباً!')"><i class="fas fa-store" style="color:#a855f7"></i>المتجر</button>
     </div>
 
     <div style="text-align: right;">
@@ -151,15 +157,11 @@
     let players = [];   
     let currentUserData = {};   
 
-    // --- نظام المستوى المطور ---
     function getLevelData(totalXP) {
-        // حماية من القيم السالبة
         const xp = Math.max(0, totalXP);
-        // المعادلة: كل مستوى يتطلب (رقم المستوى * 100) نقطة
         let level = 1;
         let currentLevelXPStart = 0;
-        let nextLevelXPRequired = 100;
-
+        
         while (xp >= currentLevelXPStart + (level * 100)) {
             currentLevelXPStart += (level * 100);
             level++;
@@ -182,7 +184,6 @@
             if (user) {  
                 let data = await loadUserData();   
                 if (data) {
-                    // تصحيح فوري إذا كان الـ XP سالباً في السيرفر
                     if (data.xp < 0) {
                         await firebase.firestore().collection("users").doc(user.uid).update({ xp: 0 });
                         data.xp = 0;
@@ -216,13 +217,38 @@
         const remaining = lv.targetXP - lv.xpInLevel;
         document.getElementById("xp-remaining").innerText = `متبقي ${remaining} XP للمستوى ${lv.level + 1}`;
         
-        // مزامنة المستوى مع السيرفر إذا حدث ترقية
-        if (currentUserData.level !== lv.level) {
-            syncLevel(lv.level);
+        // --- نظام مكافآت صعود المستوى ---
+        // إذا كان المستوى في السيرفر أقل من المستوى الحالي المحسوب
+        if (currentUserData.level && lv.level > currentUserData.level) {
+            handleLevelUpReward(lv.level);
+        } else if (!currentUserData.level) {
+            // لأول مرة فقط لحفظ المستوى الابتدائي
+            syncLevelOnly(lv.level);
         }
     }
 
-    async function syncLevel(newLevel) {
+    async function handleLevelUpReward(newLevel) {
+        const user = firebase.auth().currentUser;
+        if (user) {
+            // حساب المكافأة: المستوى الجديد * 100 كوينز
+            const reward = newLevel * 100;
+            const newTotalCoins = (currentUserData.totalCoins || 0) + reward;
+            
+            await firebase.firestore().collection("users").doc(user.uid).update({ 
+                level: newLevel,
+                totalCoins: newTotalCoins
+            });
+            
+            // تحديث الواجهة والبيانات المحلية
+            currentUserData.level = newLevel;
+            currentUserData.totalCoins = newTotalCoins;
+            document.getElementById("total-coins-value").innerText = newTotalCoins.toLocaleString();
+            
+            alert(`🎉 مبروك! وصلت للمستوى ${newLevel} وحصلت على ${reward} كوينز مكافأة!`);
+        }
+    }
+
+    async function syncLevelOnly(newLevel) {
         const user = firebase.auth().currentUser;
         if (user) {
             await firebase.firestore().collection("users").doc(user.uid).update({ level: newLevel });
