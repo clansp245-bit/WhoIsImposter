@@ -214,15 +214,11 @@
     </div>
 
 <script>
-    // 1. تهيئة المتغيرات الأساسية (تأكد أن firebase-app.js معرف في الهيد)
-    const db = firebase.firestore();
-    const auth = firebase.auth();
-    
-    let uData = null;
+    // تعريف المتغيرات عالمياً ولكن دون تهيئة فورية لتجنب أخطاء التحميل
+    let db, auth, uData;
     const XP_PER_LVL = 1000;
     const MAX_LVL = 30;
 
-    // --- بنك المهام الأساسي ---
     const TASK_BANK = [
         { t: "جمع 1000 كوينز", g: 1000, xp: 500, k: "totalCoins" },
         { t: "لعب 3 مباريات", g: 3, xp: 600, k: "s_matches" },
@@ -231,7 +227,7 @@
         { t: "شراء عنصر واحد", g: 1, xp: 300, k: "s_shop_buys" }
     ];
 
-    // --- مصفوفات الجوائز (Free) - مطابقة تماماً للأيقونات والأسماء ---
+    // بناء مصفوفات الجوائز
     const FREE_REWARDS_MAP = Array(31).fill(null);
     for(let i=1; i<=29; i++) {
         if(i % 2 !== 0) FREE_REWARDS_MAP[i] = {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"};
@@ -242,11 +238,8 @@
     FREE_REWARDS_MAP[29] = {n: "500 Coins", v: 500, t: "coins", i: "fa-coins"};
     FREE_REWARDS_MAP[30] = {n: "شارة السيزون (فضية)", v: "silver_s_badge", t: "badge", i: "fa-regular fa-1", color: "#cbd5e1"};
 
-    // --- مصفوفات الجوائز (Premium) ---
     const PREM_REWARDS_MAP = Array(31).fill(null);
     for(let i=1; i<=30; i++) PREM_REWARDS_MAP[i] = {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"};
-    
-    // تعديلات الجوائز المميزة في البريميوم
     PREM_REWARDS_MAP[1] = {n: "بطاقة تغيير اسم", v: "بطاقة الاسم", t: "item", i: "fa-id-card"};
     PREM_REWARDS_MAP[5] = PREM_REWARDS_MAP[20] = PREM_REWARDS_MAP[24] = PREM_REWARDS_MAP[28] = {n: "1 Gem", v: 1, t: "gems", i: "fa-gem"};
     [3,7,9,12,15,18,22,27].forEach(l => PREM_REWARDS_MAP[l] = {n: "XP 1000", v: 1000, t: "xp", i: "fa-star"});
@@ -255,21 +248,23 @@
     PREM_REWARDS_MAP[25] = {n: "اسبوع برو", v: 7, t: "pro_day", i: "fa-stopwatch"};
     PREM_REWARDS_MAP[30] = {n: "شارة السيزون (ذهبية)", v: "gold_s_badge", t: "badge", i: "fa-regular fa-1", color: "#fbbf24"};
 
-    // --- الدالة الأساسية عند التشغيل ---
     function initApp() {
+        // تهيئة فايربيس هنا بعد التأكد من تحميل الصفحة
+        db = firebase.firestore();
+        auth = firebase.auth();
+
         auth.onAuthStateChanged(user => {
-            if (!user) return;
+            if (!user) {
+                console.log("لا يوجد مستخدم مسجل");
+                return;
+            }
 
-            // تحديث الوقت (اختياري)
-            setInterval(() => {
-                db.collection('users').doc(user.uid).update({ s_minutes: firebase.firestore.FieldValue.increment(1) }).catch(()=>{});
-            }, 60000);
-
-            // الاستماع للبيانات
+            // الاستماع للبيانات الحية
             db.collection('users').doc(user.uid).onSnapshot(doc => {
                 if(!doc.exists) return;
                 uData = doc.data();
                 
+                // إذا كانت بيانات السيزون مفقودة، قم بتهيئتها
                 if (uData.s_xp === undefined) {
                     db.collection('users').doc(user.uid).update({
                         s_xp: 0, s_claimed: [], s_premium: false,
@@ -280,11 +275,12 @@
                 } else {
                     renderUI();
                 }
-            }, err => console.error("Firestore Error:", err));
+            }, err => console.error("خطأ في جلب البيانات:", err));
         });
     }
 
     function renderUI() {
+        if(!uData) return;
         const totalXP = uData.s_xp || 0;
         const currentLvl = Math.floor(totalXP / XP_PER_LVL) + 1;
         const xpProgress = totalXP % XP_PER_LVL;
@@ -304,11 +300,9 @@
         for(let i = 1; i <= MAX_LVL; i++) {
             const row = document.createElement('div');
             row.className = 'lvl-row';
-            
-            let freeBox = createRewardBox(i, FREE_REWARDS_MAP[i], false, currentLvl);
-            let premBox = createRewardBox(i, PREM_REWARDS_MAP[i], true, currentLvl);
-
-            row.innerHTML = `<div class="lvl-indicator">${i}</div>${freeBox}${premBox}`;
+            row.innerHTML = `<div class="lvl-indicator">${i}</div>` + 
+                            createRewardBox(i, FREE_REWARDS_MAP[i], false, currentLvl) + 
+                            createRewardBox(i, PREM_REWARDS_MAP[i], true, currentLvl);
             rList.appendChild(row);
         }
         renderTasks();
@@ -333,14 +327,17 @@
     }
 
     async function claimReward(rewardId, type, val) {
-        const ref = db.collection('users').doc(auth.currentUser.uid);
+        const user = auth.currentUser;
+        if(!user) return;
+        
+        const ref = db.collection('users').doc(user.uid);
         let updates = { s_claimed: firebase.firestore.FieldValue.arrayUnion(rewardId) };
 
         if (type === 'coins') updates.totalCoins = firebase.firestore.FieldValue.increment(Number(val));
         if (type === 'gems') updates.s_gems = firebase.firestore.FieldValue.increment(Number(val));
         if (type === 'xp') updates.s_xp = firebase.firestore.FieldValue.increment(Number(val));
         if (type === 'badge') updates.badges = firebase.firestore.FieldValue.arrayUnion(val);
-        if (type === 'item') updates.inventory = firebase.firestore.FieldValue.arrayUnion(val); // لبطاقة الاسم
+        if (type === 'item') updates.inventory = firebase.firestore.FieldValue.arrayUnion(val);
         
         if (type === 'pro_day') {
             const now = Date.now();
@@ -348,15 +345,16 @@
             updates.proExpiryTime = (current > now ? current : now) + (Number(val) * 86400000);
         }
 
-        await ref.update(updates).then(() => {
-             // تأثير بصري بسيط عند الاستلام
-             console.log("Claimed: " + rewardId);
-        });
+        try {
+            await ref.update(updates);
+        } catch(e) {
+            alert("خطأ في الاستلام: " + e.message);
+        }
     }
 
     function renderTasks() {
         const tList = document.getElementById('tasks-list');
-        if(!tList) return;
+        if(!tList || !uData || !uData.active_tasks) return;
         tList.innerHTML = '';
         uData.active_tasks.forEach((task, idx) => {
             const currentVal = uData[task.k] || 0;
@@ -365,7 +363,7 @@
             const isClaimed = uData.s_claimed && uData.s_claimed.includes(taskId);
 
             tList.innerHTML += `
-                <div class="task-item" style="border-color: ${isDone ? 'var(--success)' : 'rgba(255,255,255,0.05)'}">
+                <div class="task-item">
                     <div class="task-info">
                         <h4>${task.t}</h4>
                         <div style="font-size:0.75rem; opacity:0.7;">${currentVal} / ${task.g} <span class="task-xp">+${task.xp} XP</span></div>
@@ -373,7 +371,7 @@
                     <button class="claim-btn" style="width:100px; ${isDone && !isClaimed ? 'background:var(--success)' : ''}" 
                         ${!isDone || isClaimed ? 'disabled' : ''} 
                         onclick="${isClaimed ? 'replaceTask('+idx+')' : 'claimTaskXP('+idx+','+task.xp+',\''+task.t+'\')'}">
-                        ${isClaimed ? 'مهمة جديدة' : (isDone ? 'استلام' : 'قيد العمل')}
+                        ${isClaimed ? 'مكتمل' : (isDone ? 'استلام' : 'قيد العمل')}
                     </button>
                 </div>`;
         });
@@ -396,7 +394,7 @@
 
     async function buyPremium() {
         if ((uData.s_gems || 0) < 3) return alert("تحتاج 3 جواهر!");
-        if (confirm("تفعيل البريميوم مقابل 3 جواهر؟")) {
+        if (confirm("تفعيل البريميوم؟")) {
             await db.collection('users').doc(auth.currentUser.uid).update({
                 s_gems: firebase.firestore.FieldValue.increment(-3),
                 s_premium: true
@@ -422,16 +420,6 @@
     
     function openModal(id) { document.getElementById(id+'-modal').style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id+'-modal').style.display = 'none'; }
-
-    async function resetSeason() {
-        if ((uData.totalCoins || 0) < 5000) return alert("تحتاج 5000 كوينز");
-        if (confirm("إعادة تصفير السيزون؟")) {
-            await db.collection('users').doc(auth.currentUser.uid).update({
-                totalCoins: firebase.firestore.FieldValue.increment(-5000),
-                s_xp: 0, s_premium: false, s_claimed: []
-            });
-        }
-    }
 </script>
 
 
