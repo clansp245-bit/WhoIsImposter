@@ -22,6 +22,7 @@
             --text-main: #f1f5f9;
             --text-dim: #94a3b8;
             --gold: #ffd700;
+            --gem-color: #22d3ee;
             --pro-color: #f472b6;
             --tool-color: #38bdf8;
             --xp-color: #10b981;
@@ -36,8 +37,10 @@
             display: flex; flex-direction: column; align-items: center;
         }
 
-        .top-info-bar { width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        #coins-display { background: rgba(251, 191, 36, 0.1); padding: 8px 15px; border-radius: 15px; color: var(--gold); font-weight: 900; border: 1px solid var(--gold); }
+        .top-info-bar { width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 5px; }
+        .currency-display { background: rgba(255, 255, 255, 0.05); padding: 8px 12px; border-radius: 15px; font-weight: 900; border: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem; }
+        #coins-display { color: var(--gold); border-color: var(--gold); }
+        #gems-display { color: var(--gem-color); border-color: var(--gem-color); }
 
         .card {
             background: var(--card-bg); backdrop-filter: blur(15px); padding: 15px; border-radius: 20px;
@@ -68,7 +71,9 @@
 
         .gift-name { font-weight: 800; font-size: 0.85rem; color: #fff; line-height: 1.2; }
         .gift-xp { color: var(--xp-color); font-size: 0.7rem; font-weight: bold; margin-bottom: 4px; }
-        .gift-price { color: var(--gold); font-weight: 900; font-size: 0.8rem; }
+        .gift-price { font-weight: 900; font-size: 0.8rem; }
+        .price-coins { color: var(--gold); }
+        .price-gems { color: var(--gem-color); }
 
         .qty-controls { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
         .qty-btn { width: 25px; height: 25px; border: none; background: var(--primary); color: white; border-radius: 5px; cursor: pointer; font-weight: 900; }
@@ -84,7 +89,10 @@
 
 <div class="top-info-bar">
     <a href="index.html" style="color: var(--text-dim); text-decoration: none;"><i class="fas fa-chevron-right"></i></a>
-    <div id="coins-display"><i class="fas fa-coins"></i> <span id="user-coins">0</span></div>
+    <div style="display: flex; gap: 5px;">
+        <div id="coins-display" class="currency-display"><i class="fas fa-coins"></i> <span id="user-coins">0</span></div>
+        <div id="gems-display" class="currency-display"><i class="fas fa-gem"></i> <span id="user-gems">0</span></div>
+    </div>
 </div>
 
 <h2 style="font-weight: 900; color: #fff; margin: 10px 0;">💎 المتجر الملكي</h2>
@@ -110,15 +118,21 @@
 <div class="card">
     <div id="gifts-container" class="gifts-grid"></div>
     <div style="text-align: center; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
-        <span style="color: var(--text-dim)">الإجمالي:</span>
-        <span id="total-cost" style="color: var(--gold); font-weight: 900; font-size: 1.2rem;">0</span>
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+            <span style="color: var(--text-dim); font-size: 0.8rem;">الإجمالي:</span>
+            <div>
+                <span id="total-coins-cost" style="color: var(--gold); font-weight: 900; font-size: 1rem;">0 كوينز</span>
+                <span style="color: white; margin: 0 5px;">|</span>
+                <span id="total-gems-cost" style="color: var(--gem-color); font-weight: 900; font-size: 1rem;">0 جواهر</span>
+            </div>
+        </div>
     </div>
-    <button class="send-btn" id="send-btn" disabled onclick="processPurchase()">تأكيد الشراء</button>
+    <button class="send-btn" id="send-btn" disabled onclick="processPurchase()">تأكيد الشراء والإرسال</button>
 </div>
 
 <div id="purchase-overlay">
     <i class="fas fa-spinner fa-spin" style="font-size: 3rem; color: var(--primary);"></i>
-    <p>جاري تنفيذ الطلب...</p>
+    <p>جاري تنفيذ طلبك الملكي...</p>
 </div>
 
 <script>
@@ -127,45 +141,49 @@ let selectedPlayerUid = null;
 let cart = {};
 
 const gifts = [
+    // --- بطاقة البريميوم (بجواهر) ---
+    {id: 777, name:"Premium Pass", cost:3, currency: "gems", cat:"tools", icon:"fas fa-ticket-alt", isTool: true, xp: 1000},
+
     // --- الأدوات (لا تعطي XP) ---
-    {id: 50, name:"بطاقة الاسم", cost:1000, cat:"tools", icon:"fas fa-id-card", isTool: true, xp: 0},
-    {id: 51, name:"بطاقة الـ ID", cost:1000000, cat:"tools", icon:"fas fa-fingerprint", isTool: true, xp: 0},
+    {id: 50, name:"بطاقة الاسم", cost:1000, currency: "coins", cat:"tools", icon:"fas fa-id-card", isTool: true, xp: 0},
+    {id: 51, name:"بطاقة الـ ID", cost:1000000, currency: "coins", cat:"tools", icon:"fas fa-fingerprint", isTool: true, xp: 0},
 
     // --- الشارات (لا تعطي XP) ---
-    {id: 100, name:"الأسطورة", cost:20000, cat:"badges", icon:"fas fa-shield-halved", isBadge: true, xp: 0},
-    {id: 101, name:"التنين", cost:15000, cat:"badges", icon:"fas fa-dragon", isBadge: true, xp: 0},
+    {id: 100, name:"الأسطورة", cost:20000, currency: "coins", cat:"badges", icon:"fas fa-shield-halved", isBadge: true, xp: 0},
+    {id: 101, name:"التنين", cost:15000, currency: "coins", cat:"badges", icon:"fas fa-dragon", isBadge: true, xp: 0},
 
     // --- هدايا ملكية (Luxury) ---
-    {id: 200, name:"قصر الصيف", cost:50000, cat:"luxury", icon:"🏰", xp: 25000},
-    {id: 201, name:"جزيرة خاصة", cost:150000, cat:"luxury", icon:"🏝️", xp: 80000},
-    {id: 202, name:"طائرة خاصة", cost:100000, cat:"luxury", icon:"✈️", xp: 50000},
-    {id: 203, name:"يخت ملكي", cost:75000, cat:"luxury", icon:"🚢", xp: 35000},
+    {id: 200, name:"قصر الصيف", cost:50000, currency: "coins", cat:"luxury", icon:"🏰", xp: 25000},
+    {id: 201, name:"جزيرة خاصة", cost:150000, currency: "coins", cat:"luxury", icon:"🏝️", xp: 80000},
+    {id: 202, name:"طائرة خاصة", cost:100000, currency: "coins", cat:"luxury", icon:"✈️", xp: 50000},
+    {id: 203, name:"يخت ملكي", cost:75000, currency: "coins", cat:"luxury", icon:"🚢", xp: 35000},
 
     // --- هدايا متوسطة (Medium) ---
-    {id: 300, name:"سيارة رياضية", cost:10000, cat:"medium", icon:"🏎️", xp: 4500},
-    {id: 301, name:"ساعة الماس", cost:8000, cat:"medium", icon:"⌚", xp: 3500},
-    {id: 302, name:"خاتم ذهب", cost:5000, cat:"medium", icon:"💍", xp: 2000},
-    {id: 303, name:"لابتوب", cost:3000, cat:"medium", icon:"💻", xp: 1200},
+    {id: 300, name:"سيارة رياضية", cost:10000, currency: "coins", cat:"medium", icon:"🏎️", xp: 4500},
+    {id: 301, name:"ساعة الماس", cost:8000, currency: "coins", cat:"medium", icon:"⌚", xp: 3500},
+    {id: 302, name:"خاتم ذهب", cost:5000, currency: "coins", cat:"medium", icon:"💍", xp: 2000},
+    {id: 303, name:"لابتوب", cost:3000, currency: "coins", cat:"medium", icon:"💻", xp: 1200},
 
     // --- هدايا بسيطة (Cheap) ---
-    {id: 1, name:"وردة", cost:20, cat:"cheap", icon:"🌹", xp: 10},
-    {id: 2, name:"قلب", cost:50, cat:"cheap", icon:"❤️", xp: 25},
-    {id: 3, name:"قهوة", cost:15, cat:"cheap", icon:"☕", xp: 5},
-    {id: 4, name:"دونات", cost:30, cat:"cheap", icon:"🍩", xp: 15},
-    {id: 5, name:"بالون", cost:10, cat:"cheap", icon:"🎈", xp: 4},
+    {id: 1, name:"وردة", cost:20, currency: "coins", cat:"cheap", icon:"🌹", xp: 10},
+    {id: 2, name:"قلب", cost:50, currency: "coins", cat:"cheap", icon:"❤️", xp: 25},
+    {id: 3, name:"قهوة", cost:15, currency: "coins", cat:"cheap", icon:"☕", xp: 5},
+    {id: 4, name:"دونات", cost:30, currency: "coins", cat:"cheap", icon:"🍩", xp: 15},
+    {id: 5, name:"بالون", cost:10, currency: "coins", cat:"cheap", icon:"🎈", xp: 4},
 
     // --- هدايا البرو (Pro) ---
-    {id: 60, name:"التاج الأرجواني", cost:12000, cat:"pro", icon:"fas fa-crown", proOnly: true, xp: 6000},
-    {id: 61, name:"سيارة نيون", cost:18000, cat:"pro", icon:"fas fa-car-side", proOnly: true, xp: 9000},
-    {id: 62, name:"درع الفارس", cost:7000, cat:"pro", icon:"fas fa-shield-alt", proOnly: true, xp: 3500}
+    {id: 60, name:"التاج الأرجواني", cost:12000, currency: "coins", cat:"pro", icon:"fas fa-crown", proOnly: true, xp: 6000},
+    {id: 61, name:"سيارة نيون", cost:18000, currency: "coins", cat:"pro", icon:"fas fa-car-side", proOnly: true, xp: 9000},
+    {id: 62, name:"درع الفارس", cost:7000, currency: "coins", cat:"pro", icon:"fas fa-shield-alt", proOnly: true, xp: 3500}
 ];
 
-// توليد هدايا تلقائية لتكملة العدد (تجنباً للتكرار اليدوي)
+// توليد هدايا تلقائية
 for(let i=1; i<=30; i++) {
     gifts.push({
         id: 500+i,
         name: `هدية منوعة ${i}`,
         cost: 100 * i,
+        currency: "coins",
         cat: i > 20 ? "luxury" : (i > 10 ? "medium" : "cheap"),
         icon: "🎁",
         xp: 50 * i
@@ -179,6 +197,7 @@ async function initGiftPage() {
         const doc = await firebase.firestore().collection('users').doc(user.uid).get();
         currentUserData = doc.data() || {};
         document.getElementById("user-coins").innerText = (currentUserData.totalCoins || 0).toLocaleString();
+        document.getElementById("user-gems").innerText = (currentUserData.s_gems || 0).toLocaleString();
         renderGifts('all');
         setupSearch();
     });
@@ -200,7 +219,7 @@ function renderGifts(filter) {
             <div class="gift-icon-container">${iconContent}</div>
             <div class="gift-name">${g.name}</div>
             <div class="gift-xp">${g.xp > 0 ? `+${g.xp} XP` : 'بدون XP'}</div>
-            <div class="gift-price">${g.cost.toLocaleString()} كوينز</div>
+            <div class="gift-price ${g.currency === 'gems' ? 'price-gems' : 'price-coins'}">${g.cost.toLocaleString()} ${g.currency === 'gems' ? 'جواهر' : 'كوينز'}</div>
             <div class="qty-controls">
                 <button class="qty-btn" onclick="changeQty(${g.id}, 1)">+</button>
                 <span id="qty-${g.id}">${cart[g.id] || 0}</span>
@@ -214,20 +233,15 @@ function renderGifts(filter) {
 function setupSearch() {
     const input = document.getElementById('player-search');
     const results = document.getElementById('search-results');
-
     input.addEventListener('input', async () => {
         const val = input.value.trim();
         if(val.length < 2) { results.style.display = 'none'; return; }
-
         const snap = await firebase.firestore().collection('users')
-            .where('displayName', '>=', val)
-            .where('displayName', '<=', val + '\uf8ff')
+            .where('displayName', '>=', val).where('displayName', '<=', val + '\uf8ff')
             .limit(5).get();
-
         results.innerHTML = '';
-        if(snap.empty) {
-            results.innerHTML = '<div class="search-item">لا يوجد نتائج</div>';
-        } else {
+        if(snap.empty) { results.innerHTML = '<div class="search-item">لا يوجد نتائج</div>'; } 
+        else {
             snap.forEach(doc => {
                 const data = doc.data();
                 const div = document.createElement('div');
@@ -249,27 +263,26 @@ function setupSearch() {
 function changeQty(id, delta) {
     const gift = gifts.find(g => g.id === id);
     const isPro = (currentUserData.proExpiryTime || 0) > Date.now();
-    
-    if(gift.proOnly && !isPro) {
-        alert("حصري لأعضاء PRO!");
-        return;
-    }
-
+    if(gift.proOnly && !isPro) { alert("حصري لأعضاء PRO!"); return; }
     cart[id] = Math.max(0, (cart[id] || 0) + delta);
     if(gift.isBadge || gift.isTool) cart[id] = Math.min(cart[id], 1);
-
     document.getElementById(`qty-${id}`).innerText = cart[id];
     updateTotal();
 }
 
 function updateTotal() {
-    let total = 0;
+    let coinsTotal = 0;
+    let gemsTotal = 0;
     for(let id in cart) {
         const gift = gifts.find(g => g.id == id);
-        total += gift.cost * cart[id];
+        if(gift.currency === "gems") gemsTotal += gift.cost * cart[id];
+        else coinsTotal += gift.cost * cart[id];
     }
-    document.getElementById("total-cost").innerText = total.toLocaleString();
-    document.getElementById("send-btn").disabled = total === 0 || total > currentUserData.totalCoins;
+    document.getElementById("total-coins-cost").innerText = coinsTotal.toLocaleString() + " كوينز";
+    document.getElementById("total-gems-cost").innerText = gemsTotal.toLocaleString() + " جواهر";
+    
+    const canAfford = coinsTotal <= (currentUserData.totalCoins || 0) && gemsTotal <= (currentUserData.s_gems || 0);
+    document.getElementById("send-btn").disabled = (coinsTotal + gemsTotal === 0) || !canAfford;
 }
 
 function filterGifts(cat, el) {
@@ -285,11 +298,15 @@ async function processPurchase() {
     const myRef = db.collection('users').doc(firebase.auth().currentUser.uid);
     const targetRef = db.collection('users').doc(selectedPlayerUid);
 
-    let totalCost = 0;
+    let totalCoins = 0;
+    let totalGems = 0;
+
     for(let id in cart) {
         if(cart[id] > 0) {
             const gift = gifts.find(g => g.id == id);
-            totalCost += gift.cost * cart[id];
+            if(gift.currency === "gems") totalGems += gift.cost * cart[id];
+            else totalCoins += gift.cost * cart[id];
+
             if(gift.isBadge) batch.update(targetRef, { badges: firebase.firestore.FieldValue.arrayUnion(gift.icon) });
             else if(gift.isTool) batch.update(targetRef, { inventory: firebase.firestore.FieldValue.arrayUnion(gift.name) });
             else batch.update(targetRef, { xp: firebase.firestore.FieldValue.increment(gift.xp * cart[id]) });
@@ -297,12 +314,15 @@ async function processPurchase() {
     }
 
     try {
-        batch.update(myRef, { totalCoins: firebase.firestore.FieldValue.increment(-totalCost) });
+        batch.update(myRef, { 
+            totalCoins: firebase.firestore.FieldValue.increment(-totalCoins),
+            s_gems: firebase.firestore.FieldValue.increment(-totalGems)
+        });
         await batch.commit();
         alert("تمت العملية بنجاح!");
         location.reload();
     } catch(e) {
-        alert("حدث خطأ!");
+        alert("حدث خطأ أثناء الخصم!");
     } finally {
         document.getElementById("purchase-overlay").style.display = "none";
     }
@@ -310,4 +330,3 @@ async function processPurchase() {
 </script>
 </body>
 </html>
-
