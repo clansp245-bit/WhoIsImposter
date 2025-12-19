@@ -59,34 +59,41 @@
             border-radius: 15px;
             transition: 0.3s;
             cursor: pointer;
+            min-height: 70px;
         }
 
         .player-item:hover { background: rgba(255, 255, 255, 0.08); transform: translateX(-5px); }
 
-        .rank { width: 30px; font-weight: 900; color: var(--accent); font-size: 1.1rem; }
+        .rank { width: 35px; font-weight: 900; color: var(--accent); font-size: 1.1rem; flex-shrink: 0; }
 
-        /* تعديل الصورة الشخصية */
+        /* الحل النهائي للأفاتار الدائري */
         .avatar-frame {
             width: 45px;
             height: 45px;
+            min-width: 45px;
+            min-height: 45px;
             border-radius: 50%;
             border: 2px solid var(--primary);
             margin-left: 12px;
             overflow: hidden;
             background: #1e293b;
+            flex-shrink: 0; /* يمنع الانضغاط ليصبح بيضاوي */
         }
-        .avatar-frame img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-frame img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            aspect-ratio: 1 / 1; 
+        }
 
-        .info { flex-grow: 1; }
+        .info { flex-grow: 1; min-width: 0; } /* min-width لمنع تمدد النصوص */
         .name-wrapper { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
-        .name { font-weight: 700; color: #fff; font-size: 0.95rem; }
-        .value { font-weight: 900; color: var(--gold); }
+        .name { font-weight: 700; color: #fff; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .value { font-weight: 900; color: var(--gold); flex-shrink: 0; margin-right: 10px; }
 
         /* الشارات */
-        .badge-icon { font-size: 0.85rem; margin: 0 1px; }
-        .purchased-badge { color: var(--gold); filter: drop-shadow(0 0 3px var(--gold)); }
+        .badge-icon { font-size: 0.9rem; margin: 0 1px; }
         .icon-dev { color: #f87171; }
-        .icon-pro { color: #fbbf24; }
 
         /* النافذة المنبثقة */
         .modal {
@@ -106,7 +113,7 @@
         .modal-avatar {
             width: 100px; height: 100px;
             border-radius: 50%; border: 4px solid var(--primary);
-            margin: 0 auto 15px; object-fit: cover;
+            margin: 0 auto 15px; object-fit: cover; aspect-ratio: 1/1;
         }
 
         .btn-add {
@@ -143,7 +150,7 @@
             <p id="modal-uid" style="color: var(--text-dim); font-size: 0.8rem; margin-top: 5px;"></p>
             
             <div id="modal-stats" style="display: flex; justify-content: space-around; margin: 25px 0; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 20px;">
-            </div>
+                </div>
 
             <button id="add-friend-btn" class="btn-add" onclick="handleAddFriend()">
                 <i class="fas fa-user-plus"></i> إضافة صديق
@@ -153,20 +160,36 @@
     </div>
 
 <script>
+    // إعدادات الشارات الموحدة
+    const ALL_BADGES_CONFIG = [
+        { id: "falcon_badge", icon: "fa-feather-alt", name: "الصقر", color: "#6366f1" },
+        { id: "pro_badge", icon: "fa-crown", name: "شارة البرو", color: "#f472b6" },
+        { id: "gold_s_badge", icon: "fa-crown", name: "سيزون ذهبي", color: "#fbbf24" },
+        { id: "silver_s_badge", icon: "fa-award", name: "سيزون فضي", color: "#cbd5e1" },
+        { id: "rich_badge", icon: "fa-gem", name: "ثري", color: "#22d3ee" },
+        { id: "legend_badge", icon: "fa-shield-halved", name: "الأسطورة", color: "#ffd700" },
+        { id: "dragon_badge", icon: "fa-dragon", name: "التنين", color: "#ff4500" }
+    ];
+
     let selectedUserUid = null;
     const ADMIN_EMAIL = "clansp245@gmail.com";
 
-    // دالة جلب الشارات (الافتراضية + المشتراة)
+    // دالة جلب الشارات المصممة لتعمل مع نظام التجهيز (Equipped)
     function getUserBadgesIcons(user) {
         let icons = "";
-        // شارات النظام
-        if (user.email === ADMIN_EMAIL) icons += '<i class="fas fa-user-shield badge-icon icon-dev" title="المطور"></i>';
-        if (user.proExpiryTime > Date.now()) icons += '<i class="fas fa-crown badge-icon icon-pro" title="عضو برو"></i>';
         
-        // شارات المتجر (المخزنة كمصفوفة كلاسات أيقونات)
-        if (user.badges && Array.isArray(user.badges)) {
-            user.badges.forEach(badgeClass => {
-                icons += `<i class="${badgeClass} badge-icon purchased-badge"></i>`;
+        // شارة المطور (تعتمد على الايميل)
+        if (user.email === ADMIN_EMAIL) {
+            icons += '<i class="fas fa-user-shield badge-icon icon-dev" title="المطور"></i>';
+        }
+
+        // عرض الشارات الـ 5 المجهزة من قبل المستخدم
+        if (user.equippedBadges && Array.isArray(user.equippedBadges)) {
+            user.equippedBadges.forEach(badgeId => {
+                const config = ALL_BADGES_CONFIG.find(c => c.id === badgeId);
+                if (config) {
+                    icons += `<i class="fas ${config.icon} badge-icon" style="color:${config.color}" title="${config.name}"></i>`;
+                }
             });
         }
         return icons;
@@ -175,7 +198,9 @@
     async function loadLeaderboards() {
         try {
             const usersRef = db.collection('users');
+            // جلب أفضل 10 في الكوينز
             const coinsSnap = await usersRef.orderBy('totalCoins', 'desc').limit(10).get();
+            // جلب أفضل 10 في الـ XP
             const xpSnap = await usersRef.orderBy('xp', 'desc').limit(10).get();
             
             document.getElementById('loading').style.display = 'none';
@@ -205,7 +230,7 @@
                 </div>
                 <div class="info">
                     <div class="name-wrapper">
-                        <span class="name">${user.displayName}</span>
+                        <span class="name">${user.displayName || 'لاعب مجهول'}</span>
                         <div class="badges-list">${getUserBadgesIcons(user)}</div>
                     </div>
                 </div>
@@ -220,11 +245,10 @@
         const avatarUrl = user.photoURL || 'https://via.placeholder.com/150';
         
         document.getElementById('modal-img').src = avatarUrl;
-        document.getElementById('modal-name').innerText = user.displayName;
-        document.getElementById('modal-uid').innerText = "ID: " + (user.publicUid || "------");
+        document.getElementById('modal-name').innerText = user.displayName || 'لاعب مجهول';
+        document.getElementById('modal-uid').innerText = "ID: " + (user.customID || user.publicUid || "------");
         document.getElementById('modal-badges').innerHTML = getUserBadgesIcons(user);
         
-        // حساب المستوى بناءً على الـ XP
         const level = Math.floor(Math.sqrt((user.xp || 0) / 100)) + 1;
 
         document.getElementById('modal-stats').innerHTML = `
@@ -238,29 +262,27 @@
 
     async function handleAddFriend() {
         const btn = document.getElementById('add-friend-btn');
-        const originalContent = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-hourglass-half fa-spin"></i> جاري الإرسال...';
 
         try {
+            // ملاحظة: تأكد من وجود دالة sendFriendRequest في ملف auth.js
             await sendFriendRequest(selectedUserUid);
             btn.innerHTML = '<i class="fas fa-check"></i> تم إرسال الطلب';
             setTimeout(closeModal, 1500);
         } catch (e) {
-            alert(e.message || "حدث خطأ");
+            alert(e.message || "حدث خطأ في إرسال الطلب");
             btn.disabled = false;
-            btn.innerHTML = originalContent;
+            btn.innerHTML = '<i class="fas fa-user-plus"></i> إضافة صديق';
         }
     }
 
     function closeModal() { 
         document.getElementById('profileModal').style.display = 'none';
-        document.getElementById('add-friend-btn').disabled = false;
-        document.getElementById('add-friend-btn').innerHTML = '<i class="fas fa-user-plus"></i> إضافة صديق';
     }
 
+    // بدء العمل عند التأكد من تسجيل الدخول
     auth.onAuthStateChanged(user => { if(user) loadLeaderboards(); });
 </script>
 </body>
 </html>
-
