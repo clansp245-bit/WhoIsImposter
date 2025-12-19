@@ -221,21 +221,74 @@
     const MAX_LVL = 30;
 
     // 2. مصفوفة الجوائز المجانية (Free Rewards)
-    const FREE_REWARDS_MAP = Array(31).fill(null).map((_, i) => {
-        if (i === 0) return null;
-        if (i === 30) return { n: "شارة سيزون 1 فضة", v: "silver_s_badge", t: "badge", i: "fa-medal" };
-        if (i % 5 === 0) return { n: "500 كوينز", v: 500, t: "coins", i: "fa-coins" };
-        return { n: "100 كوينز", v: 100, t: "coins", i: "fa-coins" };
-    });
+ const FREE_REWARDS_MAP = [
+        null, 
+        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, 
+        {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
+        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, 
+        {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
+        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, 
+        {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
+        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, 
+        {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
+        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, 
+        {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
+        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, 
+        {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
+        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, 
+        {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
+        {n: "400 Coins", v: 400, t: "coins", i: "fa-coins"}, 
+        {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
+        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, 
+        {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
+        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, 
+        {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
+        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, 
+        {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
+        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, 
+        {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
+        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, 
+        {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
+        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, 
+        {n: "يومين برو", v: 2, t: "pro_day", i: "fa-stopwatch"}, 
+        {n: "500 Coins", v: 500, t: "coins", i: "fa-coins"}, 
+        {n: "شارة السيزون (فضية)", v: "silver_s_badge", t: "badge", i: "fa-regular fa-1", color: "#cbd5e1"} 
+    ];
 
-    // 3. مصفوفة جوائز البريميوم (Premium Rewards)
-    const PREM_REWARDS_MAP = Array(31).fill(null).map((_, i) => {
-        if (i === 0) return null;
-        if (i === 1) return { n: "بطاقة الاسم", v: "rename_card", t: "item", i: "fa-id-card" };
-        if (i === 30) return { n: "شارة سيزون 1 ذهب", v: "gold_s_badge", t: "badge", i: "fa-crown" };
-        if (i % 10 === 0) return { n: "1 جوهرة", v: 1, t: "gems", i: "fa-gem" };
-        return { n: "1000 كوينز", v: 1000, t: "coins", i: "fa-coins" };
-    });
+    // --- مصفوفات الجوائز (Premium) ---
+    const PREM_REWARDS_MAP = [
+        null, 
+        {n: "بطاقة تغيير اسم", v: "rename_card", t: "item", i: "fa-id-card"}, 
+        {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, 
+        {n: "1000 XP", v: 1000, t: "xp", i: "fa-star"}, 
+        {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, 
+        {n: "1 Gem", v: 1, t: "gems", i: "fa-gem"}, 
+        {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, 
+        {n: "1000 XP", v: 1000, t: "xp", i: "fa-star"}, 
+        {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, 
+        {n: "1000 XP", v: 1000, t: "xp", i: "fa-star"}, 
+        {n: "يوم برو", v: 1, t: "pro_day", i: "fa-stopwatch"}, 
+        {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, 
+        {n: "1000 XP", v: 1000, t: "xp", i: "fa-star"}, 
+        {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, 
+        {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, 
+        {n: "1000 XP", v: 1000, t: "xp", i: "fa-star"}, 
+        {n: "شارة الصقر", v: "falcon_badge", t: "badge", i: "fa-feather-alt"}, 
+        {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, 
+        {n: "1000 XP", v: 1000, t: "xp", i: "fa-star"}, 
+        {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, 
+        {n: "1 Gem", v: 1, t: "gems", i: "fa-gem"}, 
+        {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, 
+        {n: "2000 XP", v: 2000, t: "xp", i: "fa-star"}, 
+        {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, 
+        {n: "1 Gem", v: 1, t: "gems", i: "fa-gem"}, 
+        {n: "اسبوع برو", v: 7, t: "pro_day", i: "fa-stopwatch"}, 
+        {n: "2000 Coins", v: 2000, t: "coins", i: "fa-coins"}, 
+        {n: "2000 XP", v: 2000, t: "xp", i: "fa-star"}, 
+        {n: "1 Gem", v: 1, t: "gems", i: "fa-gem"}, 
+        {n: "5000 Coins", v: 5000, t: "coins", i: "fa-coins"}, 
+        {n: "شارة السيزون (ذهبية)", v: "gold_s_badge", t: "badge", i: "fa-regular fa-1", color: "#fbbf24"} 
+    ];
 
     // 4. بنك المهام
     const TASK_BANK = [
