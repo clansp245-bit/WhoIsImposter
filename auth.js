@@ -1,5 +1,6 @@
 /**
  * @file: auth.js
+ * وصف: إدارة تهيئة Firebase، المصادقة، وبيانات المستخدم.
  */
 
 const firebaseConfig = {
@@ -11,11 +12,18 @@ const firebaseConfig = {
     appId: "1:766002212710:web:02b56401e230faed09e2a7"
 };
 
-if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-const auth = firebase.auth();
-const db = firebase.firestore();
+// 1. تهيئة Firebase (تأكد من عدم التكرار)
+if (!firebase.apps.length) { 
+    firebase.initializeApp(firebaseConfig); 
+}
 
-// --- دالة تحديث الكوينز والاشتراك (التي كانت مفقودة) ---
+// 2. تعريف المتغيرات عالمياً (مهم جداً لعمل ملف الـ HTML)
+var auth = firebase.auth();
+var db = firebase.firestore();
+
+/**
+ * دالة تحديث الكوينز ووقت البرو
+ */
 async function updateCoinsAndProTime(userData, coinsToAdd, durationDays) {
     const user = auth.currentUser;
     if (!user) return;
@@ -23,7 +31,7 @@ async function updateCoinsAndProTime(userData, coinsToAdd, durationDays) {
     let newCoins = (userData.totalCoins || 0) + (coinsToAdd || 0);
     let currentProTime = userData.proExpiryTime || Date.now();
     
-    // إذا كان الاشتراك منتهي، نبدأ من الآن، وإذا كان ساري نمدده
+    // تمديد الوقت أو البدء من الآن
     let baseTime = currentProTime > Date.now() ? currentProTime : Date.now();
     let newProTime = baseTime + (durationDays * 24 * 60 * 60 * 1000);
 
@@ -32,17 +40,25 @@ async function updateCoinsAndProTime(userData, coinsToAdd, durationDays) {
         proExpiryTime: durationDays > 0 ? newProTime : (userData.proExpiryTime || 0)
     };
 
-    await db.collection("users").doc(user.uid).update(updates);
-    return updates;
+    try {
+        await db.collection("users").doc(user.uid).update(updates);
+        return updates;
+    } catch (error) {
+        console.error("Error updating user data:", error);
+    }
 }
 
-// دالة إنشاء مستخدم جديد (تأكد أنها تبدأ بـ 0 كوينز)
+/**
+ * إنشاء مستخدم جديد في Firestore إذا لم يكن موجوداً
+ */
 async function createFirestoreUserEntry(user) {
     const userRef = db.collection("users").doc(user.uid);
     const doc = await userRef.get();
+    
     if (!doc.exists) {
         const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
         const genID = () => `IMP-${Array.from({length:4},()=>chars[Math.floor(Math.random()*chars.length)]).join('')}`;
+        
         const initialData = {
             uid: user.uid,
             email: user.email,
@@ -51,7 +67,10 @@ async function createFirestoreUserEntry(user) {
             totalCoins: 0,
             level: 1,
             xp: 0,
-            players: [],
+            s_gems: 0, // إضافة حقل الجواهر لضمان عمل السيزون
+            s_premium: false,
+            s_claimed: [],
+            active_tasks: [],
             proExpiryTime: 0,
             isOnline: true,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -62,29 +81,44 @@ async function createFirestoreUserEntry(user) {
     return doc.data();
 }
 
+/**
+ * تحميل بيانات المستخدم الحالي
+ */
 async function loadUserData() {
     const user = auth.currentUser;
     if (!user) return null;
-    const doc = await db.collection("users").doc(user.uid).get();
-    return doc.exists ? doc.data() : await createFirestoreUserEntry(user);
+    try {
+        const doc = await db.collection("users").doc(user.uid).get();
+        return doc.exists ? doc.data() : await createFirestoreUserEntry(user);
+    } catch (e) {
+        console.error("Error loading user data:", e);
+        return null;
+    }
 }
 
+/**
+ * حفظ أو تحديث بيانات المستخدم
+ */
 async function saveUserData(dataToUpdate) {
     const user = auth.currentUser;
     if (!user) return false;
     try {
         await db.collection("users").doc(user.uid).update(dataToUpdate);
         return true;
-    } catch (e) { return false; }
+    } catch (e) { 
+        console.error("Error saving user data:", e);
+        return false; 
+    }
 }
 
-// استماع لحالة الاتصال
-auth.onAuthStateChanged(user => {
+// 3. الاستماع لحالة الاتصال وتحديث الحالة أونلاين/أوفلاين
+auth.onAuthStateChanged(async (user) => {
     if (user) {
-        db.collection("users").doc(user.uid).update({ isOnline: true });
+        await db.collection("users").doc(user.uid).update({ isOnline: true });
+        
+        // عند إغلاق المتصفح
         window.addEventListener('beforeunload', () => {
             db.collection("users").doc(user.uid).update({ isOnline: false });
         });
     }
 });
-
