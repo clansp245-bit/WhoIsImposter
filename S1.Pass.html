@@ -214,12 +214,14 @@
     </div>
 
 <script>
-    const db = firebase.firestore(); // تأكيد تعريف قاعدة البيانات
+    // 1. التأكد من تهيئة Firebase (إذا لم تكن مهيأة في ملف خارجي)
+    const db = firebase.firestore();
+
     let uData = null;
     const XP_PER_LVL = 1000; 
     const MAX_LVL = 30;
 
-    // --- بنك المهام الأساسي ---
+    // بنك المهام
     const TASK_BANK = [
         { t: "جمع 1000 كوينز", g: 1000, xp: 500, k: "totalCoins" },
         { t: "لعب 3 مباريات", g: 3, xp: 600, k: "s_matches" },
@@ -228,69 +230,49 @@
         { t: "شراء عنصر واحد", g: 1, xp: 300, k: "s_shop_buys" }
     ];
 
-    // --- مصفوفات الجوائز (Free & Premium) ---
-    // (المصفوفات كما هي في كودك الأصلي، لم يتم تغيير محتواها لضمان استقرار التصميم)
-    const FREE_REWARDS_MAP = [
-        null, 
-        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
-        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
-        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
-        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
-        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
-        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
-        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
-        {n: "400 Coins", v: 400, t: "coins", i: "fa-coins"}, {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
-        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
-        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
-        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
-        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
-        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
-        {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, {n: "يومين برو", v: 2, t: "pro_day", i: "fa-stopwatch"}, 
-        {n: "500 Coins", v: 500, t: "coins", i: "fa-coins"}, 
-        {n: "شارة السيزون (فضية)", v: "silver_s_badge", t: "badge", i: "fa-regular fa-1", color: "#cbd5e1"} 
-    ];
+    // (سيتم استخدام المصفوفات Free و Premium التي وضعتها أنت سابقاً في الكود)
 
-    const PREM_REWARDS_MAP = [
-        null, 
-        {n: "بطاقة تغيير اسم", v: "rename_card", t: "item", i: "fa-id-card"}, {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, 
-        {n: "1000 XP", v: 1000, t: "xp", i: "fa-star"}, {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, 
-        {n: "1 Gem", v: 1, t: "gems", i: "fa-gem"}, {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, 
-        {n: "1000 XP", v: 1000, t: "xp", i: "fa-star"}, {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, 
-        {n: "1000 XP", v: 1000, t: "xp", i: "fa-star"}, {n: "يوم برو", v: 1, t: "pro_day", i: "fa-stopwatch"}, 
-        {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, {n: "1000 XP", v: 1000, t: "xp", i: "fa-star"}, 
-        {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, 
-        {n: "1000 XP", v: 1000, t: "xp", i: "fa-star"}, {n: "شارة الصقر", v: "falcon_badge", t: "badge", i: "fa-feather-alt"}, 
-        {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, {n: "1000 XP", v: 1000, t: "xp", i: "fa-star"}, 
-        {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, {n: "1 Gem", v: 1, t: "gems", i: "fa-gem"}, 
-        {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, {n: "2000 XP", v: 2000, t: "xp", i: "fa-star"}, 
-        {n: "1000 Coins", v: 1000, t: "coins", i: "fa-coins"}, {n: "1 Gem", v: 1, t: "gems", i: "fa-gem"}, 
-        {n: "اسبوع برو", v: 7, t: "pro_day", i: "fa-stopwatch"}, {n: "2000 Coins", v: 2000, t: "coins", i: "fa-coins"}, 
-        {n: "2000 XP", v: 2000, t: "xp", i: "fa-star"}, {n: "1 Gem", v: 1, t: "gems", i: "fa-gem"}, 
-        {n: "5000 Coins", v: 5000, t: "coins", i: "fa-coins"}, 
-        {n: "شارة السيزون (ذهبية)", v: "gold_s_badge", t: "badge", i: "fa-regular fa-1", color: "#fbbf24"} 
-    ];
-
+    // 2. دالة بدء التطبيق المحسنة
     async function initApp() {
+        console.log("App Initializing...");
         firebase.auth().onAuthStateChanged(async user => {
-            if (!user) return;
-            
-            db.collection('users').doc(user.uid).onSnapshot(doc => {
-                if(!doc.exists) return;
-                uData = doc.data();
-                
-                checkGiftCards(user.uid);
-
-                if (!uData.active_tasks) {
-                    db.collection('users').doc(user.uid).update({
-                        active_tasks: TASK_BANK.slice(0, 3),
-                        s_claimed: uData.s_claimed || []
-                    });
-                }
-                renderUI();
-            });
+            if (user) {
+                console.log("User Logged In:", user.uid);
+                startDataListener(user.uid);
+            } else {
+                console.log("No User Found");
+                // يمكنك توجيه المستخدم لصفحة تسجيل الدخول هنا
+            }
         });
     }
 
+    // 3. مراقب البيانات الحي (Live Listener)
+    function startDataListener(uid) {
+        db.collection('users').doc(uid).onSnapshot(doc => {
+            if(!doc.exists) {
+                console.error("Document not found!");
+                return;
+            }
+            uData = doc.data();
+            
+            // إصلاح البيانات المفقودة تلقائياً
+            if (!uData.active_tasks || !uData.s_claimed) {
+                db.collection('users').doc(uid).update({
+                    active_tasks: uData.active_tasks || TASK_BANK.slice(0, 3),
+                    s_claimed: uData.s_claimed || [],
+                    s_premium: uData.s_premium || false,
+                    s_gems: uData.s_gems || 0
+                });
+            }
+
+            checkGiftCards(uid);
+            renderUI();
+        }, error => {
+            console.error("Firestore Error:", error);
+        });
+    }
+
+    // 4. معالجة بطاقات الهدايا (تفعيل تلقائي)
     async function checkGiftCards(uid) {
         if (uData.inventory && uData.inventory.includes("Premium Pass")) {
             const updatedInventory = uData.inventory.filter(item => item !== "Premium Pass");
@@ -298,39 +280,47 @@
                 s_premium: true,
                 inventory: updatedInventory
             });
-            alert("🎉 تم تفعيل بطاقة السيزون بريميوم بنجاح!");
+            alert("🎉 مبروك! تم تفعيل البريميوم باستخدام البطاقة.");
         }
     }
 
+    // 5. تحديث الواجهة (UI)
     function renderUI() {
         if(!uData) return;
 
-        const accountXP = uData.xp || 0;
-        const currentLvl = Math.floor(accountXP / XP_PER_LVL);
-        const xpProgress = accountXP % XP_PER_LVL;
-        const xpPercent = (xpProgress / XP_PER_LVL) * 100;
+        const currentXP = uData.xp || 0;
+        const currentLvl = Math.floor(currentXP / XP_PER_LVL);
+        const xpProgress = currentXP % XP_PER_LVL;
+        const xpPercent = Math.min((xpProgress / XP_PER_LVL) * 100, 100);
 
+        // تحديث الأرقام العلوية
         document.getElementById('u-coins').innerText = (uData.totalCoins || 0).toLocaleString();
         document.getElementById('u-gems').innerText = (uData.s_gems || 0).toLocaleString();
         document.getElementById('txt-lvl').innerText = Math.min(currentLvl, MAX_LVL);
         
+        // تحديث شريط الخبرة
         document.getElementById('xp-text').innerText = currentLvl >= MAX_LVL ? "MAX" : `${xpProgress} / ${XP_PER_LVL}`;
         document.getElementById('xp-fill').style.width = currentLvl >= MAX_LVL ? "100%" : `${xpPercent}%`;
 
+        // إخفاء/إظهار العناصر
         document.getElementById('premium-footer').style.display = uData.s_premium ? 'none' : 'block';
         document.getElementById('end-season-ui').style.display = currentLvl >= MAX_LVL ? 'block' : 'none';
 
+        // رندر الجوائز
         const rList = document.getElementById('rewards-list');
         rList.innerHTML = '';
         for(let i = 1; i <= MAX_LVL; i++) {
             const row = document.createElement('div');
             row.className = 'lvl-row';
             
+            let freeItem = FREE_REWARDS_MAP[i];
+            let premItem = PREM_REWARDS_MAP[i];
+
             let freeBox = (i === 30 && uData.s_premium) ? 
                 `<div class="reward-box" style="justify-content:center; opacity:0.5; border-style:dashed;"><small>ترقية للذهبي <i class="fas fa-arrow-right"></i></small></div>` :
-                createRewardBox(i, FREE_REWARDS_MAP[i], false, currentLvl);
+                createRewardBox(i, freeItem, false, currentLvl);
 
-            row.innerHTML = `<div class="lvl-indicator">${i}</div>${freeBox}${createRewardBox(i, PREM_REWARDS_MAP[i], true, currentLvl)}`;
+            row.innerHTML = `<div class="lvl-indicator">${i}</div>${freeBox}${createRewardBox(i, premItem, true, currentLvl)}`;
             rList.appendChild(row);
         }
         renderTasks();
@@ -343,53 +333,52 @@
         const isClaimed = uData.s_claimed && uData.s_claimed.includes(claimId);
         const canClaim = (userLvl >= lvl) && (!isPrem || uData.s_premium);
 
-        let btn = isClaimed ? `<button class="claim-btn claimed">تم</button>` :
-                  canClaim ? `<button class="claim-btn" onclick="claimReward('${claimId}', '${item.t}', ${JSON.stringify(item.v)})">استلام</button>` :
-                  `<button class="claim-btn locked"><i class="fas fa-lock"></i></button>`;
+        let btnClass = isClaimed ? "claimed" : (canClaim ? "" : "locked");
+        let btnText = isClaimed ? "تم" : (canClaim ? "استلام" : `<i class="fas fa-lock"></i>`);
+        let btnClick = (canClaim && !isClaimed) ? `onclick="claimReward('${claimId}', '${item.t}', '${item.v}')"` : "";
 
-        return `<div class="reward-box ${isPrem ? 'premium' : ''}">
+        return `
+        <div class="reward-box ${isPrem ? 'premium' : ''}">
             <i class="fas ${item.i} item-icon"></i>
             <span class="item-name">${item.n}</span>
-            ${btn}
+            <button class="claim-btn ${btnClass}" ${btnClick}>${btnText}</button>
         </div>`;
     }
 
-    // --- الدالة المعدلة بالكامل لحل مشكلة الاستلام ---
+    // 6. نظام استلام الجوائز الموحد (الكوينز، الجواهر، الشارات، بطاقة الاسم)
     async function claimReward(claimId, type, val) {
-        const ref = db.collection('users').doc(firebase.auth().currentUser.uid);
+        if (!uData) return;
+        const uid = firebase.auth().currentUser.uid;
+        const ref = db.collection('users').doc(uid);
+        
         let updates = { s_claimed: firebase.firestore.FieldValue.arrayUnion(claimId) };
 
-        if (type === 'coins') updates.totalCoins = firebase.firestore.FieldValue.increment(val);
-        if (type === 'gems') updates.s_gems = firebase.firestore.FieldValue.increment(val);
-        if (type === 'xp') updates.xp = firebase.firestore.FieldValue.increment(val); 
-        
-        // إرسال الشارات لمصفوفة badges التي يستخدمها الملف الشخصي
+        if (type === 'coins') updates.totalCoins = firebase.firestore.FieldValue.increment(parseInt(val));
+        if (type === 'gems') updates.s_gems = firebase.firestore.FieldValue.increment(parseInt(val));
+        if (type === 'xp') updates.xp = firebase.firestore.FieldValue.increment(parseInt(val));
         if (type === 'badge') updates.badges = firebase.firestore.FieldValue.arrayUnion(val);
-        
-        // إرسال بطاقة الاسم لمصفوفة inventory التي يستخدمها الملف الشخصي
         if (type === 'item' && val === "rename_card") {
             updates.inventory = firebase.firestore.FieldValue.arrayUnion("بطاقة الاسم");
         }
-        
         if (type === 'pro_day') {
             const now = Date.now();
             const current = uData.proExpiryTime || now;
-            updates.proExpiryTime = (current > now ? current : now) + (val * 86400000);
+            updates.proExpiryTime = (current > now ? current : now) + (parseInt(val) * 86400000);
         }
 
         try {
             await ref.update(updates);
-            alert("✅ تم استلام الجائزة بنجاح!");
-        } catch (error) {
-            console.error(error);
-            alert("❌ حدث خطأ أثناء الاستلام");
+            console.log("Reward Claimed:", claimId);
+        } catch (e) {
+            alert("حدث خطأ في الشبكة");
         }
     }
 
+    // 7. نظام المهام
     function renderTasks() {
         const tList = document.getElementById('tasks-list');
+        if (!tList || !uData.active_tasks) return;
         tList.innerHTML = '';
-        if(!uData.active_tasks) return;
 
         uData.active_tasks.forEach((task, idx) => {
             const currentVal = uData[task.k] || 0;
@@ -398,14 +387,14 @@
             const isClaimed = uData.s_claimed && uData.s_claimed.includes(taskId);
 
             tList.innerHTML += `
-            <div class="task-item" style="border-color: ${isDone ? 'var(--success)' : 'rgba(255,255,255,0.05)'}">
+            <div class="task-item" style="${isDone ? 'border-color: var(--success)' : ''}">
                 <div class="task-info">
                     <h4>${task.t}</h4>
                     <div style="font-size:0.75rem; opacity:0.7;">${currentVal} / ${task.g} <span class="task-xp">+${task.xp} XP</span></div>
                 </div>
                 <div>
                     ${isClaimed ? 
-                        `<button class="claim-btn" style="background:transparent; border:1px solid #fff;" onclick="replaceTask(${idx})">مهمة جديدة</button>` :
+                        `<button class="claim-btn" style="background:#334155" onclick="replaceTask(${idx})">مهمة جديدة</button>` :
                         `<button class="claim-btn" ${!isDone ? 'disabled' : ''} onclick="claimTaskXP(${idx}, ${task.xp}, '${task.t}')" style="${isDone ? 'background:var(--success)' : ''}">
                             ${isDone ? 'استلام' : 'قيد التنفيذ'}
                         </button>`
@@ -423,8 +412,16 @@
         });
     }
 
+    async function replaceTask(idx) {
+        const randomTask = TASK_BANK[Math.floor(Math.random() * TASK_BANK.length)];
+        let newTasks = [...uData.active_tasks];
+        newTasks[idx] = randomTask;
+        await db.collection('users').doc(firebase.auth().currentUser.uid).update({ active_tasks: newTasks });
+    }
+
+    // 8. وظائف الشراء والتخطي
     async function confirmSkip() {
-        if ((uData.totalCoins || 0) < 500) return alert("لا تملك كوينز كافية");
+        if ((uData.totalCoins || 0) < 500) return alert("الكوينز غير كافية");
         await db.collection('users').doc(firebase.auth().currentUser.uid).update({
             totalCoins: firebase.firestore.FieldValue.increment(-500),
             xp: firebase.firestore.FieldValue.increment(XP_PER_LVL)
@@ -434,7 +431,7 @@
 
     async function buyPremium() {
         if ((uData.s_gems || 0) < 3) return alert("تحتاج 3 جواهر");
-        if (confirm("تفعيل البريميوم مقابل 3 جواهر؟")) {
+        if (confirm("هل تريد تفعيل البريميوم؟")) {
             await db.collection('users').doc(firebase.auth().currentUser.uid).update({
                 s_gems: firebase.firestore.FieldValue.increment(-3),
                 s_premium: true
@@ -444,7 +441,7 @@
 
     async function resetSeason() {
         if ((uData.totalCoins || 0) < 5000) return alert("تحتاج 5000 كوينز");
-        if (confirm("هل تريد تصفير السيزون؟ (سيتم تصفير XP الحساب وإلغاء البريميوم)")) {
+        if (confirm("سيتم تصفير السيزون والـ XP والبدء من جديد. موافق؟")) {
             await db.collection('users').doc(firebase.auth().currentUser.uid).update({
                 totalCoins: firebase.firestore.FieldValue.increment(-5000),
                 xp: 0, 
@@ -455,13 +452,7 @@
         }
     }
 
-    async function replaceTask(idx) {
-        const randomTask = TASK_BANK[Math.floor(Math.random() * TASK_BANK.length)];
-        let newTasks = [...uData.active_tasks];
-        newTasks[idx] = randomTask;
-        await db.collection('users').doc(firebase.auth().currentUser.uid).update({ active_tasks: newTasks });
-    }
-
+    // التنقل بين التبويبات والمودال
     function switchTab(t) {
         document.getElementById('pass-tab').style.display = t === 'pass' ? 'block' : 'none';
         document.getElementById('tasks-tab').style.display = t === 'tasks' ? 'block' : 'none';
