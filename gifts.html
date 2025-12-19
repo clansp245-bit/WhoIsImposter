@@ -1,141 +1,141 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💎 المتجر الملكي الأسطوري</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💎 المتجر الملكي الأسطوري</title>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="auth.js"></script> 
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="auth.js"></script> 
 
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-    <style>
-        :root {
-            --primary: #6366f1;
-            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-            --bg-body: #0a0f1e;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --text-main: #f1f5f9;
-            --text-dim: #94a3b8;
-            --gold: #ffd700;
-            --gem-color: #22d3ee;
-            --pro-color: #f472b6;
-            --tool-color: #38bdf8;
-            --xp-color: #10b981;
-        }
+    <style>
+        :root {
+            --primary: #6366f1;
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --bg-body: #0a0f1e;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8;
+            --gold: #ffd700;
+            --gem-color: #22d3ee;
+            --pro-color: #f472b6;
+            --tool-color: #38bdf8;
+            --xp-color: #10b981;
+        }
 
-        body {
-            font-family: 'Cairo', sans-serif;
-            background-color: var(--bg-body);
-            background-image: radial-gradient(circle at top right, #1e1b4b, transparent);
-            color: var(--text-main);
-            padding: 10px; margin: 0;
-            display: flex; flex-direction: column; align-items: center;
-        }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-body);
+            background-image: radial-gradient(circle at top right, #1e1b4b, transparent);
+            color: var(--text-main);
+            padding: 10px; margin: 0;
+            display: flex; flex-direction: column; align-items: center;
+        }
 
-        .top-info-bar { width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 5px; }
-        .currency-display { background: rgba(255, 255, 255, 0.05); padding: 8px 12px; border-radius: 15px; font-weight: 900; border: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem; }
-        #coins-display { color: var(--gold); border-color: var(--gold); }
-        #gems-display { color: var(--gem-color); border-color: var(--gem-color); }
+        .top-info-bar { width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 5px; }
+        .currency-display { background: rgba(255, 255, 255, 0.05); padding: 8px 12px; border-radius: 15px; font-weight: 900; border: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem; }
+        #coins-display { color: var(--gold); border-color: var(--gold); }
+        #gems-display { color: var(--gem-color); border-color: var(--gem-color); }
 
-        .card {
-            background: var(--card-bg); backdrop-filter: blur(15px); padding: 15px; border-radius: 20px;
-            width: 100%; max-width: 500px; border: 1px solid rgba(255,255,255,0.1); box-sizing: border-box; margin-bottom: 12px;
-            position: relative;
-        }
+        .card {
+            background: var(--card-bg); backdrop-filter: blur(15px); padding: 15px; border-radius: 20px;
+            width: 100%; max-width: 500px; border: 1px solid rgba(255,255,255,0.1); box-sizing: border-box; margin-bottom: 12px;
+            position: relative;
+        }
 
-        .search-container { position: relative; width: 100%; }
-        #player-search { width: 100%; padding: 12px; border-radius: 10px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; font-family: 'Cairo'; box-sizing: border-box; outline: none; }
-        .search-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #1e293b; border-radius: 10px; z-index: 100; max-height: 200px; overflow-y: auto; display: none; border: 1px solid var(--primary); margin-top: 5px; }
-        .search-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; font-size: 0.85rem; display: flex; justify-content: space-between; }
-        .search-item:hover { background: var(--primary); }
+        .search-container { position: relative; width: 100%; }
+        #player-search { width: 100%; padding: 12px; border-radius: 10px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; font-family: 'Cairo'; box-sizing: border-box; outline: none; }
+        .search-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #1e293b; border-radius: 10px; z-index: 100; max-height: 200px; overflow-y: auto; display: none; border: 1px solid var(--primary); margin-top: 5px; }
+        .search-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; font-size: 0.85rem; display: flex; justify-content: space-between; }
+        .search-item:hover { background: var(--primary); }
 
-        .tabs { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; width: 100%; max-width: 500px; scrollbar-width: none; padding-bottom: 5px; }
-        .tab { padding: 8px 15px; background: rgba(255,255,255,0.05); border-radius: 20px; cursor: pointer; white-space: nowrap; font-weight: 700; font-size: 0.75rem; transition: 0.3s; }
-        .tab.active { background: var(--primary); color: white; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; width: 100%; max-width: 500px; scrollbar-width: none; padding-bottom: 5px; }
+        .tab { padding: 8px 15px; background: rgba(255,255,255,0.05); border-radius: 20px; cursor: pointer; white-space: nowrap; font-weight: 700; font-size: 0.75rem; transition: 0.3s; }
+        .tab.active { background: var(--primary); color: white; }
 
-        .gifts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%; }
-        .gift-item { 
-            background: rgba(255, 255, 255, 0.03); padding: 15px 5px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.05);
-            display: flex; flex-direction: column; align-items: center; text-align: center; position: relative;
-        }
-        
-        .gift-icon-container { width: 60px; height: 60px; border-radius: 18px; background: rgba(255,255,255,0.05); display: flex; justify-content: center; align-items: center; font-size: 1.8rem; margin-bottom: 8px; }
-        .badge-icon { color: var(--gold); }
-        .tool-icon { color: var(--tool-color); }
-        .pro-exclusive-tag { position: absolute; top: 8px; left: 8px; background: var(--pro-color); color: white; font-size: 0.6rem; padding: 2px 8px; border-radius: 6px; font-weight: 900; }
+        .gifts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%; }
+        .gift-item { 
+            background: rgba(255, 255, 255, 0.03); padding: 15px 5px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.05);
+            display: flex; flex-direction: column; align-items: center; text-align: center; position: relative;
+        }
+        
+        .gift-icon-container { width: 60px; height: 60px; border-radius: 18px; background: rgba(255,255,255,0.05); display: flex; justify-content: center; align-items: center; font-size: 1.8rem; margin-bottom: 8px; }
+        .badge-icon { color: var(--gold); }
+        .tool-icon { color: var(--tool-color); }
+        .pro-exclusive-tag { position: absolute; top: 8px; left: 8px; background: var(--pro-color); color: white; font-size: 0.6rem; padding: 2px 8px; border-radius: 6px; font-weight: 900; }
 
-        .gift-name { font-weight: 800; font-size: 0.85rem; color: #fff; line-height: 1.2; margin-bottom: 4px; }
-        .gift-xp { color: var(--xp-color); font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; }
-        .gift-price { font-weight: 900; font-size: 0.85rem; }
-        .price-coins { color: var(--gold); }
-        .price-gems { color: var(--gem-color); }
+        .gift-name { font-weight: 800; font-size: 0.85rem; color: #fff; line-height: 1.2; margin-bottom: 4px; }
+        .gift-xp { color: var(--xp-color); font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; }
+        .gift-price { font-weight: 900; font-size: 0.85rem; }
+        .price-coins { color: var(--gold); }
+        .price-gems { color: var(--gem-color); }
 
-        .qty-controls { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
-        .qty-btn { width: 28px; height: 28px; border: none; background: var(--primary); color: white; border-radius: 8px; cursor: pointer; font-weight: 900; }
-        .qty-num { min-width: 20px; font-weight: 900; }
+        .qty-controls { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+        .qty-btn { width: 28px; height: 28px; border: none; background: var(--primary); color: white; border-radius: 8px; cursor: pointer; font-weight: 900; }
+        .qty-num { min-width: 20px; font-weight: 900; }
 
-        .send-btn { width: 100%; padding: 15px; border-radius: 18px; border: none; background: var(--accent-gradient); color: white; font-weight: 900; cursor: pointer; margin-top: 15px; font-size: 1rem; }
-        .send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .send-btn { width: 100%; padding: 15px; border-radius: 18px; border: none; background: var(--accent-gradient); color: white; font-weight: 900; cursor: pointer; margin-top: 15px; font-size: 1rem; }
+        .send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-        #purchase-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; display: none; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-    </style>
+        #purchase-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; display: none; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+    </style>
 </head>
 
 <body onload="initGiftPage()">
 
 <div class="top-info-bar">
-    <a href="index.html" style="color: var(--text-dim); text-decoration: none; font-size: 1.2rem;"><i class="fas fa-chevron-right"></i></a>
-    <div style="display: flex; gap: 8px;">
-        <div id="coins-display" class="currency-display"><i class="fas fa-coins"></i> <span id="user-coins">0</span></div>
-        <div id="gems-display" class="currency-display"><i class="fas fa-gem"></i> <span id="user-gems">0</span></div>
-    </div>
+    <a href="index.html" style="color: var(--text-dim); text-decoration: none; font-size: 1.2rem;"><i class="fas fa-chevron-right"></i></a>
+    <div style="display: flex; gap: 8px;">
+        <div id="coins-display" class="currency-display"><i class="fas fa-coins"></i> <span id="user-coins">0</span></div>
+        <div id="gems-display" class="currency-display"><i class="fas fa-gem"></i> <span id="user-gems">0</span></div>
+    </div>
 </div>
 
 <h2 style="font-weight: 900; color: #fff; margin: 10px 0;">💎 المتجر الملكي</h2>
 
 <div class="card">
-    <div class="search-container">
-        <input type="text" id="player-search" placeholder="ابحث عن صديق لإرسال هدية له...">
-        <div id="search-results" class="search-dropdown"></div>
-    </div>
-    <div id="rec-info" style="margin-top: 10px; font-size: 0.85rem; color: var(--primary); font-weight: bold; text-align: center;">
-        المستلم الحالي: <span id="rec-name" style="color:#fff; border-bottom: 1px dashed #fff;">نفسي (حسابي)</span>
-    </div>
+    <div class="search-container">
+        <input type="text" id="player-search" placeholder="ابحث عن صديق لإرسال هدية له...">
+        <div id="search-results" class="search-dropdown"></div>
+    </div>
+    <div id="rec-info" style="margin-top: 10px; font-size: 0.85rem; color: var(--primary); font-weight: bold; text-align: center;">
+        المستلم الحالي: <span id="rec-name" style="color:#fff; border-bottom: 1px dashed #fff;">نفسي (حسابي)</span>
+    </div>
 </div>
 
 <div class="tabs">
-    <div class="tab active" onclick="filterGifts('all', this)">الكل</div>
-    <div class="tab" onclick="filterGifts('luxury', this)">ملكي 💎</div>
-    <div class="tab" onclick="filterGifts('medium', this)">متوسط ⚖️</div>
-    <div class="tab" onclick="filterGifts('cheap', this)">بسيط ✨</div>
-    <div class="tab" onclick="filterGifts('pro', this)">برو 🔥</div>
-    <div class="tab" onclick="filterGifts('tools', this)">أدوات 🛠️</div>
-    <div class="tab" onclick="filterGifts('badges', this)">شارات 🏅</div>
+    <div class="tab active" onclick="filterGifts('all', this)">الكل</div>
+    <div class="tab" onclick="filterGifts('luxury', this)">ملكي 💎</div>
+    <div class="tab" onclick="filterGifts('medium', this)">متوسط ⚖️</div>
+    <div class="tab" onclick="filterGifts('cheap', this)">بسيط ✨</div>
+    <div class="tab" onclick="filterGifts('pro', this)">برو 🔥</div>
+    <div class="tab" onclick="filterGifts('tools', this)">أدوات 🛠️</div>
+    <div class="tab" onclick="filterGifts('badges', this)">شارات 🏅</div>
 </div>
 
 <div class="card">
-    <div id="gifts-container" class="gifts-grid"></div>
-    <div style="text-align: center; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-            <span style="color: var(--text-dim); font-size: 0.85rem;">إجمالي الفاتورة الملكية:</span>
-            <div>
-                <span id="total-coins-cost" style="color: var(--gold); font-weight: 900; font-size: 1.1rem;">0 كوينز</span>
-                <span style="color: white; margin: 0 8px; opacity: 0.3;">|</span>
-                <span id="total-gems-cost" style="color: var(--gem-color); font-weight: 900; font-size: 1.1rem;">0 جواهر</span>
-            </div>
-        </div>
-    </div>
-    <button class="send-btn" id="send-btn" disabled onclick="processPurchase()">تأكيد العملية الآن</button>
+    <div id="gifts-container" class="gifts-grid"></div>
+    <div style="text-align: center; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <span style="color: var(--text-dim); font-size: 0.85rem;">إجمالي الفاتورة الملكية:</span>
+            <div>
+                <span id="total-coins-cost" style="color: var(--gold); font-weight: 900; font-size: 1.1rem;">0 كوينز</span>
+                <span style="color: white; margin: 0 8px; opacity: 0.3;">|</span>
+                <span id="total-gems-cost" style="color: var(--gem-color); font-weight: 900; font-size: 1.1rem;">0 جواهر</span>
+            </div>
+        </div>
+    </div>
+    <button class="send-btn" id="send-btn" disabled onclick="processPurchase()">تأكيد العملية الآن</button>
 </div>
 
 <div id="purchase-overlay">
-    <i class="fas fa-crown fa-spin" style="font-size: 3.5rem; color: var(--gold); margin-bottom: 15px;"></i>
-    <p style="font-weight: bold; font-size: 1.1rem;">جاري معالجة طلبك في الخزينة...</p>
+    <i class="fas fa-crown fa-spin" style="font-size: 3.5rem; color: var(--gold); margin-bottom: 15px;"></i>
+    <p style="font-weight: bold; font-size: 1.1rem;">جاري معالجة طلبك في الخزينة...</p>
 </div>
 
 <script>
@@ -143,181 +143,223 @@ let currentUserData = {};
 let selectedPlayerUid = null;
 let cart = {};
 
-// داتا الهدايا - مفاتيح الشارات مطابقة للبروفايل
+// داتا الهدايا - محدثة بالكامل
 const gifts = [
-    {id: 50, name:"بطاقة الاسم", cost:5000, currency: "coins", cat:"tools", icon:"fas fa-id-card", isTool: true, xp: 0},
-    {id: 51, name:"بطاقة الـ ID", cost:500000, currency: "coins", cat:"tools", icon:"fas fa-fingerprint", isTool: true, xp: 0},
-    
-    {id: 100, name:"شارة الأسطورة", cost:50000, currency: "coins", cat:"badges", icon:"legend_badge", isBadge: true, xp: 0},
-    {id: 101, name:"شارة التنين", cost:30000, currency: "coins", cat:"badges", icon:"dragon_badge", isBadge: true, xp: 0},
-    {id: 102, name:"شارة الصقر", cost:25000, currency: "coins", cat:"badges", icon:"falcon_badge", isBadge: true, xp: 0},
+    // --- الأدوات والشارات الأساسية ---
+    {id: 777, name:"Premium Pass", cost:3, currency: "gems", cat:"tools", icon:"fas fa-ticket-alt", isTool: true, xp: 1000},
+    {id: 50, name:"بطاقة الاسم", cost:5000, currency: "coins", cat:"tools", icon:"fas fa-id-card", isTool: true, xp: 0},
+    {id: 51, name:"بطاقة الـ ID", cost:1000000, currency: "coins", cat:"tools", icon:"fas fa-fingerprint", isTool: true, xp: 0},
+    {id: 100, name:"شارة الأسطورة", cost:50000, currency: "coins", cat:"badges", icon:"legend_badge", isBadge: true, xp: 0},
+    {id: 101, name:"شارة التنين", cost:30000, currency: "coins", cat:"badges", icon:"dragon_badge", isBadge: true, xp: 0},
 
-    {id: 200, name:"قصر الصيف", cost:150000, currency: "coins", cat:"luxury", icon:"🏰", xp: 15000},
-    {id: 201, name:"يخت ملكي", cost:85000, currency: "coins", cat:"luxury", icon:"🚢", xp: 8500},
-    {id: 300, name:"سيارة رياضية", cost:25000, currency: "coins", cat:"medium", icon:"🏎️", xp: 2500},
-    {id: 1, name:"وردة حمراء", cost:50, currency: "coins", cat:"cheap", icon:"🌹", xp: 5},
-    {id: 2, name:"قلب حب", cost:100, currency: "coins", cat:"cheap", icon:"❤️", xp: 10},
-    
-    {id: 60, name:"تاج البرو", cost:30000, currency: "coins", cat:"pro", icon:"fas fa-crown", proOnly: true, xp: 5000},
-    {id: 777, name:"صندوق جواهر", cost:5, currency: "gems", cat:"luxury", icon:"fas fa-box-open", xp: 10000}
+    // --- هدايا ملكية (Luxury) ---
+    {id: 200, name:"قصر الصيف", cost:150000, currency: "coins", cat:"luxury", icon:"🏰", xp: 15000},
+    {id: 201, name:"يخت ملكي", cost:85000, currency: "coins", cat:"luxury", icon:"🚢", xp: 8500},
+    {id: 202, name:"طائرة نفاثة", cost:250000, currency: "coins", cat:"luxury", icon:"🛩️", xp: 30000},
+    {id: 203, name:"برج دبي", cost:500000, currency: "coins", cat:"luxury", icon:"🏙️", xp: 60000},
+    {id: 204, name:"تاج مرصع", cost:120000, currency: "coins", cat:"luxury", icon:"👑", xp: 12000},
+    {id: 205, name:"سيارة ذهبية", cost:95000, currency: "coins", cat:"luxury", icon:"🚕", xp: 9000},
+    {id: 206, name:"جزيرة خاصة", cost:300000, currency: "coins", cat:"luxury", icon:"🏝️", xp: 35000},
+
+    // --- هدايا متوسطة (Medium) ---
+    {id: 300, name:"سيارة رياضية", cost:25000, currency: "coins", cat:"medium", icon:"🏎️", xp: 2500},
+    {id: 301, name:"ساعة يد فاخرة", cost:12000, currency: "coins", cat:"medium", icon:"⌚", xp: 1500},
+    {id: 302, name:"دراجة نارية", cost:8000, currency: "coins", cat:"medium", icon:"🏍️", xp: 1000},
+    {id: 303, name:"خاتم الماس", cost:15000, currency: "coins", cat:"medium", icon:"💍", xp: 2000},
+    {id: 304, name:"لابتوب قيمنق", cost:6000, currency: "coins", cat:"medium", icon:"💻", xp: 800},
+    {id: 305, name:"كاميرا احترافية", cost:4500, currency: "coins", cat:"medium", icon:"📷", xp: 600},
+
+    // --- هدايا بسيطة (Cheap) ---
+    {id: 1, name:"وردة حمراء", cost:50, currency: "coins", cat:"cheap", icon:"🌹", xp: 5},
+    {id: 2, name:"قلب حب", cost:100, currency: "coins", cat:"cheap", icon:"❤️", xp: 10},
+    {id: 3, name:"فنجان قهوة", cost:20, currency: "coins", cat:"cheap", icon:"☕", xp: 2},
+    {id: 4, name:"دونات", cost:40, currency: "coins", cat:"cheap", icon:"🍩", xp: 4},
+    {id: 5, name:"بيتزا", cost:150, currency: "coins", cat:"cheap", icon:"🍕", xp: 15},
+    {id: 6, name:"بالون نيون", cost:30, currency: "coins", cat:"cheap", icon:"🎈", xp: 3},
+
+    // --- هدايا البرو (Pro) ---
+    {id: 60, name:"تاج البرو", cost:30000, currency: "coins", cat:"pro", icon:"fas fa-crown", proOnly: true, xp: 5000},
+    {id: 61, name:"غواصة نيون", cost:45000, currency: "coins", cat:"pro", icon:"fas fa-subway", proOnly: true, xp: 7000},
+    {id: 62, name:"درع الفارس", cost:15000, currency: "coins", cat:"pro", icon:"fas fa-shield-alt", proOnly: true, xp: 2000}
 ];
 
+// توليد أكثر من 40 هدية إضافية متنوعة برمجياً لإكمال العدد فوق 50
+const extraIcons = ["🎸", "🎨", "🎮", "🚀", "🛸", "💎", "🏅", "🏆", "📽️", "🎤", "🎧", "🕶️", "👔", "👜", "👠", "👟", "👗", "👘", "💄", "🌂", "👜", "🎒", "👒", "🎓", "👑", "🤳", "📱", "📲", "📺", "📼", "📷", "📹", "📞", "☎️", "📡", "🔋", "💡", "🔦", "🕯️", "🛠️", "⛏️", "⚙️", "🛡️", "🏹", "🗡️", "⚔️", "🔫", "🔮", "🧿"];
+
+extraIcons.forEach((icon, index) => {
+    let category = "cheap";
+    let cost = 200 + (index * 150);
+    let xp = Math.floor(cost / 10);
+    
+    if(cost > 10000) category = "medium";
+    if(cost > 40000) category = "luxury";
+
+    gifts.push({
+        id: 1000 + index,
+        name: `هدية ملكية #${index + 1}`,
+        cost: cost,
+        currency: "coins",
+        cat: category,
+        icon: icon,
+        xp: xp
+    });
+});
+
 async function initGiftPage() {
-    firebase.auth().onAuthStateChanged(async user => {
-        if(!user) return;
-        selectedPlayerUid = user.uid; // الافتراضي إرسال لنفسي
-        const doc = await db.collection('users').doc(user.uid).get();
-        currentUserData = doc.data() || {};
-        document.getElementById("user-coins").innerText = (currentUserData.totalCoins || 0).toLocaleString();
-        document.getElementById("user-gems").innerText = (currentUserData.s_gems || 0).toLocaleString();
-        renderGifts('all');
-        setupSearch();
-    });
+    firebase.auth().onAuthStateChanged(async user => {
+        if(!user) return;
+        selectedPlayerUid = user.uid;
+        const doc = await db.collection('users').doc(user.uid).get();
+        currentUserData = doc.data() || {};
+        document.getElementById("user-coins").innerText = (currentUserData.totalCoins || 0).toLocaleString();
+        document.getElementById("user-gems").innerText = (currentUserData.s_gems || 0).toLocaleString();
+        renderGifts('all');
+        setupSearch();
+    });
 }
 
 function renderGifts(filter) {
-    const container = document.getElementById("gifts-container");
-    container.innerHTML = '';
-    
-    gifts.forEach(g => {
-        if(filter !== 'all' && g.cat !== filter) return;
-        
-        const div = document.createElement("div");
-        div.className = "gift-item";
-        
-        let displayIcon = g.icon;
-        if(g.isBadge) {
-            // تحويل كود الشارة لأيقونة مرئية في المتجر
-            const icons = {"legend_badge":"fa-shield-halved", "dragon_badge":"fa-dragon", "falcon_badge":"fa-feather-alt"};
-            displayIcon = `<i class="fas ${icons[g.icon]} badge-icon"></i>`;
-        } else if(g.icon.startsWith('fas')) {
-            displayIcon = `<i class="${g.icon} tool-icon"></i>`;
-        } else {
-            displayIcon = `<span>${g.icon}</span>`;
-        }
-        
-        div.innerHTML = `
-            ${g.proOnly ? '<span class="pro-exclusive-tag">PRO</span>' : ''}
-            <div class="gift-icon-container">${displayIcon}</div>
-            <div class="gift-name">${g.name}</div>
-            <div class="gift-xp">${g.xp > 0 ? `+${g.xp} XP` : 'عنصر خاص'}</div>
-            <div class="gift-price ${g.currency === 'gems' ? 'price-gems' : 'price-coins'}">
-                <i class="fas ${g.currency === 'gems' ? 'fa-gem' : 'fa-coins'}"></i> ${g.cost.toLocaleString()}
-            </div>
-            <div class="qty-controls">
-                <button class="qty-btn" onclick="changeQty(${g.id}, -1)">-</button>
-                <span class="qty-num" id="qty-${g.id}">${cart[g.id] || 0}</span>
-                <button class="qty-btn" onclick="changeQty(${g.id}, 1)">+</button>
-            </div>
-        `;
-        container.appendChild(div);
-    });
+    const container = document.getElementById("gifts-container");
+    container.innerHTML = '';
+    
+    gifts.forEach(g => {
+        if(filter !== 'all' && g.cat !== filter) return;
+        
+        const div = document.createElement("div");
+        div.className = "gift-item";
+        
+        let displayIcon = g.icon;
+        if(g.isBadge) {
+            const icons = {"legend_badge":"fa-shield-halved", "dragon_badge":"fa-dragon"};
+            displayIcon = `<i class="fas ${icons[g.icon]} badge-icon"></i>`;
+        } else if(g.icon.startsWith('fas')) {
+            displayIcon = `<i class="${g.icon} tool-icon"></i>`;
+        } else {
+            displayIcon = `<span>${g.icon}</span>`;
+        }
+        
+        div.innerHTML = `
+            ${g.proOnly ? '<span class="pro-exclusive-tag">PRO</span>' : ''}
+            <div class="gift-icon-container">${displayIcon}</div>
+            <div class="gift-name">${g.name}</div>
+            <div class="gift-xp">${g.xp > 0 ? `+${g.xp} XP` : 'عنصر خاص'}</div>
+            <div class="gift-price ${g.currency === 'gems' ? 'price-gems' : 'price-coins'}">
+                <i class="fas ${g.currency === 'gems' ? 'fa-gem' : 'fa-coins'}"></i> ${g.cost.toLocaleString()}
+            </div>
+            <div class="qty-controls">
+                <button class="qty-btn" onclick="changeQty(${g.id}, -1)">-</button>
+                <span class="qty-num" id="qty-${g.id}">${cart[g.id] || 0}</span>
+                <button class="qty-btn" onclick="changeQty(${g.id}, 1)">+</button>
+            </div>
+        `;
+        container.appendChild(div);
+    });
 }
 
 function changeQty(id, delta) {
-    const gift = gifts.find(g => g.id === id);
-    cart[id] = Math.max(0, (cart[id] || 0) + delta);
-    
-    // الشارات والأدوات قطعة واحدة فقط
-    if((gift.isBadge || gift.isTool) && cart[id] > 1) cart[id] = 1;
-    
-    document.getElementById(`qty-${id}`).innerText = cart[id];
-    updateTotal();
+    const gift = gifts.find(g => g.id === id);
+    cart[id] = Math.max(0, (cart[id] || 0) + delta);
+    
+    if((gift.isBadge || gift.isTool) && cart[id] > 1) cart[id] = 1;
+    
+    document.getElementById(`qty-${id}`).innerText = cart[id];
+    updateTotal();
 }
 
 function updateTotal() {
-    let coinsTotal = 0; let gemsTotal = 0;
-    for(let id in cart) {
-        const gift = gifts.find(g => g.id == id);
-        if(gift.currency === "gems") gemsTotal += gift.cost * cart[id];
-        else coinsTotal += gift.cost * cart[id];
-    }
-    document.getElementById("total-coins-cost").innerText = coinsTotal.toLocaleString() + " كوينز";
-    document.getElementById("total-gems-cost").innerText = gemsTotal.toLocaleString() + " جواهر";
-    
-    const canAfford = coinsTotal <= (currentUserData.totalCoins || 0) && gemsTotal <= (currentUserData.s_gems || 0);
-    document.getElementById("send-btn").disabled = (coinsTotal + gemsTotal === 0) || !canAfford;
+    let coinsTotal = 0; let gemsTotal = 0;
+    for(let id in cart) {
+        const gift = gifts.find(g => g.id == id);
+        if(!gift) continue;
+        if(gift.currency === "gems") gemsTotal += gift.cost * cart[id];
+        else coinsTotal += gift.cost * cart[id];
+    }
+    document.getElementById("total-coins-cost").innerText = coinsTotal.toLocaleString() + " كوينز";
+    document.getElementById("total-gems-cost").innerText = gemsTotal.toLocaleString() + " جواهر";
+    
+    const canAfford = coinsTotal <= (currentUserData.totalCoins || 0) && gemsTotal <= (currentUserData.s_gems || 0);
+    document.getElementById("send-btn").disabled = (coinsTotal + gemsTotal === 0) || !canAfford;
 }
 
 function setupSearch() {
-    const input = document.getElementById('player-search');
-    const results = document.getElementById('search-results');
-    input.addEventListener('input', async () => {
-        const val = input.value.trim();
-        if(val.length < 2) { results.style.display = 'none'; return; }
-        
-        const snap = await db.collection('users').where('displayName', '>=', val).where('displayName', '<=', val + '\uf8ff').limit(5).get();
-        results.innerHTML = '';
-        if(snap.empty) {
-            results.innerHTML = '<div class="search-item">لا يوجد لاعب بهذا الاسم</div>';
-        } else {
-            snap.forEach(doc => {
-                const data = doc.data();
-                const div = document.createElement('div');
-                div.className = 'search-item';
-                div.innerHTML = `<span>${data.displayName}</span> <small style="color:var(--primary)">${doc.id.substring(0,6)}#</small>`;
-                div.onclick = () => {
-                    selectedPlayerUid = doc.id;
-                    document.getElementById('rec-name').innerText = data.displayName;
-                    results.style.display = 'none';
-                    input.value = '';
-                };
-                results.appendChild(div);
-            });
-        }
-        results.style.display = 'block';
-    });
+    const input = document.getElementById('player-search');
+    const results = document.getElementById('search-results');
+    input.addEventListener('input', async () => {
+        const val = input.value.trim();
+        if(val.length < 2) { results.style.display = 'none'; return; }
+        
+        const snap = await db.collection('users').where('displayName', '>=', val).where('displayName', '<=', val + '\uf8ff').limit(5).get();
+        results.innerHTML = '';
+        if(snap.empty) {
+            results.innerHTML = '<div class="search-item">لا يوجد لاعب بهذا الاسم</div>';
+        } else {
+            snap.forEach(doc => {
+                const data = doc.data();
+                const div = document.createElement('div');
+                div.className = 'search-item';
+                div.innerHTML = `<span>${data.displayName}</span> <small style="color:var(--primary)">${doc.id.substring(0,6)}#</small>`;
+                div.onclick = () => {
+                    selectedPlayerUid = doc.id;
+                    document.getElementById('rec-name').innerText = data.displayName;
+                    results.style.display = 'none';
+                    input.value = '';
+                };
+                results.appendChild(div);
+            });
+        }
+        results.style.display = 'block';
+    });
 }
 
 function filterGifts(cat, el) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-    renderGifts(cat);
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    renderGifts(cat);
 }
 
 async function processPurchase() {
-    document.getElementById("purchase-overlay").style.display = "flex";
-    const batch = db.batch();
-    const myUid = firebase.auth().currentUser.uid;
-    const myRef = db.collection('users').doc(myUid);
-    const targetRef = db.collection('users').doc(selectedPlayerUid);
+    document.getElementById("purchase-overlay").style.display = "flex";
+    const batch = db.batch();
+    const myUid = firebase.auth().currentUser.uid;
+    const myRef = db.collection('users').doc(myUid);
+    const targetRef = db.collection('users').doc(selectedPlayerUid);
 
-    let tCoins = 0; let tGems = 0;
+    let tCoins = 0; let tGems = 0;
 
-    for(let id in cart) {
-        if(cart[id] <= 0) continue;
-        const gift = gifts.find(g => g.id == id);
-        const qty = cart[id];
+    for(let id in cart) {
+        if(cart[id] <= 0) continue;
+        const gift = gifts.find(g => g.id == id);
+        const qty = cart[id];
 
-        if(gift.currency === "gems") tGems += gift.cost * qty;
-        else tCoins += gift.cost * qty;
+        if(gift.currency === "gems") tGems += gift.cost * qty;
+        else tCoins += gift.cost * qty;
 
-        if(gift.isBadge) {
-            batch.update(targetRef, { badges: firebase.firestore.FieldValue.arrayUnion(gift.icon) });
-        } else if(gift.isTool) {
-            // إضافة مصفوفة للأدوات
-            for(let i=0; i<qty; i++) {
-                batch.update(targetRef, { inventory: firebase.firestore.FieldValue.arrayUnion(gift.name) });
-            }
-        } else {
-            batch.update(targetRef, { xp: firebase.firestore.FieldValue.increment(gift.xp * qty) });
-        }
-    }
+        if(gift.isBadge) {
+            batch.update(targetRef, { badges: firebase.firestore.FieldValue.arrayUnion(gift.icon) });
+        } else if(gift.isTool) {
+            for(let i=0; i<qty; i++) {
+                batch.update(targetRef, { inventory: firebase.firestore.FieldValue.arrayUnion(gift.name) });
+            }
+        } else {
+            batch.update(targetRef, { xp: firebase.firestore.FieldValue.increment(gift.xp * qty) });
+        }
+    }
 
-    try {
-        batch.update(myRef, { 
-            totalCoins: firebase.firestore.FieldValue.increment(-tCoins),
-            s_gems: firebase.firestore.FieldValue.increment(-tGems)
-        });
-        await batch.commit();
-        alert("💎 تم الشراء بنجاح! شكراً لكرمك الملكي.");
-        location.reload();
-    } catch(e) {
-        alert("❌ فشلت العملية. تأكد من اتصالك بالإنترنت.");
-    } finally {
-        document.getElementById("purchase-overlay").style.display = "none";
-    }
+    try {
+        batch.update(myRef, { 
+            totalCoins: firebase.firestore.FieldValue.increment(-tCoins),
+            s_gems: firebase.firestore.FieldValue.increment(-tGems)
+        });
+        await batch.commit();
+        alert("💎 تم الشراء بنجاح! شكراً لكرمك الملكي.");
+        location.reload();
+    } catch(e) {
+        alert("❌ فشلت العملية.");
+    } finally {
+        document.getElementById("purchase-overlay").style.display = "none";
+    }
 }
 </script>
+
 </body>
 </html>
