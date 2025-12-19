@@ -21,14 +21,15 @@
             --card-bg: rgba(30, 41, 59, 0.7);
             --gold: #ffd700;
             --silver: #cbd5e1;
+            /* ألوان الشارات */
             --rarity-dev: linear-gradient(45deg, #ff4757, #990000);
             --rarity-pro: linear-gradient(45deg, #ffd700, #b8860b); 
             --rarity-legend: linear-gradient(45deg, #fbbf24, #d97706);
             --rarity-silver: linear-gradient(45deg, #94a3b8, #475569); 
             --rarity-rare: linear-gradient(45deg, #3b82f6, #1e3a8a);
             --rarity-rich: linear-gradient(45deg, #2ecc71, #27ae60); 
-            --rarity-gem: linear-gradient(45deg, #00d2ff, #3a7bd5); /* لون شارة الجواهر */
-            --rarity-fire: linear-gradient(45deg, #f093fb, #f5576c); 
+            --rarity-gem: linear-gradient(45deg, #00d2ff, #9b59b6); /* بنفسجي مع سماوي للجواهر */
+            --rarity-fire: linear-gradient(45deg, #00c6ff, #0072ff); /* خلفية زرقاء للنار الزرقاء */
         }
 
         body {
@@ -61,7 +62,7 @@
         }
         #profile-img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; display: none; }
 
-        .badge-display { display: flex; justify-content: center; gap: 10px; margin: 10px 0; min-height: 40px; }
+        .badge-display { display: flex; justify-content: center; gap: 10px; margin: 10px 0; min-height: 40px; flex-wrap: wrap; }
         .header-badge-circle {
             width: 35px; height: 35px; border-radius: 50%; display: flex; 
             align-items: center; justify-content: center; font-size: 1rem;
@@ -77,6 +78,7 @@
         .badge-slot i { font-size: 1.5rem; display: block; margin-bottom: 5px; color: white; }
         .badge-slot span { font-size: 0.65rem; font-weight: bold; display: block; color: white; }
 
+        /* ربط الكلاسات بالألوان */
         .bg-dev { background: var(--rarity-dev); }
         .bg-pro { background: var(--rarity-pro); }
         .bg-legend { background: var(--rarity-legend); }
@@ -143,7 +145,7 @@ const ALL_GAME_BADGES = {
     "dev_badge": { name: "مطور", icon: "fa-code", bg: "bg-dev" },
     "pro_badge": { name: "برو", icon: "fa-crown", bg: "bg-pro" },
     "rich_badge": { name: "ثري", icon: "fa-money-bill-trend-up", bg: "bg-rich" },
-    "gem_rich_badge": { name: "ملك الجواهر", icon: "fa-gem", bg: "bg-gem" }, // الشارة الجديدة
+    "gem_rich_badge": { name: "ملك الجواهر", icon: "fa-gem", bg: "bg-gem" },
     "blue_fire_badge": { name: "نار زرقاء", icon: "fa-fire-flame-curved", bg: "bg-fire" },
     "legend_badge": { name: "الأسطورة", icon: "fa-shield-halved", bg: "bg-legend" },
     "dragon_badge": { name: "التنين", icon: "fa-dragon", bg: "bg-rare" },
@@ -179,7 +181,7 @@ async function fetchLeaderboards() {
 
         const gemsSnap = await db.collection('users').orderBy('s_gems', 'desc').limit(10).get();
         topGemsUIDs = gemsSnap.docs.map(d => d.id);
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Error fetching tops:", e); }
 }
 
 function refreshUI() {
@@ -196,6 +198,7 @@ function refreshUI() {
         imgEl.style.display = 'none'; defaultAv.style.display = 'flex';
     }
 
+    // عرض الشارات المجهزة
     const activeCont = document.getElementById("active-badges-container");
     activeCont.innerHTML = "";
     const equipped = userDoc.equippedBadges || [];
@@ -204,6 +207,7 @@ function refreshUI() {
         if(badge) activeCont.innerHTML += `<div class="header-badge-circle ${badge.bg}"><i class="fas ${badge.icon}" style="color:white"></i></div>`;
     });
 
+    // مكتبة الشارات
     const libraryCont = document.getElementById("badges-library");
     libraryCont.innerHTML = "";
     let owned = userDoc.badges || [];
@@ -231,52 +235,83 @@ function refreshUI() {
         libraryCont.appendChild(slot);
     });
 
+    // تحديث البطاقات
     const inv = userDoc.inventory || [];
     const nCards = inv.filter(i => i === "بطاقة الاسم").length;
     const iCards = inv.filter(i => i === "بطاقة الـ ID").length;
+    
+    document.getElementById("nameInput").disabled = (nCards === 0);
     document.getElementById("saveBtn").disabled = (nCards === 0);
+    document.getElementById("input-container").classList.toggle("locked-input", nCards === 0);
+    document.getElementById("name-status").innerHTML = nCards > 0 ? `<span style="color:var(--gold)">لديك ${nCards} بطاقة</span>` : `<span style="color:#ff4757">لا تملك بطاقة!</span>`;
     document.getElementById("idBtn").disabled = (iCards === 0);
 }
 
 async function toggleBadge(badgeKey) {
     let currentEquipped = userDoc.equippedBadges || [];
-    let newEquipped = currentEquipped.includes(badgeKey) 
-        ? currentEquipped.filter(item => item !== badgeKey) 
-        : (currentEquipped.length < 5 ? [...currentEquipped, badgeKey] : (alert("الحد الأقصى 5!"), currentEquipped));
+    let newEquipped;
+
+    if (currentEquipped.includes(badgeKey)) {
+        newEquipped = currentEquipped.filter(item => item !== badgeKey);
+    } else {
+        if (currentEquipped.length >= 5) {
+            alert("الحد الأقصى 5 شارات فقط!");
+            return;
+        }
+        newEquipped = [...currentEquipped, badgeKey];
+    }
     await db.collection('users').doc(auth.currentUser.uid).update({ equippedBadges: newEquipped });
 }
 
 async function handleSaveName() {
     const n = document.getElementById("nameInput").value.trim();
-    if(n.length < 3) return alert("قصير جداً!");
-    let inv = [...userDoc.inventory];
-    inv.splice(inv.indexOf("بطاقة الاسم"), 1);
-    await db.collection('users').doc(auth.currentUser.uid).update({ displayName: n, inventory: inv });
-    alert("تم التغيير!");
+    if(n.length < 3) return alert("الاسم قصير جداً!");
+    try {
+        let inv = [...userDoc.inventory];
+        const index = inv.indexOf("بطاقة الاسم");
+        if (index > -1) inv.splice(index, 1);
+        await db.collection('users').doc(auth.currentUser.uid).update({ displayName: n, inventory: inv });
+        document.getElementById("nameInput").value = "";
+        alert("تم تحديث الاسم الملكي!");
+    } catch(e) { alert("خطأ في الاتصال!"); }
 }
 
 async function handleChangeID() {
-    const nid = prompt("ID جديد:");
+    const nid = prompt("أدخل الـ ID الملكي الجديد:");
     if(!nid) return;
-    const check = await db.collection('users').where('customID', '==', nid.trim()).get();
-    if(!check.empty) return alert("محجوز!");
-    let inv = [...userDoc.inventory];
-    inv.splice(inv.indexOf("بطاقة الـ ID"), 1);
-    await db.collection('users').doc(auth.currentUser.uid).update({ customID: nid.trim(), inventory: inv });
+    const cleanId = nid.trim();
+    try {
+        const check = await db.collection('users').where('customID', '==', cleanId).get();
+        if(!check.empty) return alert("المعرف محجوز!");
+        let inv = [...userDoc.inventory];
+        const index = inv.indexOf("بطاقة الـ ID");
+        if (index > -1) inv.splice(index, 1);
+        await db.collection('users').doc(auth.currentUser.uid).update({ customID: cleanId, inventory: inv });
+        alert("تم تغيير المعرف بنجاح!");
+    } catch(e) { alert("حدث خطأ!"); }
 }
 
-function copyUserID() { navigator.clipboard.writeText(document.getElementById("user-id-display").innerText); alert("تم النسخ!"); }
+function copyUserID() {
+    const id = document.getElementById("user-id-display").innerText;
+    navigator.clipboard.writeText(id);
+    alert("تم نسخ المعرف!");
+}
 
 async function handlePhotoUpload(input) {
-    const file = input.files[0]; if (!file) return;
+    const file = input.files[0];
+    if (!file) return;
     const reader = new FileReader();
     reader.onload = (e) => {
-        const img = new Image(); img.src = e.target.result;
+        const img = new Image();
+        img.src = e.target.result;
         img.onload = () => {
             const canvas = document.createElement('canvas');
             canvas.width = 200; canvas.height = 200;
-            canvas.getContext('2d').drawImage(img, 0, 0, 200, 200);
-            db.collection('users').doc(auth.currentUser.uid).update({ photoURL: canvas.toDataURL('image/jpeg', 0.7) });
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, 200, 200);
+            db.collection('users').doc(auth.currentUser.uid).update({ 
+                photoURL: canvas.toDataURL('image/jpeg', 0.7) 
+            });
         };
     };
     reader.readAsDataURL(file);
