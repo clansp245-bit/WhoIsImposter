@@ -44,8 +44,20 @@
         }
 
         .profile-header { text-align: center; }
+        
+        /* --- تنسيق الأفاتار الجديد --- */
         .avatar-container { width: 110px; height: 110px; margin: 0 auto 15px; position: relative; cursor: pointer; }
-        #profile-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary); background: #1e293b; }
+        #avatar-wrapper {
+            width: 100%; height: 100%; border-radius: 50%; 
+            border: 4px solid var(--primary); overflow: hidden; position: relative;
+            background: #1e293b;
+        }
+        #default-avatar {
+            width: 100%; height: 100%; background: #6366f1; /* خلفية بنفسجية */
+            display: flex; align-items: center; justify-content: center;
+            font-size: 3rem; color: white;
+        }
+        #profile-img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; display: none; }
 
         .badge-display { display: flex; justify-content: center; gap: 10px; margin: 10px 0; min-height: 40px; }
         .header-badge-circle {
@@ -77,7 +89,6 @@
         .input-group { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; display: flex; overflow: hidden; margin-top: 10px; transition: 0.3s; }
         .input-group.locked-input { opacity: 0.5; background: rgba(255,0,0,0.05); cursor: not-allowed; }
         #nameInput { background: transparent; border: none; padding: 15px; color: white; font-family: 'Cairo'; flex-grow: 1; outline: none; }
-        #nameInput:disabled { cursor: not-allowed; }
         
         .btn-save { background: var(--accent-gradient); border: none; color: white; padding: 0 20px; font-weight: 900; cursor: pointer; }
         .btn-save:disabled { cursor: not-allowed; filter: grayscale(1); }
@@ -88,7 +99,10 @@
 
 <div class="card profile-header">
     <div class="avatar-container" onclick="document.getElementById('upload-photo').click()">
-        <img id="profile-img" src="https://via.placeholder.com/150" title="تغيير الصورة">
+        <div id="avatar-wrapper">
+            <img id="profile-img" src="" title="تغيير الصورة">
+            <div id="default-avatar"><i class="fas fa-user"></i></div>
+        </div>
         <input type="file" id="upload-photo" style="display:none" accept="image/*" onchange="handlePhotoUpload(this)">
     </div>
     <div id="active-badges-container" class="badge-display"></div>
@@ -119,6 +133,7 @@
 <button class="btn-back" onclick="location.href='index.html'">العودة للرئيسية</button>
 
 <script>
+// المفاتيح هنا مطابقة تماماً لما سيتم إرساله من صفحة المتجر المعدلة
 const ALL_GAME_BADGES = {
     "dev_badge": { name: "مطور", icon: "fa-code", bg: "bg-dev" },
     "pro_badge": { name: "برو", icon: "fa-crown", bg: "bg-pro" },
@@ -143,11 +158,25 @@ auth.onAuthStateChanged(user => {
 });
 
 function refreshUI() {
+    if(!userDoc) return;
+
     const currentID = userDoc.customID || userDoc.publicUid || "";
     document.getElementById("display-name").innerText = userDoc.displayName || "لاعب";
     document.getElementById("user-id-display").innerText = currentID;
-    if (userDoc.photoURL) document.getElementById('profile-img').src = userDoc.photoURL;
 
+    // --- منطق الصورة الشخصية والأفاتار الافتراضي ---
+    const imgEl = document.getElementById('profile-img');
+    const defaultAv = document.getElementById('default-avatar');
+    if (userDoc.photoURL) {
+        imgEl.src = userDoc.photoURL;
+        imgEl.style.display = 'block';
+        defaultAv.style.display = 'none';
+    } else {
+        imgEl.style.display = 'none';
+        defaultAv.style.display = 'flex';
+    }
+
+    // --- الشارات المجهزة (فوق الاسم) ---
     const activeCont = document.getElementById("active-badges-container");
     activeCont.innerHTML = "";
     const equipped = userDoc.equippedBadges || [];
@@ -159,9 +188,12 @@ function refreshUI() {
         }
     });
 
+    // --- مكتبة الشارات ---
     const libraryCont = document.getElementById("badges-library");
     libraryCont.innerHTML = "";
     let owned = userDoc.badges || [];
+    
+    // دعم تلقائي لشارة الفضة إذا كان يملك الذهب
     const ownsGoldS1 = owned.includes("gold_s_badge");
     if(ownsGoldS1 && !owned.includes("silver_s_badge")) owned.push("silver_s_badge");
 
@@ -177,6 +209,7 @@ function refreshUI() {
         libraryCont.appendChild(slot);
     });
 
+    // --- فحص البطاقات في الحقيبة ---
     const inv = userDoc.inventory || [];
     const nCards = inv.filter(i => i === "بطاقة الاسم").length;
     const iCards = inv.filter(i => i === "بطاقة الـ ID").length;
@@ -194,7 +227,6 @@ async function handleSaveName() {
     if(n === userDoc.displayName) return alert("هذا اسمك الحالي بالفعل!");
 
     try {
-        // فحص تكرار الاسم في قاعدة البيانات
         const check = await db.collection('users').where('displayName', '==', n).get();
         if(!check.empty) return alert("هذا الاسم مستخدم من قبل شخص آخر!");
 
@@ -203,6 +235,7 @@ async function handleSaveName() {
         if (index > -1) inv.splice(index, 1);
         
         await db.collection('users').doc(auth.currentUser.uid).update({ displayName: n, inventory: inv });
+        document.getElementById("nameInput").value = "";
         alert("تم تحديث الاسم الملكي!");
     } catch(e) { alert("خطأ في الاتصال!"); }
 }
@@ -213,7 +246,6 @@ async function handleChangeID() {
     const cleanId = nid.trim();
 
     try {
-        // فحص تكرار الـ ID في الحقلين (الافتراضي والمخصص)
         const check1 = await db.collection('users').where('customID', '==', cleanId).get();
         const check2 = await db.collection('users').where('publicUid', '==', cleanId).get();
         
@@ -257,7 +289,8 @@ async function handlePhotoUpload(input) {
         img.onload = async () => {
             const canvas = document.createElement('canvas');
             canvas.width = 200; canvas.height = 200;
-            canvas.getContext('2d').drawImage(img, 0, 0, 200, 200);
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, 200, 200);
             const base64 = canvas.toDataURL('image/jpeg', 0.6);
             await db.collection('users').doc(auth.currentUser.uid).update({ photoURL: base64 });
         };
