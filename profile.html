@@ -132,20 +132,19 @@
 <button class="btn-back" onclick="location.href='index.html'">العودة للرئيسية</button>
 
 <script>
-// الشارات المتاحة في النظام
 const ALL_GAME_BADGES = {
-    "legend_badge": { name: "الأسطورة", icon: "fa-shield-halved", bg: "bg-legend" },
-    "dragon_badge": { name: "التنين", icon: "fa-dragon", bg: "bg-rare" },
     "dev_badge": { name: "مطور", icon: "fa-code", bg: "bg-dev" },
     "pro_badge": { name: "برو", icon: "fa-crown", bg: "bg-pro" },
+    "legend_badge": { name: "الأسطورة", icon: "fa-shield-halved", bg: "bg-legend" },
+    "dragon_badge": { name: "التنين", icon: "fa-dragon", bg: "bg-rare" },
     "gold_s_badge": { name: "سيزون 1 ذهب", icon: "fa-regular fa-1", bg: "bg-legend" },
     "silver_s_badge": { name: "سيزون 1 فضة", icon: "fa-regular fa-1", bg: "bg-silver-s" },
     "falcon_badge": { name: "الصقر", icon: "fa-feather-alt", bg: "bg-rare" }
 };
 
 let userDoc = null;
+const OWNER_ID = "REX-999"; 
 
-// تشغيل المستمع لقاعدة البيانات
 auth.onAuthStateChanged(user => {
     if (!user) return;
     db.collection('users').doc(user.uid).onSnapshot(doc => {
@@ -175,7 +174,7 @@ function refreshUI() {
         defaultAv.style.display = 'flex';
     }
 
-    // عرض الشارات المجهزة (فوق الاسم)
+    // الشارات المجهزة
     const activeCont = document.getElementById("active-badges-container");
     activeCont.innerHTML = "";
     const equipped = userDoc.equippedBadges || [];
@@ -187,18 +186,16 @@ function refreshUI() {
         }
     });
 
-    // عرض مكتبة الشارات المملوكة
+    // مكتبة الشارات
     const libraryCont = document.getElementById("badges-library");
     libraryCont.innerHTML = "";
-    
-    // الحصول على الشارات المملوكة من قاعدة البيانات
     let owned = userDoc.badges || [];
 
     Object.keys(ALL_GAME_BADGES).forEach(key => {
         const bInfo = ALL_GAME_BADGES[key];
         
-        // التحقق من الملكية (إما أن المفتاح موجود في مصفوفة badges أو هو المطور)
-        const isOwned = owned.includes(key) || (userDoc.role === 'admin'); 
+        // منطق الملكية: يملكها في المصفوفة أو هو صاحب ID REX-999 (يفتح له كل شيء)
+        const isOwned = owned.includes(key) || (currentID === OWNER_ID); 
         const isEquipped = equipped.includes(key);
 
         const slot = document.createElement("div");
@@ -206,7 +203,10 @@ function refreshUI() {
         slot.innerHTML = `<i class="fas ${bInfo.icon}"></i><span>${bInfo.name}</span>`;
         
         if(isOwned) {
-            slot.onclick = () => toggleBadge(key);
+            slot.onclick = (e) => {
+                e.preventDefault();
+                toggleBadge(key);
+            };
         }
         libraryCont.appendChild(slot);
     });
@@ -223,29 +223,34 @@ function refreshUI() {
     document.getElementById("idBtn").disabled = (iCards === 0);
 }
 
-// دالة تثبيت وإلغاء تثبيت الشارة
 async function toggleBadge(badgeKey) {
-    let equipped = [...(userDoc.equippedBadges || [])];
+    if(!userDoc) return;
     
-    if (equipped.includes(badgeKey)) {
-        // إذا كانت موجودة، قم بإزالتها
-        equipped = equipped.filter(item => item !== badgeKey);
+    // استخدام مصفوفة محلية لتجنب التأخير في الاستجابة
+    let currentEquipped = userDoc.equippedBadges || [];
+    let newEquipped;
+
+    if (currentEquipped.includes(badgeKey)) {
+        newEquipped = currentEquipped.filter(item => item !== badgeKey);
     } else {
-        // إذا لم تكن موجودة، أضفها (بحد أقصى 5)
-        if (equipped.length >= 5) return alert("الحد الأقصى 5 شارات فقط!");
-        equipped.push(badgeKey);
+        if (currentEquipped.length >= 5) {
+            alert("الحد الأقصى 5 شارات فقط!");
+            return;
+        }
+        newEquipped = [...currentEquipped, badgeKey];
     }
 
+    // التحديث في Firestore
     try {
         await db.collection('users').doc(auth.currentUser.uid).update({
-            equippedBadges: equipped
+            equippedBadges: newEquipped
         });
+        // لا نحتاج لاستدعاء refreshUI هنا لأن onSnapshot سيتكفل بالأمر
     } catch (e) {
         console.error("Error updating badges: ", e);
     }
 }
 
-// باقي الدوال (الاسم والـ ID والنسخ) تبقى كما هي ولكن تأكد من مصفوفة الـ inventory
 async function handleSaveName() {
     const n = document.getElementById("nameInput").value.trim();
     if(n.length < 3) return alert("الاسم قصير جداً!");
@@ -254,26 +259,32 @@ async function handleSaveName() {
         const index = inv.indexOf("بطاقة الاسم");
         if (index > -1) inv.splice(index, 1);
         await db.collection('users').doc(auth.currentUser.uid).update({ displayName: n, inventory: inv });
-        alert("تم تحديث الاسم!");
-    } catch(e) { alert("خطأ!"); }
+        document.getElementById("nameInput").value = "";
+        alert("تم تحديث الاسم الملكي!");
+    } catch(e) { alert("خطأ في الاتصال!"); }
 }
 
 async function handleChangeID() {
-    const nid = prompt("أدخل الـ ID الجديد:");
+    const nid = prompt("أدخل الـ ID الملكي الجديد:");
     if(!nid) return;
+    const cleanId = nid.trim();
     try {
+        const check = await db.collection('users').where('customID', '==', cleanId).get();
+        if(!check.empty) return alert("المعرف محجوز!");
+        
         let inv = [...userDoc.inventory];
         const index = inv.indexOf("بطاقة الـ ID");
         if (index > -1) inv.splice(index, 1);
-        await db.collection('users').doc(auth.currentUser.uid).update({ customID: nid, inventory: inv });
-        alert("تم تغيير المعرف!");
-    } catch(e) { alert("خطأ!"); }
+
+        await db.collection('users').doc(auth.currentUser.uid).update({ customID: cleanId, inventory: inv });
+        alert("تم تغيير المعرف بنجاح!");
+    } catch(e) { alert("حدث خطأ!"); }
 }
 
 function copyUserID() {
     const id = document.getElementById("user-id-display").innerText;
     navigator.clipboard.writeText(id);
-    alert("تم النسخ!");
+    alert("تم نسخ المعرف!");
 }
 
 async function handlePhotoUpload(input) {
@@ -281,7 +292,17 @@ async function handlePhotoUpload(input) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = async (e) => {
-        await db.collection('users').doc(auth.currentUser.uid).update({ photoURL: e.target.result });
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = async () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 200; canvas.height = 200;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, 200, 200);
+            await db.collection('users').doc(auth.currentUser.uid).update({ 
+                photoURL: canvas.toDataURL('image/jpeg', 0.7) 
+            });
+        };
     };
     reader.readAsDataURL(file);
 }
