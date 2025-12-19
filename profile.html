@@ -71,6 +71,51 @@
             cursor: pointer; border: 3px solid var(--bg-body);
         }
 
+        /* --- نظام الشارات --- */
+        #user-badges {
+            display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;
+        }
+        .active-badge {
+            font-size: 1.3rem; filter: drop-shadow(0 0 5px rgba(255,255,255,0.3));
+        }
+
+        .badges-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .badge-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 12px 5px;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+            transition: 0.3s all ease;
+        }
+
+        .badge-item.locked {
+            filter: grayscale(1) opacity(0.4);
+            cursor: not-allowed;
+        }
+
+        .badge-item.selected {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(99, 102, 241, 0.2);
+        }
+
+        .badge-item i { font-size: 1.8rem; margin-bottom: 6px; display: block; }
+        .badge-item span { font-size: 0.65rem; display: block; color: var(--text-dim); font-weight: bold; }
+
+        .badge-lock { position: absolute; top: 6px; right: 6px; font-size: 0.7rem; color: #ef4444; }
+        .badge-check { position: absolute; top: 4px; left: 4px; font-size: 0.8rem; color: var(--primary); }
+
+        /* --- بقية العناصر --- */
         .input-group {
             background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);
             border-radius: 15px; display: flex; overflow: hidden; margin-top: 10px;
@@ -93,7 +138,7 @@
             border: 1px solid rgba(255,215,0,0.2);
         }
 
-        .btn-back { width: 100%; max-width: 500px; padding: 15px; background: rgba(255,255,255,0.05); color: white; border-radius: 15px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); font-family: 'Cairo'; font-weight: bold; }
+        .btn-back { width: 100%; max-width: 500px; padding: 15px; background: rgba(255,255,255,0.05); color: white; border-radius: 15px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); font-family: 'Cairo'; font-weight: bold; margin-bottom: 30px; }
         
         .log-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
     </style>
@@ -108,10 +153,19 @@
         <input type="file" id="upload-photo" style="display:none" accept="image/*" onchange="handlePhotoUpload(this)">
     </div>
     
-    <div id="user-badges" style="margin-bottom: 10px;"></div>
+    <div id="user-badges"></div>
+
     <h2 id="display-name" style="margin: 5px 0; font-weight: 900;">جارِ التحميل...</h2>
     <p style="font-size: 0.9rem; margin-bottom: 12px;">المعرف الملكي: <span id="user-id-display">---</span></p>
     <p id="user-email" style="color: var(--text-dim); font-size: 0.85rem; margin-bottom: 0;">...</p>
+</div>
+
+<div class="card">
+    <h3 style="margin:0; font-size: 1.1rem; color: var(--gold);"><i class="fas fa-medal"></i> خزانة الشارات الملكية</h3>
+    <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 5px;">اضغط لتفعيل الشارة (بحد أقصى 5)</p>
+    
+    <div id="badges-library" class="badges-grid">
+        </div>
 </div>
 
 <div class="card">
@@ -139,153 +193,171 @@
 <button class="btn-back" onclick="location.href='index.html'">العودة للرئيسية</button>
 
 <script>
+// تعريف كافة الشارات في اللعبة
+const ALL_BADGES_CONFIG = [
+    { id: "falcon_badge", icon: "fa-feather-alt", name: "الصقر", color: "#6366f1" },
+    { id: "gold_s_badge", icon: "fa-crown", name: "سيزون ذهبي", color: "#fbbf24" },
+    { id: "silver_s_badge", icon: "fa-award", name: "سيزون فضي", color: "#cbd5e1" },
+    { id: "rich_badge", icon: "fa-gem", name: "ثري", color: "#22d3ee" },
+    { id: "fire_badge", icon: "fa-fire", name: "متفاعل", color: "#ef4444" },
+    { id: "shield_badge", icon: "fa-shield-alt", name: "حامي", color: "#22c55e" },
+    { id: "heart_badge", icon: "fa-heart", name: "محبوب", color: "#f472b6" }
+];
+
 let currentUserData = null;
 
-// الربط مع Firebase Auth و Firestore
 auth.onAuthStateChanged(user => {
-    if (!user) {
-        window.location.href = "auth.html";
-        return;
-    }
+    if (!user) { window.location.href = "auth.html"; return; }
 
-    // استماع لحظي للبيانات لضمان التحديث التلقائي
     db.collection('users').doc(user.uid).onSnapshot(doc => {
         if (doc.exists) {
             currentUserData = doc.data();
             updateUILayout(user);
+            renderBadgesLibrary(); 
         } else {
             document.getElementById("display-name").innerText = "جاري تهيئة الحساب...";
         }
-    }, error => {
-        console.error("خطأ في جلب البيانات:", error);
     });
 });
 
 function updateUILayout(authInfo) {
-    // 1. تحديث الاسم
+    // 1. البيانات الأساسية
     document.getElementById("display-name").innerText = currentUserData.displayName || "لاعب مجهول";
-    
-    // 2. تحديث المعرف (ID): يعرض customID إذا وجد، وإلا يعرض publicUid من ملف auth.js
-    const displayID = currentUserData.customID || currentUserData.publicUid || "---";
-    document.getElementById("user-id-display").innerText = displayID;
-    
+    document.getElementById("user-id-display").innerText = currentUserData.customID || currentUserData.publicUid || "---";
     document.getElementById("user-email").innerText = authInfo.email;
     
-    // 3. تحديث الصورة الشخصية
+    // 2. الصورة
     if (currentUserData.photoURL) {
         document.getElementById('profile-img').src = currentUserData.photoURL;
         document.getElementById('profile-img').style.display = 'block';
         document.getElementById('default-avatar').style.display = 'none';
     }
 
-    // 4. فحص الحقيبة (Inventory)
+    // 3. عرض الشارات المفعلة في الأعلى
+    const badgesDiv = document.getElementById("user-badges");
+    badgesDiv.innerHTML = "";
+    const equipped = currentUserData.equippedBadges || [];
+    equipped.forEach(bId => {
+        const conf = ALL_BADGES_CONFIG.find(x => x.id === bId);
+        if(conf) {
+            badgesDiv.innerHTML += `<i class="fas ${conf.icon} active-badge" style="color:${conf.color}" title="${conf.name}"></i>`;
+        }
+    });
+
+    // 4. فحص الحقيبة
     const inventory = currentUserData.inventory || [];
     const nameCards = inventory.filter(i => i === "بطاقة الاسم").length;
     const idCards = inventory.filter(i => i === "بطاقة الـ ID").length;
 
-    // تحديث حالة أزرار التعديل
     const nStatus = document.getElementById("name-status");
     const nBtn = document.getElementById("saveBtn");
-    if(nameCards > 0) {
-        nStatus.innerText = `لديك ${nameCards} بطاقة اسم`;
-        nStatus.style.color = "#10b981";
-        nBtn.disabled = false;
-    } else {
-        nStatus.innerText = "لا تملك بطاقة اسم";
-        nStatus.style.color = "#ef4444";
-        nBtn.disabled = true;
-    }
+    nStatus.innerText = nameCards > 0 ? `لديك ${nameCards} بطاقة اسم` : "لا تملك بطاقة اسم";
+    nStatus.style.color = nameCards > 0 ? "#10b981" : "#ef4444";
+    nBtn.disabled = nameCards === 0;
 
     const iStatus = document.getElementById("id-status");
     const iBtn = document.getElementById("idBtn");
-    if(idCards > 0) {
-        iStatus.innerText = `لديك ${idCards} بطاقة ID مميز`;
-        iStatus.style.color = "#38bdf8";
-        iBtn.disabled = false;
-    } else {
-        iStatus.innerText = "لا تملك بطاقة ID";
-        iStatus.style.color = "#ef4444";
-        iBtn.disabled = true;
-    }
+    iStatus.innerText = idCards > 0 ? `لديك ${idCards} بطاقة ID مميز` : "لا تملك بطاقة ID";
+    iStatus.style.color = idCards > 0 ? "#38bdf8" : "#ef4444";
+    iBtn.disabled = idCards === 0;
 
-    // 5. تحديث سجل الهدايا
+    // 5. السجل
     if(currentUserData.receivedHistory && currentUserData.receivedHistory.length > 0) {
         document.getElementById("logs-container").style.display = "block";
         const cont = document.getElementById('received-logs');
         cont.innerHTML = "";
         currentUserData.receivedHistory.slice(-5).reverse().forEach(log => {
-            cont.innerHTML += `
-                <div class="log-item">
-                    <span><i class="fas fa-gift" style="color:var(--primary)"></i> ${log.giftName}</span>
-                    <b style="color:var(--gold)">من: ${log.senderName}</b>
-                </div>`;
+            cont.innerHTML += `<div class="log-item"><span><i class="fas fa-gift" style="color:var(--primary)"></i> ${log.giftName}</span><b style="color:var(--gold)">من: ${log.senderName}</b></div>`;
         });
     }
 }
 
-// دالة تغيير الاسم
+function renderBadgesLibrary() {
+    const lib = document.getElementById("badges-library");
+    lib.innerHTML = "";
+    
+    const owned = currentUserData.badges || [];
+    const equipped = currentUserData.equippedBadges || [];
+
+    ALL_BADGES_CONFIG.forEach(badge => {
+        const isOwned = owned.includes(badge.id);
+        const isEquipped = equipped.includes(badge.id);
+        
+        const bEl = document.createElement("div");
+        bEl.className = `badge-item ${!isOwned ? 'locked' : ''} ${isEquipped ? 'selected' : ''}`;
+        
+        bEl.innerHTML = `
+            ${!isOwned ? '<i class="fas fa-lock badge-lock"></i>' : ''}
+            ${isEquipped ? '<i class="fas fa-check-circle badge-check"></i>' : ''}
+            <i class="fas ${badge.icon}" style="color:${badge.color}"></i>
+            <span>${badge.name}</span>
+        `;
+
+        if(isOwned) {
+            bEl.onclick = () => toggleBadgeSelection(badge.id);
+        } else {
+            bEl.onclick = () => alert("هذه الشارة مقفلة، احصل عليها من السيزون أو المتجر!");
+        }
+        
+        lib.appendChild(bEl);
+    });
+}
+
+async function toggleBadgeSelection(bId) {
+    let equipped = [...(currentUserData.equippedBadges || [])];
+    
+    if(equipped.includes(bId)) {
+        equipped = equipped.filter(id => id !== bId);
+    } else {
+        if(equipped.length >= 5) {
+            return alert("الحد الأقصى 5 شارات فقط!");
+        }
+        equipped.push(bId);
+    }
+
+    await db.collection('users').doc(auth.currentUser.uid).update({
+        equippedBadges: equipped
+    });
+}
+
 async function handleSaveName() {
     const newName = document.getElementById('nameInput').value.trim();
-    if (newName.length < 3) return alert("الاسم قصير جداً (3 حروف على الأقل)");
-    
-    if (confirm(`هل أنت متأكد من تغيير اسمك إلى "${newName}"؟ سيتم استهلاك بطاقة واحدة.`)) {
+    if (newName.length < 3) return alert("الاسم قصير جداً");
+    if (confirm(`تغيير الاسم إلى "${newName}"؟`)) {
         let inv = [...(currentUserData.inventory || [])];
         const idx = inv.indexOf("بطاقة الاسم");
         if (idx > -1) {
             inv.splice(idx, 1);
-            await db.collection('users').doc(auth.currentUser.uid).update({
-                displayName: newName,
-                inventory: inv
-            });
-            alert("تم تحديث هويتك الملكية بنجاح! ✨");
+            await db.collection('users').doc(auth.currentUser.uid).update({ displayName: newName, inventory: inv });
             document.getElementById('nameInput').value = "";
+            alert("تم التغيير!");
         }
     }
 }
 
-// دالة توليد ID فخم ومميز جداً
 async function handleChangeID() {
-    // قوائم الأيديهات الفخمة
-    const prefixes = ["REX", "KING", "GOLD", "VIP", "ACE", "BOSS", "STAR", "PRO"];
-    const luckyNumbers = ["999", "777", "111", "007", "555", "101", "888", "001"];
-    
-    const randomPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
-    const randomNum = luckyNumbers[Math.floor(Math.random() * luckyNumbers.length)];
-    const generatedID = `${randomPrefix}-${randomNum}`;
-
-    if (confirm(`هل تريد استهلاك بطاقة ID للحصول على هذا المعرف الفخم: [ ${generatedID} ]؟`)) {
+    const prefixes = ["KING", "GOLD", "VIP", "ACE", "BOSS"];
+    const generatedID = `${prefixes[Math.floor(Math.random()*prefixes.length)]}-${Math.floor(100+Math.random()*899)}`;
+    if (confirm(`الحصول على الـ ID: [ ${generatedID} ]؟`)) {
         let inv = [...(currentUserData.inventory || [])];
         const idx = inv.indexOf("بطاقة الـ ID");
         if (idx > -1) {
             inv.splice(idx, 1);
-            await db.collection('users').doc(auth.currentUser.uid).update({
-                customID: generatedID,
-                inventory: inv
-            });
-            alert(`مبروك! معرفك الجديد هو: ${generatedID} 🏅`);
+            await db.collection('users').doc(auth.currentUser.uid).update({ customID: generatedID, inventory: inv });
+            alert("مبروك المعرف الجديد!");
         }
     }
 }
 
-// دالة رفع الصورة الشخصية
 async function handlePhotoUpload(input) {
     const file = input.files[0];
-    if (!file) return;
-    if (file.size > 1024 * 1024) return alert("حجم الصورة كبير جداً (الأقصى 1 ميجا)");
-
+    if (!file || file.size > 1024*1024) return alert("الصورة مفقودة أو كبيرة جداً");
     const reader = new FileReader();
     reader.onload = async (e) => {
-        const base64Image = e.target.result;
-        try {
-            await db.collection('users').doc(auth.currentUser.uid).update({ photoURL: base64Image });
-        } catch (err) {
-            alert("حدث خطأ أثناء رفع الصورة");
-        }
+        await db.collection('users').doc(auth.currentUser.uid).update({ photoURL: e.target.result });
     };
     reader.readAsDataURL(file);
 }
 </script>
-
 </body>
 </html>
-
