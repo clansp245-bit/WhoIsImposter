@@ -20,11 +20,11 @@
             --bg-body: #0a0f1e;
             --card-bg: rgba(30, 41, 59, 0.7);
             --gold: #ffd700;
-            --silver: #e2e8f0; /* لون فضي حقيقي */
+            --silver: #cbd5e1;
             --rarity-dev: linear-gradient(45deg, #ff4757, #990000);
             --rarity-pro: linear-gradient(45deg, #ffd700, #b8860b); 
             --rarity-legend: linear-gradient(45deg, #fbbf24, #d97706);
-            --rarity-silver: linear-gradient(45deg, #94a3b8, #475569); /* خلفية فضية */
+            --rarity-silver: linear-gradient(45deg, #94a3b8, #475569); 
             --rarity-rare: linear-gradient(45deg, #3b82f6, #1e3a8a);
         }
 
@@ -45,7 +45,7 @@
 
         .profile-header { text-align: center; }
         .avatar-container { width: 110px; height: 110px; margin: 0 auto 15px; position: relative; cursor: pointer; }
-        #profile-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary); background: #1e293b; transition: 0.3s; }
+        #profile-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary); background: #1e293b; }
 
         .badge-display { display: flex; justify-content: center; gap: 10px; margin: 10px 0; min-height: 40px; }
         .header-badge-circle {
@@ -66,7 +66,7 @@
         .bg-pro { background: var(--rarity-pro); }
         .bg-pro i { color: #ffffff !important; } 
         .bg-legend { background: var(--rarity-legend); }
-        .bg-silver-s { background: var(--rarity-silver); } /* كلاس الفضي الجديد */
+        .bg-silver-s { background: var(--rarity-silver); } 
         .bg-rare { background: var(--rarity-rare); }
         
         .badge-slot.equipped { border-color: #fff; transform: scale(1.05); box-shadow: 0 0 15px rgba(255,255,255,0.3); }
@@ -75,7 +75,6 @@
         .id-badge-container { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; }
         .id-badge { color: var(--gold); font-weight: 900; background: rgba(255,215,0,0.1); padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(255,215,0,0.2); }
         
-        /* تحسين مظهر الإدخال المقيد */
         .input-group { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; display: flex; overflow: hidden; margin-top: 10px; transition: 0.3s; }
         .input-group.locked-input { opacity: 0.5; background: rgba(255,0,0,0.05); cursor: not-allowed; }
         #nameInput { background: transparent; border: none; padding: 15px; color: white; font-family: 'Cairo'; flex-grow: 1; outline: none; }
@@ -124,8 +123,8 @@
 const ALL_GAME_BADGES = {
     "dev_badge": { name: "مطور", icon: "fa-code", bg: "bg-dev" },
     "pro_badge": { name: "برو", icon: "fa-crown", bg: "bg-pro" },
-    "gold_s_badge": { name: "سيزون 1", icon: "fa-regular fa-1", bg: "bg-legend" },
-    "silver_s_badge": { name: "سيزون 2", icon: "fa-regular fa-2", bg: "bg-silver-s" }, // سيزون 2 فضي
+    "gold_s_badge": { name: "سيزون 1 ذهب", icon: "fa-regular fa-1", bg: "bg-legend" },
+    "silver_s_badge": { name: "سيزون 1 فضة", icon: "fa-regular fa-1", bg: "bg-silver-s" }, 
     "legend_badge": { name: "الأسطورة", icon: "fa-shield-halved", bg: "bg-legend" },
     "dragon_badge": { name: "التنين", icon: "fa-dragon", bg: "bg-rare" },
     "falcon_badge": { name: "الصقر", icon: "fa-feather-alt", bg: "bg-rare" }
@@ -167,9 +166,10 @@ function refreshUI() {
     
     const hasFullAccess = (currentID === SUPER_ID);
 
-    // منطق السيزون: إذا امتلك ذهبية سيزون 1، تفتح فضية سيزون 2 تلقائياً
-    if(owned.includes("gold_s_badge") || owned.includes("fas fa-regular fa-1")) {
-        if(!owned.includes("silver_s_badge")) owned.push("silver_s_badge");
+    // المنطق الجديد: شارة الذهب تفتح شارة الفضة سيزون 1 تلقائياً
+    const ownsGoldS1 = owned.includes("gold_s_badge") || owned.includes("fas fa-regular fa-1");
+    if(ownsGoldS1 && !owned.includes("silver_s_badge")) {
+        owned.push("silver_s_badge");
     }
 
     Object.keys(ALL_GAME_BADGES).forEach(key => {
@@ -185,7 +185,6 @@ function refreshUI() {
         libraryCont.appendChild(slot);
     });
 
-    // التحكم في التقييد (اسم وبطاقة ID)
     const inv = userDoc.inventory || [];
     const nCards = inv.filter(i => i === "بطاقة الاسم").length;
     const iCards = inv.filter(i => i === "بطاقة الـ ID").length;
@@ -210,18 +209,14 @@ function refreshUI() {
     document.getElementById("idBtn").disabled = (iCards === 0);
 }
 
+// ... بقية الدوال (toggleBadge, handleSaveName, handlePhotoUpload إلخ) تبقى كما هي
 async function handleSaveName() {
     const n = document.getElementById("nameInput").value.trim();
     if(n.length < 3) return alert("الاسم قصير!");
-    
     let inv = [...userDoc.inventory];
     const index = inv.indexOf("بطاقة الاسم");
-    if (index > -1) inv.splice(index, 1); // حذف بطاقة واحدة فقط
-
-    await db.collection('users').doc(auth.currentUser.uid).update({ 
-        displayName: n, 
-        inventory: inv 
-    });
+    if (index > -1) inv.splice(index, 1);
+    await db.collection('users').doc(auth.currentUser.uid).update({ displayName: n, inventory: inv });
     alert("تم التغيير بنجاح!");
 }
 
@@ -230,15 +225,10 @@ async function handleChangeID() {
     if(!nid) return;
     const check = await db.collection('users').where('customID', '==', nid).get();
     if(!check.empty) return alert("عذراً، هذا المعرف مستخدم!");
-    
     let inv = [...userDoc.inventory];
     const index = inv.indexOf("بطاقة الـ ID");
     if (index > -1) inv.splice(index, 1);
-
-    await db.collection('users').doc(auth.currentUser.uid).update({ 
-        customID: nid, 
-        inventory: inv 
-    });
+    await db.collection('users').doc(auth.currentUser.uid).update({ customID: nid, inventory: inv });
 }
 
 async function toggleBadge(badgeKey) {
