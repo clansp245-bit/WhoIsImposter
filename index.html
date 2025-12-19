@@ -21,7 +21,7 @@
         --text-main: #f1f5f9;
         --text-dim: #94a3b8;
         --gold: #ffd700;
-        --season-color: #f43f5e;
+        --season-gradient: linear-gradient(135deg, #f43f5e 0%, #fb7185 100%);
     }
 
     body {  
@@ -74,8 +74,21 @@
     .nav-btn i { font-size: 1.4rem; }
     .nav-btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-3px); }
     
-    /* ستايل زر السيزون باس الخاص */
-    .btn-season { border: 1px solid rgba(244, 63, 94, 0.3); background: rgba(244, 63, 94, 0.05); }
+    /* ستايل زر السيزون باس المميز */
+    .btn-season { 
+        grid-column: span 2; /* جعله يأخذ العرض كاملاً للتميز */
+        background: var(--season-gradient); 
+        box-shadow: 0 4px 15px rgba(244, 63, 92, 0.4);
+        animation: pulse-animation 2s infinite;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .btn-season i { color: #fff; }
+
+    @keyframes pulse-animation {
+        0% { transform: scale(1); box-shadow: 0 4px 15px rgba(244, 63, 92, 0.4); }
+        50% { transform: scale(1.02); box-shadow: 0 4px 25px rgba(244, 63, 92, 0.6); }
+        100% { transform: scale(1); box-shadow: 0 4px 15px rgba(244, 63, 92, 0.4); }
+    }
 
     #player-input { 
         width: 100%; padding: 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); 
@@ -124,12 +137,15 @@
 
 <div class="main-card">  
     <div class="action-grid">
+        <button class="nav-btn btn-season" onclick="location.href='seasonpass.html'">
+            <i class="fas fa-star"></i>
+            <span>سيزون باس - الموسم 1</span>
+        </button>
+        
         <button class="nav-btn" onclick="location.href='leaderboard.html'"><i class="fas fa-trophy" style="color:#f59e0b"></i>المتصدرين</button>
         <button class="nav-btn" onclick="location.href='friends.html'"><i class="fas fa-user-friends" style="color:#10b981"></i>الأصدقاء</button>
-        <button class="nav-btn" onclick="location.href='settings.html'"><i class="fas fa-cog" style="color:#94a3b8"></i>الإعدادات</button>
         <button class="nav-btn" onclick="location.href='online.html'"><i class="fas fa-globe" style="color:#6366f1"></i>أونلاين</button>
-        <button class="nav-btn btn-season" onclick="location.href='seasonpass.html'"><i class="fas fa-star" style="color:var(--season-color)"></i>سيزون باس</button>
-        <button class="nav-btn" onclick="alert('قريباً!')"><i class="fas fa-store" style="color:#a855f7"></i>المتجر</button>
+        <button class="nav-btn" onclick="location.href='settings.html'"><i class="fas fa-cog" style="color:#94a3b8"></i>الإعدادات</button>
     </div>
 
     <div style="text-align: right;">
@@ -217,12 +233,9 @@
         const remaining = lv.targetXP - lv.xpInLevel;
         document.getElementById("xp-remaining").innerText = `متبقي ${remaining} XP للمستوى ${lv.level + 1}`;
         
-        // --- نظام مكافآت صعود المستوى ---
-        // إذا كان المستوى في السيرفر أقل من المستوى الحالي المحسوب
         if (currentUserData.level && lv.level > currentUserData.level) {
             handleLevelUpReward(lv.level);
         } else if (!currentUserData.level) {
-            // لأول مرة فقط لحفظ المستوى الابتدائي
             syncLevelOnly(lv.level);
         }
     }
@@ -230,7 +243,6 @@
     async function handleLevelUpReward(newLevel) {
         const user = firebase.auth().currentUser;
         if (user) {
-            // حساب المكافأة: المستوى الجديد * 100 كوينز
             const reward = newLevel * 100;
             const newTotalCoins = (currentUserData.totalCoins || 0) + reward;
             
@@ -239,7 +251,6 @@
                 totalCoins: newTotalCoins
             });
             
-            // تحديث الواجهة والبيانات المحلية
             currentUserData.level = newLevel;
             currentUserData.totalCoins = newTotalCoins;
             document.getElementById("total-coins-value").innerText = newTotalCoins.toLocaleString();
