@@ -214,14 +214,13 @@
     </div>
 
 <script>
-    // 1. إعدادات المتغيرات الأساسية
-    
+      // 1. إعدادات المتغيرات الأساسية
     let uData = null;
     const XP_PER_LVL = 1000; 
     const MAX_LVL = 30;
 
     // 2. مصفوفة الجوائز المجانية (Free Rewards)
- const FREE_REWARDS_MAP = [
+    const FREE_REWARDS_MAP = [
         null, 
         {n: "200 Coins", v: 200, t: "coins", i: "fa-coins"}, 
         {n: "200 XP", v: 200, t: "xp", i: "fa-star"}, 
@@ -339,6 +338,19 @@
         document.getElementById('xp-text').innerText = currentLvl >= MAX_LVL ? "MAX" : `${xpProgress} / ${XP_PER_LVL}`;
         document.getElementById('xp-fill').style.width = `${xpPercent}%`;
 
+        // تحديث نص زر البريميوم بناءً على امتلاك البطاقة
+        const premBtn = document.querySelector('.buy-premium-btn');
+        if (premBtn) {
+            const hasCard = uData.inventory && uData.inventory.includes("Premium Pass");
+            if (hasCard) {
+                premBtn.innerHTML = '<i class="fas fa-ticket-alt"></i> شحن بطاقة البريميوم';
+                premBtn.style.background = "linear-gradient(90deg, #10b981, #34d399)"; // لون أخضر للبطاقة
+            } else {
+                premBtn.innerHTML = '<i class="fas fa-lock"></i> اشترِ البطاقة من المتجر';
+                premBtn.style.background = "#334155"; // لون مطفأ
+            }
+        }
+
         document.getElementById('premium-footer').style.display = uData.s_premium ? 'none' : 'block';
         document.getElementById('end-season-ui').style.display = currentLvl >= MAX_LVL ? 'block' : 'none';
 
@@ -439,13 +451,35 @@
         closeModal('skip');
     }
 
+    // --- التعديل هنا للشحن بالبطاقة حصراً ---
     async function buyPremium() {
-        if ((uData.s_gems || 0) < 3) return alert("تحتاج 3 جواهر");
-        if (confirm("تفعيل البريميوم؟")) {
-            await db.collection('users').doc(firebase.auth().currentUser.uid).update({
-                s_gems: firebase.firestore.FieldValue.increment(-3),
-                s_premium: true
-            });
+        const cardName = "Premium Pass"; // تأكد من مطابقة الاسم لما هو موجود في كود المتجر
+        const hasCard = uData.inventory && uData.inventory.includes(cardName);
+
+        if (!hasCard) {
+            alert("ليس لديك بطاقة شحن! يرجى شراء 'Premium Pass' من المتجر أولاً.");
+            return;
+        }
+
+        if (confirm("هل تريد استخدام بطاقة 'Premium Pass' لتفعيل مسار النخبة؟")) {
+            const uid = firebase.auth().currentUser.uid;
+            
+            // سحب البطاقة الواحدة فقط من الحقيبة
+            let updatedInventory = [...uData.inventory];
+            const index = updatedInventory.indexOf(cardName);
+            if (index > -1) {
+                updatedInventory.splice(index, 1);
+            }
+
+            try {
+                await db.collection('users').doc(uid).update({
+                    inventory: updatedInventory,
+                    s_premium: true
+                });
+                alert("🎉 تم التفعيل بنجاح! استمتع بجوائز النخبة.");
+            } catch (e) {
+                alert("حدث خطأ أثناء تفعيل البطاقة.");
+            }
         }
     }
 
@@ -468,8 +502,8 @@
     }
     function openModal(id) { document.getElementById(id+'-modal').style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id+'-modal').style.display = 'none'; }
-</script>
 
+</script>
 
 
 </body>
