@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل الدخول |</title>
+    <title>تسجيل الدخول | نظام النخبة</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
     <script src="auth.js"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
@@ -36,7 +37,6 @@
             overflow: hidden;
         }
 
-        /* التصميم الزجاجي للبطاقة */
         .card {
             background: var(--glass-bg);
             backdrop-filter: blur(15px);
@@ -92,22 +92,12 @@
 
         #google-sign-in-btn { background: #fff; color: #334155; margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; }
 
-        /* هل نسيت كلمة المرور */
-        .forgot-password {
-            text-align: left;
-            margin-top: 10px;
-        }
-        .forgot-password a {
-            color: #94a3b8;
-            font-size: 0.8rem;
-            text-decoration: none;
-            transition: 0.3s;
-        }
+        .forgot-password { text-align: left; margin-top: 10px; }
+        .forgot-password a { color: #94a3b8; font-size: 0.8rem; text-decoration: none; transition: 0.3s; }
         .forgot-password a:hover { color: var(--primary); text-decoration: underline; }
 
         .error-message { color: #ef4444; font-size: 0.85rem; margin-top: 15px; text-align: center; display: none; padding: 10px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; }
 
-        /* النافذة المنبثقة لإعادة التعيين */
         .modal {
             display: none;
             position: fixed;
@@ -146,9 +136,9 @@
         <p id="error-msg" class="error-message"></p>
 
         <button id="email-sign-in-btn" onclick="handleSignIn()">دخول</button>
-        <button id="email-sign-up-btn" onclick="handleSignUp()">إنشاء حساب</button>
+        <button id="email-sign-up-btn" onclick="handleSignUp()">إنشاء حساب جديد</button>
         
-        <div style="margin: 20px 0; color: #475569; font-size: 0.7rem;">أو عبر</div>
+        <div style="margin: 20px 0; text-align: center; color: #475569; font-size: 0.7rem;">أو عبر</div>
         
         <button id="google-sign-in-btn" onclick="handleGoogleSignIn()">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="18">
@@ -159,7 +149,7 @@
     <div id="resetModal" class="modal">
         <div class="modal-content">
             <h3 style="color: var(--accent);">إعادة تعيين كلمة المرور</h3>
-            <p style="font-size: 0.8rem; color: #94a3b8;">سيتم إرسال رابط تغيير كلمة السر لبريدك:</p>
+            <p style="font-size: 0.8rem; color: #94a3b8;">سيتم إرسال رابط التغيير لبريدك:</p>
             <input type="email" id="resetEmail" placeholder="أدخل إيميلك المسجل">
             <button onclick="handleResetPassword()" style="background: var(--accent); color: #0a0f1e;">إرسال الرابط</button>
             <button onclick="closeResetModal()" style="background: transparent; color: #94a3b8; font-size: 0.8rem;">إلغاء</button>
@@ -173,6 +163,7 @@
     const errorMsg = document.getElementById("error-msg");
     const resetModal = document.getElementById("resetModal");
 
+    // التحقق من وجود مستخدم مسجل مسبقاً
     function checkActiveUser() {
         firebase.auth().onAuthStateChanged(user => {
             if (user) window.location.href = "index.html";
@@ -182,57 +173,91 @@
     function displayError(msg) {
         errorMsg.innerText = msg;
         errorMsg.style.display = 'block';
-        setTimeout(() => { errorMsg.style.display = 'none'; }, 4000);
+        setTimeout(() => { errorMsg.style.display = 'none'; }, 5000);
     }
 
-    // --- وظائف كلمة المرور ---
+    // --- وظائف استعادة الحساب ---
     function openResetModal() { resetModal.style.display = 'flex'; }
     function closeResetModal() { resetModal.style.display = 'none'; }
 
     async function handleResetPassword() {
         const email = document.getElementById("resetEmail").value.trim();
         const msg = document.getElementById("reset-msg");
-        if (!email) { msg.innerText = "أدخل الإيميل أولاً"; msg.style.color = "#ef4444"; return; }
+        if (!email) { msg.innerText = "أدخل الإيميل أولاً"; return; }
 
         try {
             await firebase.auth().sendPasswordResetEmail(email);
-            msg.innerText = "✅ تم إرسال رابط التغيير! تفقد إيميلك (والبريد العشوائي).";
+            msg.innerText = "✅ تم إرسال الرابط! تفقد بريدك الوارد.";
             msg.style.color = "#34d399";
-            setTimeout(closeResetModal, 5000);
         } catch (e) {
-            msg.innerText = "❌ حدث خطأ: تأكد من صحة الإيميل";
+            msg.innerText = "❌ فشل الإرسال: تأكد من صحة الإيميل";
             msg.style.color = "#ef4444";
         }
     }
 
-    // --- وظائف الدخول ---
+    // --- إنشاء حساب جديد ---
     async function handleSignUp() {
         const email = emailInput.value.trim();
         const password = passwordInput.value;
-        if (!email || password.length < 6) return displayError("كلمة السر يجب أن تكون 6 خانات فأكثر");
+        
+        if (!email || password.length < 6) {
+            return displayError("يجب أن تكون كلمة المرور 6 أحرف على الأقل");
+        }
+
         try {
-            await signUp(email, password);
+            await firebase.auth().createUserWithEmailAndPassword(email, password);
+            alert("تم إنشاء الحساب بنجاح!");
             window.location.href = "index.html";
-        } catch (e) { displayError(e.message); }
+        } catch (e) {
+            if (e.code === 'auth/email-already-in-use') {
+                displayError("هذا البريد مسجل بالفعل، قم بتسجيل الدخول");
+            } else {
+                displayError("خطأ في الإنشاء: " + e.message);
+            }
+        }
     }
 
+    // --- تسجيل الدخول (التصحيح الأساسي) ---
     async function handleSignIn() {
         const email = emailInput.value.trim();
         const pass = passwordInput.value;
-        if(!email || !pass) return displayError("أدخل البيانات");
+        
+        if(!email || !pass) return displayError("يرجى ملء كافة الحقول");
+
         try {
-            await signIn(email, pass);
+            // استخدام Firebase Auth المباشر هنا لحل مشكلة الحساب الثاني
+            await firebase.auth().signInWithEmailAndPassword(email, pass);
+            console.log("تم تسجيل الدخول بنجاح");
             window.location.href = "index.html";
-        } catch (e) { displayError("فشل الدخول: تأكد من الإيميل وكلمة السر"); }
+        } catch (e) {
+            console.error("Login Error:", e.code);
+            // تخصيص رسائل الخطأ لتكون واضحة
+            switch (e.code) {
+                case 'auth/user-not-found':
+                    displayError("لا يوجد حساب بهذا البريد الإلكتروني");
+                    break;
+                case 'auth/wrong-password':
+                    displayError("كلمة السر خاطئة، حاول مرة أخرى");
+                    break;
+                case 'auth/invalid-email':
+                    displayError("صيغة البريد الإلكتروني غير صحيحة");
+                    break;
+                default:
+                    displayError("فشل الدخول: تأكد من بياناتك واتصالك بالإنترنت");
+            }
+        }
     }
 
+    // --- تسجيل الدخول بجوجل ---
     async function handleGoogleSignIn() {
         try {
-            await signInWithGoogle();
+            const provider = new firebase.auth.GoogleAuthProvider();
+            await firebase.auth().signInWithPopup(provider);
             window.location.href = "index.html";
-        } catch (e) { displayError("فشل الدخول عبر Google"); }
+        } catch (e) {
+            displayError("فشل تسجيل الدخول عبر Google");
+        }
     }
 </script>
 </body>
 </html>
-
