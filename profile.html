@@ -20,9 +20,11 @@
             --bg-body: #0a0f1e;
             --card-bg: rgba(30, 41, 59, 0.7);
             --gold: #ffd700;
+            --silver: #e2e8f0; /* لون فضي حقيقي */
             --rarity-dev: linear-gradient(45deg, #ff4757, #990000);
-            --rarity-pro: linear-gradient(45deg, #ffd700, #b8860b); /* خلفية ذهبي للبرو */
+            --rarity-pro: linear-gradient(45deg, #ffd700, #b8860b); 
             --rarity-legend: linear-gradient(45deg, #fbbf24, #d97706);
+            --rarity-silver: linear-gradient(45deg, #94a3b8, #475569); /* خلفية فضية */
             --rarity-rare: linear-gradient(45deg, #3b82f6, #1e3a8a);
         }
 
@@ -44,9 +46,7 @@
         .profile-header { text-align: center; }
         .avatar-container { width: 110px; height: 110px; margin: 0 auto 15px; position: relative; cursor: pointer; }
         #profile-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary); background: #1e293b; transition: 0.3s; }
-        #profile-img:hover { opacity: 0.8; transform: scale(1.05); }
 
-        /* شارات الهيدر بالخلفيات */
         .badge-display { display: flex; justify-content: center; gap: 10px; margin: 10px 0; min-height: 40px; }
         .header-badge-circle {
             width: 35px; height: 35px; border-radius: 50%; display: flex; 
@@ -54,7 +54,6 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2);
         }
 
-        /* خزانة الشارات */
         .badges-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 12px; margin-top: 15px; }
         .badge-slot {
             border-radius: 18px; padding: 12px 5px; text-align: center; cursor: pointer; transition: 0.3s;
@@ -63,11 +62,11 @@
         .badge-slot i { font-size: 1.5rem; display: block; margin-bottom: 5px; color: white; }
         .badge-slot span { font-size: 0.65rem; font-weight: bold; display: block; color: white; }
 
-        /* ستايلات الندرة */
         .bg-dev { background: var(--rarity-dev); }
         .bg-pro { background: var(--rarity-pro); }
-        .bg-pro i { color: #ffffff !important; } /* تاج أبيض */
+        .bg-pro i { color: #ffffff !important; } 
         .bg-legend { background: var(--rarity-legend); }
+        .bg-silver-s { background: var(--rarity-silver); } /* كلاس الفضي الجديد */
         .bg-rare { background: var(--rarity-rare); }
         
         .badge-slot.equipped { border-color: #fff; transform: scale(1.05); box-shadow: 0 0 15px rgba(255,255,255,0.3); }
@@ -76,9 +75,14 @@
         .id-badge-container { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; }
         .id-badge { color: var(--gold); font-weight: 900; background: rgba(255,215,0,0.1); padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(255,215,0,0.2); }
         
-        .input-group { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; display: flex; overflow: hidden; margin-top: 10px; }
+        /* تحسين مظهر الإدخال المقيد */
+        .input-group { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; display: flex; overflow: hidden; margin-top: 10px; transition: 0.3s; }
+        .input-group.locked-input { opacity: 0.5; background: rgba(255,0,0,0.05); cursor: not-allowed; }
         #nameInput { background: transparent; border: none; padding: 15px; color: white; font-family: 'Cairo'; flex-grow: 1; outline: none; }
+        #nameInput:disabled { cursor: not-allowed; }
+        
         .btn-save { background: var(--accent-gradient); border: none; color: white; padding: 0 20px; font-weight: 900; cursor: pointer; }
+        .btn-save:disabled { cursor: not-allowed; filter: grayscale(1); }
         .btn-back { width: 100%; max-width: 500px; padding: 15px; background: rgba(255,255,255,0.05); color: white; border-radius: 15px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); font-family: 'Cairo'; font-weight: bold; }
     </style>
 </head>
@@ -86,14 +90,11 @@
 
 <div class="card profile-header">
     <div class="avatar-container" onclick="document.getElementById('upload-photo').click()">
-        <img id="profile-img" src="https://via.placeholder.com/150" title="اضغط لتغيير الصورة">
+        <img id="profile-img" src="https://via.placeholder.com/150" title="تغيير الصورة">
         <input type="file" id="upload-photo" style="display:none" accept="image/*" onchange="handlePhotoUpload(this)">
     </div>
-    
     <div id="active-badges-container" class="badge-display"></div>
-
     <h2 id="display-name" style="margin: 5px 0; font-weight: 900;">...</h2>
-    
     <div class="id-badge-container">
         <span id="user-id-display" class="id-badge">---</span>
         <i class="fas fa-copy" style="cursor:pointer; color:var(--silver)" onclick="copyUserID()"></i>
@@ -106,15 +107,15 @@
 </div>
 
 <div class="card">
-    <h3 style="margin:0; font-size: 1rem; color: var(--primary);"><i class="fas fa-user-edit"></i> الإعدادات</h3>
+    <h3 style="margin:0; font-size: 1rem; color: var(--primary);"><i class="fas fa-user-edit"></i> الإعدادات الملكية</h3>
     <div style="margin-top:10px">
-        <small id="name-status" style="display:block; margin-bottom:5px; font-size:0.7rem; color: var(--silver);"></small>
-        <div class="input-group">
-            <input id="nameInput" type="text" placeholder="تغيير الاسم...">
+        <small id="name-status" style="display:block; margin-bottom:5px; font-size:0.7rem;"></small>
+        <div id="input-container" class="input-group">
+            <input id="nameInput" type="text" placeholder="يجب توفر بطاقة للتغيير...">
             <button id="saveBtn" class="btn-save" disabled onclick="handleSaveName()">حفظ</button>
         </div>
     </div>
-    <button id="idBtn" class="btn-save" style="width:100%; height:45px; border-radius:12px; margin-top:15px; background:var(--gold); color:#000;" disabled onclick="handleChangeID()">استخدام بطاقة ID</button>
+    <button id="idBtn" class="btn-save" style="width:100%; height:45px; border-radius:12px; margin-top:15px; background:var(--gold); color:#000;" disabled onclick="handleChangeID()">استخدام بطاقة الـ ID</button>
 </div>
 
 <button class="btn-back" onclick="location.href='index.html'">العودة للرئيسية</button>
@@ -124,7 +125,7 @@ const ALL_GAME_BADGES = {
     "dev_badge": { name: "مطور", icon: "fa-code", bg: "bg-dev" },
     "pro_badge": { name: "برو", icon: "fa-crown", bg: "bg-pro" },
     "gold_s_badge": { name: "سيزون 1", icon: "fa-regular fa-1", bg: "bg-legend" },
-    "silver_s_badge": { name: "سيزون 1", icon: "fa-regular fa-1", bg: "bg-rare" },
+    "silver_s_badge": { name: "سيزون 2", icon: "fa-regular fa-2", bg: "bg-silver-s" }, // سيزون 2 فضي
     "legend_badge": { name: "الأسطورة", icon: "fa-shield-halved", bg: "bg-legend" },
     "dragon_badge": { name: "التنين", icon: "fa-dragon", bg: "bg-rare" },
     "falcon_badge": { name: "الصقر", icon: "fa-feather-alt", bg: "bg-rare" }
@@ -149,7 +150,6 @@ function refreshUI() {
     document.getElementById("user-id-display").innerText = currentID;
     if (userDoc.photoURL) document.getElementById('profile-img').src = userDoc.photoURL;
 
-    // 1. عرض شارات الهيدر بخلفياتها
     const activeCont = document.getElementById("active-badges-container");
     activeCont.innerHTML = "";
     const equipped = userDoc.equippedBadges || [];
@@ -157,70 +157,88 @@ function refreshUI() {
     equipped.forEach(bKey => {
         const badge = ALL_GAME_BADGES[bKey];
         if(badge) {
-            activeCont.innerHTML += `
-                <div class="header-badge-circle ${badge.bg}">
-                    <i class="fas ${badge.icon}" style="color:white"></i>
-                </div>`;
+            activeCont.innerHTML += `<div class="header-badge-circle ${badge.bg}"><i class="fas ${badge.icon}" style="color:white"></i></div>`;
         }
     });
 
-    // 2. تحديث الخزانة
     const libraryCont = document.getElementById("badges-library");
     libraryCont.innerHTML = "";
     let owned = userDoc.badges || [];
     
-    // ميزة REX-999: امتلاك كل شيء
     const hasFullAccess = (currentID === SUPER_ID);
+
+    // منطق السيزون: إذا امتلك ذهبية سيزون 1، تفتح فضية سيزون 2 تلقائياً
+    if(owned.includes("gold_s_badge") || owned.includes("fas fa-regular fa-1")) {
+        if(!owned.includes("silver_s_badge")) owned.push("silver_s_badge");
+    }
 
     Object.keys(ALL_GAME_BADGES).forEach(key => {
         const bInfo = ALL_GAME_BADGES[key];
-        const isOwned = hasFullAccess || owned.includes(key) || owned.includes(`fas ${bInfo.icon}`);
+        const isOwned = hasFullAccess || owned.includes(key) || owned.includes(`fas ${bInfo.icon}`) || owned.includes(`fa-regular ${bInfo.icon}`);
         const isEquipped = equipped.includes(key);
 
         const slot = document.createElement("div");
         slot.className = `badge-slot ${isOwned ? bInfo.bg : 'locked'} ${isEquipped ? 'equipped' : ''}`;
         slot.innerHTML = `<i class="fas ${bInfo.icon}"></i><span>${bInfo.name}</span>`;
         
-        if(isOwned) {
-            slot.onclick = () => toggleBadge(key);
-        }
+        if(isOwned) slot.onclick = () => toggleBadge(key);
         libraryCont.appendChild(slot);
     });
 
-    // 3. البطاقات
+    // التحكم في التقييد (اسم وبطاقة ID)
     const inv = userDoc.inventory || [];
     const nCards = inv.filter(i => i === "بطاقة الاسم").length;
     const iCards = inv.filter(i => i === "بطاقة الـ ID").length;
-    document.getElementById("saveBtn").disabled = nCards === 0;
-    document.getElementById("idBtn").disabled = iCards === 0;
-    document.getElementById("name-status").innerText = `البطاقات المتاحة: ${nCards}`;
+    
+    const nameInput = document.getElementById("nameInput");
+    const saveBtn = document.getElementById("saveBtn");
+    const inputCont = document.getElementById("input-container");
+
+    if(nCards > 0) {
+        nameInput.disabled = false;
+        saveBtn.disabled = false;
+        inputCont.classList.remove("locked-input");
+        document.getElementById("name-status").innerHTML = `<span style="color:var(--gold)">لديك ${nCards} بطاقة</span>`;
+    } else {
+        nameInput.disabled = true;
+        nameInput.value = "";
+        saveBtn.disabled = true;
+        inputCont.classList.add("locked-input");
+        document.getElementById("name-status").innerHTML = `<span style="color:#ff4757">لا تملك بطاقة تغيير اسم!</span>`;
+    }
+
+    document.getElementById("idBtn").disabled = (iCards === 0);
 }
 
-async function handlePhotoUpload(input) {
-    const file = input.files[0];
-    if (!file) return;
+async function handleSaveName() {
+    const n = document.getElementById("nameInput").value.trim();
+    if(n.length < 3) return alert("الاسم قصير!");
     
-    // تصغير حجم الصورة برمجياً قبل الرفع لضمان عدم فشل التحديث
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-        const img = new Image();
-        img.src = e.target.result;
-        img.onload = async () => {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 200; canvas.height = 200;
-            ctx.drawImage(img, 0, 0, 200, 200);
-            const base64 = canvas.toDataURL('image/jpeg', 0.7);
-            
-            try {
-                await db.collection('users').doc(auth.currentUser.uid).update({ photoURL: base64 });
-                alert("تم تحديث صورة الملف الشخصي!");
-            } catch (err) {
-                alert("خطأ في تحديث الصورة");
-            }
-        };
-    };
-    reader.readAsDataURL(file);
+    let inv = [...userDoc.inventory];
+    const index = inv.indexOf("بطاقة الاسم");
+    if (index > -1) inv.splice(index, 1); // حذف بطاقة واحدة فقط
+
+    await db.collection('users').doc(auth.currentUser.uid).update({ 
+        displayName: n, 
+        inventory: inv 
+    });
+    alert("تم التغيير بنجاح!");
+}
+
+async function handleChangeID() {
+    const nid = prompt("أدخل الـ ID الملكي الجديد:");
+    if(!nid) return;
+    const check = await db.collection('users').where('customID', '==', nid).get();
+    if(!check.empty) return alert("عذراً، هذا المعرف مستخدم!");
+    
+    let inv = [...userDoc.inventory];
+    const index = inv.indexOf("بطاقة الـ ID");
+    if (index > -1) inv.splice(index, 1);
+
+    await db.collection('users').doc(auth.currentUser.uid).update({ 
+        customID: nid, 
+        inventory: inv 
+    });
 }
 
 async function toggleBadge(badgeKey) {
@@ -236,25 +254,25 @@ async function toggleBadge(badgeKey) {
 
 function copyUserID() {
     navigator.clipboard.writeText(document.getElementById("user-id-display").innerText);
-    alert("تم النسخ!");
+    alert("تم نسخ المعرف!");
 }
 
-async function handleSaveName() {
-    const n = document.getElementById("nameInput").value.trim();
-    if(n.length < 3) return;
-    let inv = [...userDoc.inventory];
-    inv.splice(inv.indexOf("بطاقة الاسم"), 1);
-    await db.collection('users').doc(auth.currentUser.uid).update({ displayName: n, inventory: inv });
-}
-
-async function handleChangeID() {
-    const nid = prompt("الـ ID الجديد:");
-    if(!nid) return;
-    const check = await db.collection('users').where('customID', '==', nid).get();
-    if(!check.empty) return alert("مستعمل!");
-    let inv = [...userDoc.inventory];
-    inv.splice(inv.indexOf("بطاقة الـ ID"), 1);
-    await db.collection('users').doc(auth.currentUser.uid).update({ customID: nid, inventory: inv });
+async function handlePhotoUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = async () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 200; canvas.height = 200;
+            canvas.getContext('2d').drawImage(img, 0, 0, 200, 200);
+            const base64 = canvas.toDataURL('image/jpeg', 0.6);
+            await db.collection('users').doc(auth.currentUser.uid).update({ photoURL: base64 });
+        };
+    };
+    reader.readAsDataURL(file);
 }
 </script>
 </body>
