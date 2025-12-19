@@ -26,6 +26,8 @@
             --rarity-legend: linear-gradient(45deg, #fbbf24, #d97706);
             --rarity-silver: linear-gradient(45deg, #94a3b8, #475569); 
             --rarity-rare: linear-gradient(45deg, #3b82f6, #1e3a8a);
+            --rarity-rich: linear-gradient(45deg, #2ecc71, #27ae60); /* لون الثراء */
+            --rarity-fire: linear-gradient(45deg, #00d2ff, #3a7bd5); /* لون النار الزرقاء */
         }
 
         body {
@@ -78,6 +80,8 @@
         .bg-legend { background: var(--rarity-legend); }
         .bg-silver-s { background: var(--rarity-silver); } 
         .bg-rare { background: var(--rarity-rare); }
+        .bg-rich { background: var(--rarity-rich); }
+        .bg-fire { background: var(--rarity-fire); }
         
         .badge-slot.equipped { border-color: #fff; transform: scale(1.05); box-shadow: 0 0 15px rgba(255,255,255,0.3); }
         .badge-slot.locked { opacity: 0.15; filter: grayscale(1); cursor: not-allowed; background: #000; }
@@ -132,9 +136,12 @@
 <button class="btn-back" onclick="location.href='index.html'">العودة للرئيسية</button>
 
 <script>
+// تعريف كافة الشارات بما فيها الجديدة
 const ALL_GAME_BADGES = {
     "dev_badge": { name: "مطور", icon: "fa-code", bg: "bg-dev" },
     "pro_badge": { name: "برو", icon: "fa-crown", bg: "bg-pro" },
+    "rich_badge": { name: "ثري", icon: "fa-money-bill-trend-up", bg: "bg-rich" },
+    "blue_fire_badge": { name: "نار زرقاء", icon: "fa-fire-flame-curved", bg: "bg-fire" },
     "legend_badge": { name: "الأسطورة", icon: "fa-shield-halved", bg: "bg-legend" },
     "dragon_badge": { name: "التنين", icon: "fa-dragon", bg: "bg-rare" },
     "gold_s_badge": { name: "سيزون 1 ذهب", icon: "fa-regular fa-1", bg: "bg-legend" },
@@ -144,9 +151,15 @@ const ALL_GAME_BADGES = {
 
 let userDoc = null;
 const OWNER_ID = "REX-999"; 
+let topCoinsUIDs = [];
+let topXPUIDs = [];
 
-auth.onAuthStateChanged(user => {
+auth.onAuthStateChanged(async (user) => {
     if (!user) return;
+    
+    // جلب المتصدرين لتحديد من يستحق شارات الثراء والنار
+    await fetchLeaderboards();
+
     db.collection('users').doc(user.uid).onSnapshot(doc => {
         if (doc.exists) {
             userDoc = doc.data();
@@ -154,6 +167,18 @@ auth.onAuthStateChanged(user => {
         }
     });
 });
+
+async function fetchLeaderboards() {
+    try {
+        // أفضل 10 كوينز لشارة الثراء
+        const richSnap = await db.collection('users').orderBy('totalCoins', 'desc').limit(10).get();
+        topCoinsUIDs = richSnap.docs.map(d => d.id);
+        
+        // أفضل 10 XP لشارة النار الزرقاء
+        const fireSnap = await db.collection('users').orderBy('xp', 'desc').limit(10).get();
+        topXPUIDs = fireSnap.docs.map(d => d.id);
+    } catch (e) { console.error("Leaderboard fetch error", e); }
+}
 
 function refreshUI() {
     if(!userDoc) return;
@@ -194,15 +219,26 @@ function refreshUI() {
     Object.keys(ALL_GAME_BADGES).forEach(key => {
         const bInfo = ALL_GAME_BADGES[key];
         
-        // منطق الملكية: يملكها في المصفوفة أو هو صاحب ID REX-999 (يفتح له كل شيء)
-        const isOwned = owned.includes(key) || (currentID === OWNER_ID); 
+        // --- منطق الاستحقاق التلقائي ---
+        const isPro = userDoc.proExpiryTime > Date.now();
+        const isRich = topCoinsUIDs.includes(auth.currentUser.uid);
+        const isFire = topXPUIDs.includes(auth.currentUser.uid);
+        const isDev = (currentID === OWNER_ID);
+
+        let hasAccess = owned.includes(key) || isDev;
+
+        // ربط الشارات التلقائية
+        if (key === "pro_badge" && isPro) hasAccess = true;
+        if (key === "rich_badge" && isRich) hasAccess = true;
+        if (key === "blue_fire_badge" && isFire) hasAccess = true;
+
         const isEquipped = equipped.includes(key);
 
         const slot = document.createElement("div");
-        slot.className = `badge-slot ${isOwned ? bInfo.bg : 'locked'} ${isEquipped ? 'equipped' : ''}`;
+        slot.className = `badge-slot ${hasAccess ? bInfo.bg : 'locked'} ${isEquipped ? 'equipped' : ''}`;
         slot.innerHTML = `<i class="fas ${bInfo.icon}"></i><span>${bInfo.name}</span>`;
         
-        if(isOwned) {
+        if(hasAccess) {
             slot.onclick = (e) => {
                 e.preventDefault();
                 toggleBadge(key);
@@ -226,7 +262,6 @@ function refreshUI() {
 async function toggleBadge(badgeKey) {
     if(!userDoc) return;
     
-    // استخدام مصفوفة محلية لتجنب التأخير في الاستجابة
     let currentEquipped = userDoc.equippedBadges || [];
     let newEquipped;
 
@@ -240,16 +275,14 @@ async function toggleBadge(badgeKey) {
         newEquipped = [...currentEquipped, badgeKey];
     }
 
-    // التحديث في Firestore
     try {
         await db.collection('users').doc(auth.currentUser.uid).update({
             equippedBadges: newEquipped
         });
-        // لا نحتاج لاستدعاء refreshUI هنا لأن onSnapshot سيتكفل بالأمر
-    } catch (e) {
-        console.error("Error updating badges: ", e);
-    }
+    } catch (e) { console.error("Error updating badges: ", e); }
 }
+
+// ... بقية الدوال (handleSaveName, handleChangeID, copyUserID, handlePhotoUpload) تبقى كما هي دون تغيير ...
 
 async function handleSaveName() {
     const n = document.getElementById("nameInput").value.trim();
@@ -271,11 +304,9 @@ async function handleChangeID() {
     try {
         const check = await db.collection('users').where('customID', '==', cleanId).get();
         if(!check.empty) return alert("المعرف محجوز!");
-        
         let inv = [...userDoc.inventory];
         const index = inv.indexOf("بطاقة الـ ID");
         if (index > -1) inv.splice(index, 1);
-
         await db.collection('users').doc(auth.currentUser.uid).update({ customID: cleanId, inventory: inv });
         alert("تم تغيير المعرف بنجاح!");
     } catch(e) { alert("حدث خطأ!"); }
