@@ -22,11 +22,14 @@
             --gold: #ffd700;
             --gem-color: #00d2ff;
             --xp-color: #a855f7;
+            /* ألوان الشارات من البروفايل */
             --rarity-dev: linear-gradient(45deg, #ff4757, #990000);
             --rarity-pro: linear-gradient(45deg, #ffd700, #b8860b); 
+            --rarity-legend: linear-gradient(45deg, #fbbf24, #d97706);
+            --rarity-silver: linear-gradient(45deg, #94a3b8, #475569); 
+            --rarity-rare: linear-gradient(45deg, #3b82f6, #1e3a8a);
             --rarity-rich: linear-gradient(45deg, #2ecc71, #27ae60);
-            --rarity-gem: linear-gradient(45deg, #00d2ff, #3a7bd5);
-            --rarity-fire: linear-gradient(45deg, #f093fb, #f5576c);
+            --rarity-fire: linear-gradient(45deg, #00d2ff, #3a7bd5);
         }
 
         body {
@@ -37,7 +40,6 @@
             display: flex; flex-direction: column; align-items: center; margin: 0;
         }
 
-        /* نظام الفلترة */
         .filter-tabs {
             display: flex; background: var(--glass-bg); border-radius: 15px;
             padding: 5px; margin-bottom: 25px; border: 1px solid var(--glass-border);
@@ -96,14 +98,15 @@
         .val-gems { color: var(--gem-color); }
         .val-xp { color: var(--xp-color); }
 
-        /* الألوان التلقائية للشارات */
+        /* فئات الشارات */
         .bg-dev { background: var(--rarity-dev); }
         .bg-pro { background: var(--rarity-pro); }
+        .bg-legend { background: var(--rarity-legend); }
+        .bg-silver-s { background: var(--rarity-silver); } 
+        .bg-rare { background: var(--rarity-rare); }
         .bg-rich { background: var(--rarity-rich); }
-        .bg-gem-rich { background: var(--rarity-gem); }
         .bg-fire { background: var(--rarity-fire); }
 
-        /* Modal */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; }
         .modal-content { background: #1e293b; width: 90%; max-width: 400px; border-radius: 30px; padding: 30px; text-align: center; border: 1px solid var(--primary); }
     </style>
@@ -113,13 +116,13 @@
     <h2 style="font-weight: 900; margin: 20px 0;"><i class="fas fa-trophy text-gold"></i> قمة الأساطير</h2>
 
     <div class="filter-tabs">
-        <button class="filter-btn active btn-coins" onclick="switchTab('totalCoins', this)">
+        <button id="btn-totalCoins" class="filter-btn active btn-coins" onclick="switchTab('totalCoins', this)">
             <i class="fas fa-coins"></i> كوينز
         </button>
-        <button class="filter-btn btn-gems" onclick="switchTab('s_gems', this)">
+        <button id="btn-s_gems" class="filter-btn btn-gems" onclick="switchTab('s_gems', this)">
             <i class="fas fa-gem"></i> جواهر
         </button>
-        <button class="filter-btn btn-xp" onclick="switchTab('xp', this)">
+        <button id="btn-xp" class="filter-btn btn-xp" onclick="switchTab('xp', this)">
             <i class="fas fa-bolt"></i> الخبرة
         </button>
     </div>
@@ -138,32 +141,26 @@
     </div>
 
 <script>
-    const BADGES_CONFIG = {
-        "dev_badge": { icon: "fa-code", bg: "bg-dev" },
-        "pro_badge": { icon: "fa-crown", bg: "bg-pro" },
-        "rich_badge": { icon: "fa-money-bill-trend-up", bg: "bg-rich" },
-        "gem_rich_badge": { icon: "fa-gem", bg: "bg-gem-rich" },
-        "blue_fire_badge": { icon: "fa-fire-flame-curved", bg: "bg-fire" }
+    // القاموس الموحد مع البروفايل
+    const ALL_GAME_BADGES = {
+        "dev_badge": { name: "مطور", icon: "fa-code", bg: "bg-dev" },
+        "pro_badge": { name: "برو", icon: "fa-crown", bg: "bg-pro" },
+        "rich_badge": { name: "ثري", icon: "fa-money-bill-trend-up", bg: "bg-rich" },
+        "blue_fire_badge": { name: "نار زرقاء", icon: "fa-fire-flame-curved", bg: "bg-fire" },
+        "legend_badge": { name: "الأسطورة", icon: "fa-shield-halved", bg: "bg-legend" },
+        "dragon_badge": { name: "التنين", icon: "fa-dragon", bg: "bg-rare" },
+        "gold_s_badge": { name: "سيزون 1 ذهب", icon: "fa-regular fa-1", bg: "bg-legend" },
+        "silver_s_badge": { name: "سيزون 1 فضة", icon: "fa-regular fa-1", bg: "bg-silver-s" },
+        "falcon_badge": { name: "الصقر", icon: "fa-feather-alt", bg: "bg-rare" }
     };
 
     let currentField = 'totalCoins';
-    let topLists = { totalCoins: [], s_gems: [], xp: [] };
 
     async function loadData() {
         try {
             const usersRef = db.collection('users');
-            // جلب البيانات للثلاث تصنيفات لتحديد الشارات التلقائية
-            const [cSnap, gSnap, xSnap] = await Promise.all([
-                usersRef.orderBy('totalCoins', 'desc').limit(10).get(),
-                usersRef.orderBy('s_gems', 'desc').limit(10).get(),
-                usersRef.orderBy('xp', 'desc').limit(10).get()
-            ]);
-
-            topLists.totalCoins = cSnap.docs.map(d => d.id);
-            topLists.s_gems = gSnap.docs.map(d => d.id);
-            topLists.xp = xSnap.docs.map(d => d.id);
-
-            renderLeaderboard(currentField === 'totalCoins' ? cSnap : (currentField === 's_gems' ? gSnap : xSnap));
+            const snap = await usersRef.orderBy(currentField, 'desc').limit(10).get();
+            renderLeaderboard(snap);
         } catch (e) { console.error(e); }
     }
 
@@ -174,26 +171,24 @@
 
         snapshot.forEach(doc => {
             const user = doc.data();
-            const userId = doc.id;
             const val = user[currentField] || 0;
 
             const item = document.createElement('div');
             item.className = 'player-item';
-            item.onclick = () => openProfile(user, userId);
+            item.onclick = () => openProfile(user, doc.id);
 
-            // تحديد أيقونة القيمة بناء على الفلتر
             let iconClass = "fa-coins val-coins";
             if(currentField === 's_gems') iconClass = "fa-gem val-gems";
             if(currentField === 'xp') iconClass = "fa-bolt val-xp";
 
             item.innerHTML = `
-                <span class="rank rank-${rank}">#${rank++}</span>
+                <span class="rank rank-${rank <= 3 ? rank : ''}">#${rank++}</span>
                 <div class="avatar-frame">
                     ${user.photoURL ? `<img src="${user.photoURL}">` : `<i class="fas fa-user" style="color:#fff"></i>`}
                 </div>
                 <div class="info">
                     <span class="name">${user.displayName || 'لاعب'}</span>
-                    <div class="badges-list">${getAutoBadgesHTML(user, userId)}</div>
+                    <div class="badges-list">${renderBadges(user.equippedBadges)}</div>
                 </div>
                 <div class="value ${iconClass.split(' ')[1]}">
                     ${val.toLocaleString()} <i class="fas ${iconClass.split(' ')[0]}"></i>
@@ -203,35 +198,13 @@
         });
     }
 
-    function getAutoBadgesHTML(user, uid) {
-        let html = "";
-        const isOwner = (uid === "REX-999" || user.email === "clansp245@gmail.com");
-        const equipped = user.equippedBadges || [];
-
-        // 1. شارة المطور
-        if(isOwner) html += createBadge('dev_badge');
-
-        // 2. الشارات التلقائية (تظهر فقط إذا كان الشخص ضمن التوب 10)
-        if(topLists.totalCoins.includes(uid)) html += createBadge('rich_badge');
-        if(topLists.s_gems.includes(uid)) html += createBadge('gem_rich_badge');
-        if(topLists.xp.includes(uid)) html += createBadge('blue_fire_badge');
-        
-        // 3. شارة برو (تلقائية حسب التاريخ)
-        if(user.proExpiryTime > Date.now()) html += createBadge('pro_badge');
-
-        // 4. الشارات اليدوية المجهزة الأخرى
-        equipped.forEach(b => {
-            if(!['dev_badge','rich_badge','gem_rich_badge','blue_fire_badge','pro_badge'].includes(b)) {
-                html += createBadge(b);
-            }
-        });
-
-        return html;
-    }
-
-    function createBadge(id) {
-        const config = BADGES_CONFIG[id] || {icon: "fa-medal", bg: "bg-rare"};
-        return `<div class="badge-circle ${config.bg}"><i class="fas ${config.icon}" style="color:white"></i></div>`;
+    // دالة عرض الشارات المجهزة فقط كما في البروفايل
+    function renderBadges(equippedArray) {
+        if (!equippedArray || !Array.isArray(equippedArray)) return "";
+        return equippedArray.map(bKey => {
+            const b = ALL_GAME_BADGES[bKey];
+            return b ? `<div class="badge-circle ${b.bg}" title="${b.name}"><i class="fas ${b.icon}" style="color:white"></i></div>` : "";
+        }).join("");
     }
 
     async function switchTab(field, btn) {
@@ -239,22 +212,19 @@
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById('list-container').innerHTML = '<div style="text-align:center; padding: 50px;"><i class="fas fa-spinner fa-spin fa-2x"></i></div>';
-        
-        const snap = await db.collection('users').orderBy(field, 'desc').limit(10).get();
-        renderLeaderboard(snap);
+        loadData();
     }
 
     function openProfile(user, uid) {
         const modalBody = document.getElementById('modal-body');
         const level = Math.floor(Math.sqrt((user.xp || 0) / 100)) + 1;
         modalBody.innerHTML = `
-            <div style="width:100px; height:100px; border-radius:50%; border:4px solid var(--primary); margin:0 auto 15px; overflow:hidden; background:#000;">
-                <img src="${user.photoURL || ''}" style="width:100%; height:100%; object-fit:cover; ${!user.photoURL ? 'display:none' : ''}">
-                ${!user.photoURL ? '<i class="fas fa-user" style="font-size:3rem; color:white; margin-top:20px;"></i>' : ''}
+            <div style="width:100px; height:100px; border-radius:50%; border:4px solid var(--primary); margin:0 auto 15px; overflow:hidden; background:#1e293b;">
+                ${user.photoURL ? `<img src="${user.photoURL}" style="width:100%; height:100%; object-fit:cover;">` : `<i class="fas fa-user" style="font-size:3rem; color:white; margin-top:20px;"></i>`}
             </div>
             <h2 style="margin:0">${user.displayName || 'لاعب'}</h2>
             <p style="color:#94a3b8; font-size:0.8rem">ID: ${user.customID || user.publicUid || '---'}</p>
-            <div style="display:flex; justify-content:center; gap:10px; margin:15px 0">${getAutoBadgesHTML(user, uid)}</div>
+            <div style="display:flex; justify-content:center; gap:10px; margin:15px 0">${renderBadges(user.equippedBadges)}</div>
             <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; background:rgba(0,0,0,0.3); padding:15px; border-radius:15px;">
                 <div><small>المستوى</small><br><b>${level}</b></div>
                 <div><small>جواهر</small><br><b style="color:var(--gem-color)">${(user.s_gems || 0)}</b></div>
