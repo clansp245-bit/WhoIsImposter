@@ -27,10 +27,13 @@
             font-family: 'Cairo', sans-serif;
             background: #020617;
             color: white; margin: 0; padding: 15px; min-height: 100vh;
-            background-image: radial-gradient(circle at 10% 20%, rgba(0, 242, 255, 0.1) 0%, transparent 20%), radial-gradient(circle at 90% 80%, rgba(255, 0, 127, 0.1) 0%, transparent 20%);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 242, 255, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(255, 0, 127, 0.1) 0%, transparent 20%);
             overflow-x: hidden;
         }
 
+        /* --- Header --- */
         .main-header { text-align: center; padding: 20px 0; }
         .clan-identity {
             display: inline-flex; align-items: center; gap: 10px;
@@ -38,6 +41,7 @@
             border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
 
+        /* --- Navigation --- */
         .bottom-nav {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 500px; background: var(--glass-deep);
@@ -45,34 +49,74 @@
             justify-content: space-around; padding: 10px; border: 1px solid rgba(255,255,255,0.1);
             z-index: 999; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
-        .nav-item { color: #64748b; font-size: 1.2rem; cursor: pointer; transition: 0.3s; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 15px; }
+        .nav-item {
+            color: #64748b; font-size: 1.2rem; cursor: pointer; transition: 0.3s;
+            width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;
+            border-radius: 15px;
+        }
         .nav-item.active { color: white; background: var(--grad); box-shadow: 0 0 15px rgba(236, 72, 153, 0.4); }
 
+        /* --- Sections --- */
         .section { display: none; animation: fadeIn 0.5s ease; padding-bottom: 100px; }
         .section.active { display: block; }
+
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .modern-card { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; padding: 20px; margin-bottom: 20px; backdrop-filter: blur(10px); position: relative; }
-        
+        /* --- Cards --- */
+        .modern-card {
+            background: var(--glass); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 30px; padding: 25px; margin-bottom: 20px;
+            backdrop-filter: blur(10px); position: relative; overflow: hidden;
+        }
+        .card-glow {
+            position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* --- XP & Rewards Bar --- */
+        .xp-container { margin: 20px 0; }
+        .xp-bar-bg { background: rgba(255,255,255,0.1); height: 12px; border-radius: 10px; overflow: hidden; margin: 10px 0; }
+        .xp-bar-fill { height: 100%; background: var(--grad); width: 0%; transition: 1s ease; box-shadow: 0 0 10px var(--neon-pink); }
+
+        /* --- Shop & Rewards --- */
+        .reward-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .reward-item {
+            background: rgba(0,0,0,0.3); border-radius: 20px; padding: 15px;
+            text-align: center; border: 1px solid rgba(255,255,255,0.05); transition: 0.3s;
+        }
+        .reward-item.locked { filter: grayscale(1); opacity: 0.5; }
+        .reward-item.locked::after { content: '\f023'; font-family: 'Font Awesome 6 Free'; font-weight: 900; display: block; margin-top: 5px; color: var(--neon-pink); }
+
         /* --- Chat Styles --- */
-        #chat-box { height: 250px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 15px; padding: 10px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
-        .msg { padding: 8px 12px; border-radius: 12px; max-width: 80%; font-size: 0.85rem; }
-        .msg.me { align-self: flex-start; background: var(--grad); color: white; }
-        .msg.others { align-self: flex-end; background: rgba(255,255,255,0.1); }
-        .chat-input-area { display: flex; gap: 10px; }
-        .chat-input-area input { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--glass); padding: 10px; border-radius: 12px; color: white; font-family: 'Cairo'; }
+        #chat-container { background: rgba(0,0,0,0.4); border-radius: 20px; padding: 15px; margin-top: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        #chat-box { height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 5px; margin-bottom: 10px; }
+        #chat-box::-webkit-scrollbar { width: 4px; }
+        #chat-box::-webkit-scrollbar-thumb { background: var(--grad); border-radius: 10px; }
+        .msg { max-width: 85%; padding: 8px 12px; border-radius: 15px; font-size: 0.85rem; position: relative; animation: slideUp 0.3s ease; line-height: 1.4; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .msg.me { align-self: flex-start; background: var(--grad); color: white; border-bottom-right-radius: 2px; }
+        .msg.others { align-self: flex-end; background: rgba(255,255,255,0.1); color: #e2e8f0; border-bottom-left-radius: 2px; text-align: left; }
+        .msg .sender-n { display: block; font-size: 0.65rem; font-weight: 900; margin-bottom: 2px; color: var(--neon-blue); }
+        .chat-input-area { display: flex; gap: 8px; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 15px; }
+        .chat-input-area input { flex: 1; background: transparent; border: none; color: white; outline: none; font-family: 'Cairo'; }
 
-        .xp-bar-bg { background: rgba(255,255,255,0.1); height: 10px; border-radius: 10px; overflow: hidden; margin: 10px 0; }
-        .xp-bar-fill { height: 100%; background: var(--grad); width: 0%; transition: 1s ease; }
+        /* --- Buttons --- */
+        .mega-btn {
+            background: var(--grad); color: white; border: none; padding: 15px 30px;
+            border-radius: 20px; font-weight: 900; cursor: pointer; width: 100%;
+            font-family: 'Cairo'; font-size: 1.1rem; transition: 0.3s;
+            box-shadow: 0 5px 15px rgba(236, 72, 153, 0.3);
+        }
+        .mega-btn:active { transform: scale(0.95); }
 
-        .reward-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
-        .reward-item { background: rgba(0,0,0,0.3); border-radius: 20px; padding: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
-        .reward-item.locked { opacity: 0.5; filter: grayscale(1); }
+        /* --- Member Item --- */
+        .member-row {
+            display: flex; align-items: center; gap: 15px; padding: 12px;
+            background: rgba(255,255,255,0.03); border-radius: 18px; margin-bottom: 10px;
+        }
+        .member-avatar { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--neon-blue); }
 
-        .mega-btn { background: var(--grad); color: white; border: none; padding: 12px 20px; border-radius: 15px; font-weight: 700; cursor: pointer; width: 100%; font-family: 'Cairo'; }
-        
-        .member-row { display: flex; align-items: center; gap: 12px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 15px; margin-bottom: 8px; }
-        .member-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--neon-blue); }
     </style>
 </head>
 <body>
@@ -93,181 +137,318 @@
     </div>
 
     <div id="tab-home" class="section active">
-        <div id="clan-content-area"></div>
+        <div id="clan-content-area">
+            <div style="text-align:center; padding:100px;"><i class="fas fa-ghost fa-spin"></i></div>
+        </div>
     </div>
 
     <div id="tab-find" class="section">
         <div class="modern-card">
-            <h3><i class="fas fa-search"></i> البحث عن تحالف</h3>
-            <input type="text" id="search-in" oninput="searchClans()" placeholder="اكتب اسم الكلان..." style="width:100%; padding:15px; background:rgba(0,0,0,0.3); border:1px solid var(--glass); border-radius:15px; color:white;">
+            <h3 style="margin-top:0"><i class="fas fa-globe"></i> اكتشف التحالفات</h3>
+            <div style="position:relative">
+                <input type="text" id="search-in" onkeyup="searchClans()" placeholder="ابحث عن اسم الكلان..." 
+                style="width:100%; background:rgba(0,0,0,0.3); border:1px solid var(--glass); padding:15px; border-radius:15px; color:white; font-family:'Cairo'; box-sizing:border-box;">
+            </div>
             <div id="search-results" style="margin-top:20px"></div>
         </div>
     </div>
 
     <div id="tab-shop" class="section">
         <div class="modern-card">
-            <h3><i class="fas fa-gift"></i> مكافآت المستوى 20+</h3>
+            <h3><i class="fas fa-gift"></i> جوائز المستوى والتحالف</h3>
+            <p style="font-size:0.8rem; color:#94a3b8">ارفع لفل الكلان لفتح المميزات والمطالبة بالجوائز</p>
             <div class="reward-grid" id="reward-list"></div>
         </div>
     </div>
 
     <div id="tab-create" class="section">
         <div class="modern-card" style="text-align:center">
-            <h2>تأسيس تحالف</h2>
-            <input type="text" id="c-name" placeholder="اسم الكلان" style="width:90%; padding:10px; margin:10px; border-radius:10px;">
-            <button class="mega-btn" onclick="createClan()">إنشاء بـ 1 جوهرة 💎</button>
+            <div id="c-prev" style="width:120px; height:120px; border-radius:50%; margin:0 auto 20px; display:flex; align-items:center; justify-content:center; background:#1e293b; border:4px solid var(--neon-blue); box-shadow: 0 0 30px rgba(0,242,255,0.2);">
+                <i id="c-icon-v" class="fas fa-dragon" style="font-size:3rem; color:white"></i>
+            </div>
+            
+            <h2 style="margin:0">تأسيس تحالف جديد</h2>
+            <p style="color:var(--neon-blue)">التكلفة: 1 جوهرة نادرة <i class="fas fa-gem"></i></p>
+
+            <div style="margin-top:20px; text-align:right">
+                <label>اسم الكلان</label>
+                <input type="text" id="c-name" style="width:100%; padding:12px; margin:10px 0; background:rgba(0,0,0,0.3); border:1px solid var(--glass); border-radius:12px; color:white;" placeholder="مثال: ملوك العرب">
+                
+                <label>شعار الكلان</label>
+                <select id="c-icon" onchange="updatePreview()" style="width:100%; padding:12px; margin:10px 0; background:#0f172a; border:1px solid var(--glass); border-radius:12px; color:white;">
+                    <option value="fa-dragon">التنين أسطوري</option>
+                    <option value="fa-skull-crossbones">القرصان</option>
+                    <option value="fa-crown">التاج الملكي</option>
+                    <option value="fa-fire-flame-curved">النار الأزلية</option>
+                    <option value="fa-biohazard">الخطر الحيوي</option>
+                </select>
+
+                <div style="display:flex; gap:10px; margin-top:10px">
+                    <div style="flex:1">
+                        <label>اللون الرئيسي</label>
+                        <input type="color" id="c-color" value="#00f2ff" oninput="updatePreview()" style="width:100%; height:40px; border:none; background:none;">
+                    </div>
+                    <div style="flex:1">
+                        <label>لون الخلفية</label>
+                        <input type="color" id="c-bg" value="#1e293b" oninput="updatePreview()" style="width:100%; height:40px; border:none; background:none;">
+                    </div>
+                </div>
+            </div>
+
+            <button class="mega-btn" style="margin-top:30px" onclick="createClan()">تأكيد الإنشاء 💎</button>
         </div>
     </div>
 
 <script>
+/* ================= Logic & Engine ================= */
 let me = {};
 let myClan = null;
-let chatUnsubscribe = null;
+let chatSub = null;
 
+// 1. مراقبة حالة المستخدم
 auth.onAuthStateChanged(async (user) => {
     if (user) {
         db.collection("users").doc(user.uid).onSnapshot(async (doc) => {
             me = doc.data();
             me.uid = user.uid;
-            document.getElementById('u-gems').innerText = me.s_gems || 0;
-            document.getElementById('u-cp').innerText = me.clanPoints || 0;
+            if(document.getElementById('u-gems')) document.getElementById('u-gems').innerText = me.s_gems || 0;
+            if(document.getElementById('u-cp')) document.getElementById('u-cp').innerText = me.clanPoints || 0;
             if (me.clanId) await syncMyXpWithClan();
             refreshHome();
         });
-    } else { window.location.href = "auth.html"; }
+    } else {
+        window.location.href = "auth.html";
+    }
 });
 
 function getClanLevelData(totalXp) {
     const level = Math.floor((totalXp || 0) / 1000) + 1;
-    const progress = ((totalXp % 1000) / 1000) * 100;
+    const progress = ((totalXp || 0) % 1000 / 1000) * 100;
     return { level, progress };
 }
 
 async function refreshHome() {
     const area = document.getElementById('clan-content-area');
     if (!me.clanId) {
-        area.innerHTML = `<div class="modern-card" style="text-align:center"><h2>أنت لا تنتمي لكلان</h2><button class="mega-btn" onclick="tab('find')">ابحث عن واحد</button></div>`;
+        area.innerHTML = `
+            <div class="modern-card" style="text-align:center; padding:50px 20px;">
+                <div style="font-size:4rem; color:#475569; margin-bottom:20px;"><i class="fas fa-shield-blank"></i></div>
+                <h2>لا تنتمي لأي تحالف</h2>
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button class="mega-btn" onclick="tab('create')" style="background:var(--neon-blue); color:#000;">إنشاء (1 💎)</button>
+                    <button class="mega-btn" onclick="tab('find')">بحث</button>
+                </div>
+            </div>`;
         return;
     }
 
     const clanSnap = await db.collection("clans").doc(me.clanId).get();
-    if (!clanSnap.exists) return;
+    if (!clanSnap.exists) {
+        await db.collection("users").doc(me.uid).update({ clanId: null });
+        return;
+    }
     myClan = clanSnap.data();
-    const lv = getClanLevelData(myClan.totalXp);
+    renderClanUI(myClan);
+}
 
-    area.innerHTML = `
-        <div class="modern-card" style="border-top: 4px solid ${myClan.iconColor}">
-            <h1 style="margin:0">${myClan.name} <small style="font-size:0.5em; color:var(--gold)">LV.${lv.level}</small></h1>
-            <div class="xp-bar-bg"><div class="xp-bar-fill" style="width:${lv.progress}%"></div></div>
-            
+function renderClanUI(clan) {
+    const lvData = getClanLevelData(clan.totalXp);
+    document.getElementById('clan-content-area').innerHTML = `
+        <div class="modern-card" style="border-color:${clan.iconColor}">
+            <div class="card-glow"></div>
+            <div style="text-align:center">
+                <div style="width:80px; height:80px; border-radius:50%; background:${clan.bgColor}; border:3px solid ${clan.iconColor}; margin:0 auto; display:flex; align-items:center; justify-content:center; box-shadow:0 0 20px ${clan.iconColor}66;">
+                    <i class="fas ${clan.icon}" style="font-size:2rem; color:${clan.iconColor}"></i>
+                </div>
+                <h2 style="margin:10px 0 5px;">${clan.name}</h2>
+                <span style="color:var(--gold); font-weight:900;">LEVEL ${lvData.level}</span>
+            </div>
+
+            <div class="xp-container">
+                <div class="xp-bar-bg"><div class="xp-bar-fill" style="width:${lvData.progress}%"></div></div>
+            </div>
+
             <div id="chat-container">
-                <h4><i class="fas fa-comments"></i> دردشة الكلان</h4>
                 <div id="chat-box"></div>
                 <div class="chat-input-area">
-                    <input type="text" id="msg-input" placeholder="اكتب رسالتك...">
-                    <button onclick="sendMsg()" style="background:var(--neon-blue); border:none; padding:10px; border-radius:10px;"><i class="fas fa-paper-plane"></i></button>
+                    <input type="text" id="msg-input" placeholder="رسالة للتحالف..." onkeypress="if(event.key==='Enter') sendMsg()">
+                    <button onclick="sendMsg()" style="background:none; border:none; color:var(--neon-blue); cursor:pointer;"><i class="fas fa-paper-plane"></i></button>
                 </div>
             </div>
+
+            <button class="mega-btn" onclick="dailyCheckIn()" style="margin-top:15px; background:rgba(255,255,255,0.05); border:1px solid ${clan.iconColor}; font-size:0.9rem;">
+                <i class="fas fa-calendar-check"></i> حضور يومي (+10 CP)
+            </button>
         </div>
+
         <div class="modern-card">
-            <h4>الأعضاء</h4>
+            <h3>الأعضاء</h3>
             <div id="members-list"></div>
+            <button class="mega-btn" onclick="leaveClan()" style="background:none; color:#ff4757; margin-top:15px; border:1px solid #ff4757; font-size:0.8rem">مغادرة التحالف</button>
         </div>
     `;
     loadMembers(me.clanId);
     listenToChat(me.clanId);
-    renderRewards(myClan);
+    renderRewards(clan);
 }
 
-// --- وظيفة البحث المصححة ---
-async function searchClans() {
-    const q = document.getElementById('search-in').value;
-    const resDiv = document.getElementById('search-results');
-    if(q.length < 2) { resDiv.innerHTML = ""; return; }
-
-    const snap = await db.collection("clans").where("name", ">=", q).where("name", "<=", q + '\uf8ff').limit(10).get();
-    resDiv.innerHTML = "";
-    snap.forEach(doc => {
-        const c = doc.data();
-        resDiv.innerHTML += `
-            <div class="member-row" style="justify-content:space-between">
-                <div><b>${c.name}</b> <br> <small>الأعضاء: ${c.membersCount}</small></div>
-                <button class="mega-btn" onclick="joinClan('${doc.id}')" style="width:auto; padding:5px 15px;">انضمام</button>
-            </div>`;
-    });
-}
-
-// --- وظيفة الدردشة ---
-function listenToChat(clanId) {
-    if (chatUnsubscribe) chatUnsubscribe();
-    chatUnsubscribe = db.collection("clans").doc(clanId).collection("chat")
-        .orderBy("time", "desc").limit(20).onSnapshot(snap => {
+// --- نظام الشات المحدث (الأحدث بالأسفل) ---
+function listenToChat(cid) {
+    if (chatSub) chatSub();
+    chatSub = db.collection("clans").doc(cid).collection("chat")
+        .orderBy("time", "asc").limitToLast(25)
+        .onSnapshot(snap => {
             const box = document.getElementById('chat-box');
-            if(!box) return;
+            if (!box) return;
             box.innerHTML = "";
             snap.forEach(doc => {
                 const m = doc.data();
                 const isMe = m.senderId === me.uid;
-                box.innerHTML += `<div class="msg ${isMe ? 'me' : 'others'}"><b>${m.senderName}:</b> ${m.text}</div>`;
+                box.innerHTML += `
+                    <div class="msg ${isMe ? 'me' : 'others'}">
+                        ${!isMe ? `<span class="sender-n">${m.senderName}</span>` : ''}
+                        ${m.text}
+                    </div>`;
             });
+            box.scrollTop = box.scrollHeight;
         });
 }
 
 async function sendMsg() {
     const inp = document.getElementById('msg-input');
     const txt = inp.value.trim();
-    if(!txt || !me.clanId) return;
+    if (!txt || !me.clanId) return;
+    inp.value = "";
     await db.collection("clans").doc(me.clanId).collection("chat").add({
         text: txt,
         senderId: me.uid,
         senderName: me.displayName || "محارب",
-        time: Date.now()
+        time: firebase.firestore.FieldValue.serverTimestamp()
     });
-    inp.value = "";
 }
 
-// --- نظام الجوائز الجديد (بطاقة تغيير الاسم) ---
+// --- نظام البحث المصلح ---
+async function searchClans() {
+    const val = document.getElementById('search-in').value.trim();
+    const res = document.getElementById('search-results');
+    if (val.length < 2) { res.innerHTML = ""; return; }
+
+    const snap = await db.collection("clans").where("name", ">=", val).where("name", "<=", val + '\uf8ff').limit(6).get();
+    res.innerHTML = "";
+    snap.forEach(doc => {
+        const c = doc.data();
+        res.innerHTML += `
+            <div class="member-row" style="justify-content:space-between">
+                <div style="display:flex; align-items:center; gap:10px">
+                    <div style="width:40px; height:40px; background:${c.bgColor}; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid ${c.iconColor}">
+                        <i class="fas ${c.icon}" style="color:${c.iconColor}"></i>
+                    </div>
+                    <div><b>${c.name}</b><br><small>الأعضاء: ${c.membersCount}</small></div>
+                </div>
+                <button class="mega-btn" onclick="joinClan('${doc.id}')" style="width:auto; padding:5px 15px; font-size:0.7rem">انضمام</button>
+            </div>`;
+    });
+}
+
+// --- نظام الجوائز والبطاقة الأسبوعية ---
 function renderRewards(clan) {
-    const lv = getClanLevelData(clan.totalXp);
+    const lvData = getClanLevelData(clan.totalXp);
     const list = document.getElementById('reward-list');
     if(!list) return;
 
-    const isLocked = lv.level < 20;
-    list.innerHTML = `
-        <div class="reward-item ${isLocked ? 'locked' : ''}">
-            <i class="fas fa-id-card" style="font-size:2rem; color:var(--gold)"></i>
-            <h3>بطاقة تغيير الاسم الأسبوعية</h3>
-            <p>متاحة لجميع أعضاء الكلان لفل 20+</p>
-            ${isLocked ? '<p style="color:red">مقفول: يتطلب لفل 20</p>' : '<button class="mega-btn" onclick="claimNameCard()">استلام البطاقة</button>'}
-        </div>
-    `;
+    const isLvl20 = lvData.level >= 20;
+    const rewards = [
+        { id: 'card', n: "بطاقة تغيير اسم", lv: 20, icon: "fa-id-card", special: true },
+        { id: 'chat', n: "دردشة متميزة", lv: 1, icon: "fa-comments" },
+        { id: 'gold', n: "أيقونة ذهبية", lv: 10, icon: "fa-crown" },
+        { id: 'xp', n: "مضاعف القوة", lv: 30, icon: "fa-bolt" }
+    ];
+
+    list.innerHTML = "";
+    rewards.forEach(r => {
+        const locked = lvData.level < r.lv;
+        list.innerHTML += `
+            <div class="reward-item ${locked ? 'locked' : ''}" style="${r.special ? 'grid-column: span 2; border:1px solid var(--gold)' : ''}" onclick="${r.id==='card' && !locked ? 'claimWeeklyCard()' : ''}">
+                <i class="fas ${r.icon}" style="font-size:1.8rem; color:${locked ? '#4b5563' : 'var(--gold)'}"></i>
+                <div style="font-weight:bold; margin-top:8px; font-size:0.85rem;">${r.n}</div>
+                <div style="font-size:0.7rem; color:${locked ? 'var(--neon-pink)' : '#10b981'}">
+                    ${locked ? 'لفل ' + r.lv : r.id==='card' ? 'استلم الآن' : 'مفعل'}
+                </div>
+            </div>`;
+    });
 }
 
-async function claimNameCard() {
-    const lastClaim = me.lastNameClaim || 0;
+async function claimWeeklyCard() {
+    const now = Date.now();
+    const last = me.lastWeeklyCard || 0;
     const week = 7 * 24 * 60 * 60 * 1000;
-    
-    if (Date.now() - lastClaim < week) {
-        alert("لقد استلمت بطاقتك لهذا الأسبوع بالفعل! عد لاحقاً.");
-        return;
+
+    if (now - last < week) {
+        const remaining = Math.ceil((week - (now - last)) / (1000 * 60 * 60 * 24));
+        return alert(`لقد استلمت البطاقة بالفعل! عد بعد ${remaining} يوم.`);
     }
 
     await db.collection("users").doc(me.uid).update({
-        hasNameCard: true, // تضاف ميزة تغيير الاسم في الحساب
-        lastNameClaim: Date.now()
+        lastWeeklyCard: now,
+        s_gems: firebase.firestore.FieldValue.increment(1) // أو إضافة بطاقة فعلية في inventory
     });
-    alert("🎉 مبروك! حصلت على بطاقة تغيير اسم مجانية لهذا الأسبوع.");
+    alert("🎉 مبروك! حصلت على بطاقة تغيير الاسم الأسبوعية.");
+}
+
+// --- دوال النظام الأساسية ---
+async function createClan() {
+    const name = document.getElementById('c-name').value.trim();
+    const icon = document.getElementById('c-icon').value;
+    const color = document.getElementById('c-color').value;
+    const bg = document.getElementById('c-bg').value;
+
+    if (name.length < 3) return alert("الاسم قصير!");
+    if ((me.s_gems || 0) < 1) return alert("تحتاج 1 جوهرة!");
+
+    const clanRef = db.collection("clans").doc(name);
+    const doc = await clanRef.get();
+    if (doc.exists) return alert("الاسم محجوز!");
+
+    const batch = db.batch();
+    batch.set(clanRef, { name, icon, iconColor: color, bgColor: bg, leaderId: me.uid, membersCount: 1, totalXp: me.xp || 0, createdAt: Date.now() });
+    batch.set(clanRef.collection("members").doc(me.uid), { name: me.displayName || "لاعب", role: "leader", xp: me.xp || 0 });
+    batch.update(db.collection("users").doc(me.uid), { clanId: name, s_gems: firebase.firestore.FieldValue.increment(-1) });
+    await batch.commit();
+    tab('home');
+}
+
+async function joinClan(cName) {
+    if (me.clanId) return alert("غادر كلانك أولاً!");
+    const batch = db.batch();
+    const cRef = db.collection("clans").doc(cName);
+    batch.set(cRef.collection("members").doc(me.uid), { name: me.displayName || "لاعب", role: "member", xp: me.xp || 0 });
+    batch.update(cRef, { membersCount: firebase.firestore.FieldValue.increment(1), totalXp: firebase.firestore.FieldValue.increment(me.xp || 0) });
+    batch.update(db.collection("users").doc(me.uid), { clanId: cName });
+    await batch.commit();
+    tab('home');
+}
+
+async function leaveClan() {
+    if (!confirm("هل تود المغادرة؟")) return;
+    const batch = db.batch();
+    const cRef = db.collection("clans").doc(me.clanId);
+    batch.delete(cRef.collection("members").doc(me.uid));
+    batch.update(cRef, { membersCount: firebase.firestore.FieldValue.increment(-1), totalXp: firebase.firestore.FieldValue.increment(-(me.xp || 0)) });
+    batch.update(db.collection("users").doc(me.uid), { clanId: null });
+    await batch.commit();
+    refreshHome();
 }
 
 async function syncMyXpWithClan() {
-    const clanRef = db.collection("clans").doc(me.clanId);
-    const memRef = clanRef.collection("members").doc(me.uid);
-    const mDoc = await memRef.get();
-    if(mDoc.exists) {
+    const mRef = db.collection("clans").doc(me.clanId).collection("members").doc(me.uid);
+    const mDoc = await mRef.get();
+    if (mDoc.exists) {
         const diff = (me.xp || 0) - (mDoc.data().xp || 0);
-        if(diff > 0) {
-            await memRef.update({ xp: me.xp });
-            await clanRef.update({ totalXp: firebase.firestore.FieldValue.increment(diff) });
+        if (diff > 0) {
+            const batch = db.batch();
+            batch.update(mRef, { xp: me.xp });
+            batch.update(db.collection("clans").doc(me.clanId), { totalXp: firebase.firestore.FieldValue.increment(diff) });
+            await batch.commit();
         }
     }
 }
@@ -279,28 +460,32 @@ async function loadMembers(cid) {
     list.innerHTML = "";
     snap.forEach(doc => {
         const m = doc.data();
-        list.innerHTML += `<div class="member-row"><img src="${m.photo || 'https://api.dicebear.com/7.x/avataaars/svg?seed=1'}" class="member-avatar"><div><b>${m.name}</b><br><small>${m.xp} XP</small></div></div>`;
+        list.innerHTML += `<div class="member-row"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${m.name}" class="member-avatar"><div><b>${m.name}</b><br><small>${m.xp} XP</small></div></div>`;
     });
 }
 
-async function joinClan(cid) {
-    if(me.clanId) return alert("أنت في كلان بالفعل!");
-    const batch = db.batch();
-    batch.set(db.collection("clans").doc(cid).collection("members").doc(me.uid), {
-        name: me.displayName || "لاعب",
-        xp: me.xp || 0,
-        role: "member"
-    });
-    batch.update(db.collection("clans").doc(cid), { membersCount: firebase.firestore.FieldValue.increment(1), totalXp: firebase.firestore.FieldValue.increment(me.xp || 0) });
-    batch.update(db.collection("users").doc(me.uid), { clanId: cid });
-    await batch.commit();
-    tab('home');
+async function dailyCheckIn() {
+    const today = new Date().toDateString();
+    if(me.lastClanCheckIn === today) return alert("سجلت حضورك مسبقاً!");
+    await db.collection("users").doc(me.uid).update({ lastClanCheckIn: today, clanPoints: firebase.firestore.FieldValue.increment(10) });
+    alert("حصلت على 10 CP! ⚡");
+}
+
+function updatePreview() {
+    const icon = document.getElementById('c-icon').value;
+    const color = document.getElementById('c-color').value;
+    const bg = document.getElementById('c-bg').value;
+    document.getElementById('c-icon-v').className = "fas " + icon;
+    document.getElementById('c-icon-v').style.color = color;
+    document.getElementById('c-prev').style.background = bg;
+    document.getElementById('c-prev').style.borderColor = color;
 }
 
 function tab(id) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById('tab-'+id).classList.add('active');
+    if(event && event.currentTarget) event.currentTarget.classList.add('active');
 }
 </script>
 </body>
