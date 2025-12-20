@@ -205,14 +205,22 @@ let me = {};
 let myClan = null;
 let chatSub = null;
 
-// 1. مراقبة حالة المستخدم
+// تعريف مستويات الكلان (XP المطلوبة لكل لفل)
+const CLAN_LEVELS = [0, 5000, 15000, 30000, 50000, 75000, 100000]; // لفل 7 هو 100 ألف
+
+// تعريف الشارات الجديدة
+const CLAN_BADGES = {
+    "badge_pro": { name: "شارة الاحتراف", icon: "fa-bolt-lightning", cp: 10000, lv: 5, bg: "linear-gradient(45deg, #00f2ff, #0062ff)" },
+    "badge_elite": { name: "شارة النخبة", icon: "fa-shield-halved", cp: 2000, lv: 3, bg: "linear-gradient(45deg, #a855f7, #6366f1)" },
+    "badge_legend": { name: "الشارة الأسطورية", icon: "fa-clapperboard", cp: 25000, lv: 7, bg: "linear-gradient(45deg, #ffcc00, #ff8800)" }
+};
+
 auth.onAuthStateChanged(async (user) => {
     if (user) {
         db.collection("users").doc(user.uid).onSnapshot(async (doc) => {
             me = doc.data();
             me.uid = user.uid;
-            if(document.getElementById('u-gems')) document.getElementById('u-gems').innerText = me.s_gems || 0;
-            if(document.getElementById('u-cp')) document.getElementById('u-cp').innerText = me.clanPoints || 0;
+            updateHeaderUI();
             if (me.clanId) await syncMyXpWithClan();
             refreshHome();
         });
@@ -221,24 +229,36 @@ auth.onAuthStateChanged(async (user) => {
     }
 });
 
+function updateHeaderUI() {
+    if(document.getElementById('u-gems')) document.getElementById('u-gems').innerText = me.s_gems || 0;
+    if(document.getElementById('u-cp')) document.getElementById('u-cp').innerText = me.clanPoints || 0;
+}
+
+// حساب اللفل بناءً على XP التراكمي
 function getClanLevelData(totalXp) {
-    const level = Math.floor((totalXp || 0) / 1000) + 1;
-    const progress = ((totalXp || 0) % 1000 / 1000) * 100;
-    return { level, progress };
+    let level = 1;
+    for (let i = 0; i < CLAN_LEVELS.length; i++) {
+        if (totalXp >= CLAN_LEVELS[i]) level = i + 1;
+    }
+    level = Math.min(level, 7); // الماكس لفل 7
+    let nextXp = CLAN_LEVELS[level] || CLAN_LEVELS[level-1];
+    let prevXp = CLAN_LEVELS[level-1];
+    let progress = ((totalXp - prevXp) / (nextXp - prevXp)) * 100;
+    if (level === 7) progress = 100;
+    return { level, progress, nextXp };
 }
 
 async function refreshHome() {
     const area = document.getElementById('clan-content-area');
     if (!me.clanId) {
-        area.innerHTML = `
-            <div class="modern-card" style="text-align:center; padding:50px 20px;">
-                <div style="font-size:4rem; color:#475569; margin-bottom:20px;"><i class="fas fa-shield-blank"></i></div>
-                <h2>لا تنتمي لأي تحالف</h2>
-                <div style="display:flex; gap:10px; margin-top:20px;">
-                    <button class="mega-btn" onclick="tab('create')" style="background:var(--neon-blue); color:#000;">إنشاء (1 💎)</button>
-                    <button class="mega-btn" onclick="tab('find')">بحث</button>
-                </div>
-            </div>`;
+        area.innerHTML = `<div class="modern-card" style="text-align:center; padding:50px 20px;">
+            <div style="font-size:4rem; color:#475569; margin-bottom:20px;"><i class="fas fa-shield-blank"></i></div>
+            <h2>لا تنتمي لأي تحالف</h2>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="mega-btn" onclick="tab('create')" style="background:var(--neon-blue); color:#000;">إنشاء (1 💎)</button>
+                <button class="mega-btn" onclick="tab('find')">بحث</button>
+            </div>
+        </div>`;
         return;
     }
 
@@ -261,7 +281,8 @@ function renderClanUI(clan) {
                     <i class="fas ${clan.icon}" style="font-size:2rem; color:${clan.iconColor}"></i>
                 </div>
                 <h2 style="margin:10px 0 5px;">${clan.name}</h2>
-                <span style="color:var(--gold); font-weight:900;">LEVEL ${lvData.level}</span>
+                <div style="color:var(--gold); font-weight:900; font-size:1.2rem;">LVL ${lvData.level} ${lvData.level === 7 ? '👑 MAX' : ''}</div>
+                <small style="color:#aaa">${clan.totalXp.toLocaleString()} / ${lvData.nextXp.toLocaleString()} XP</small>
             </div>
 
             <div class="xp-container">
@@ -271,7 +292,7 @@ function renderClanUI(clan) {
             <div id="chat-container">
                 <div id="chat-box"></div>
                 <div class="chat-input-area">
-                    <input type="text" id="msg-input" placeholder="رسالة للتحالف..." onkeypress="if(event.key==='Enter') sendMsg()">
+                    <input type="text" id="msg-input" placeholder="اكتب للتحالف..." onkeypress="if(event.key==='Enter') sendMsg()">
                     <button onclick="sendMsg()" style="background:none; border:none; color:var(--neon-blue); cursor:pointer;"><i class="fas fa-paper-plane"></i></button>
                 </div>
             </div>
@@ -282,17 +303,117 @@ function renderClanUI(clan) {
         </div>
 
         <div class="modern-card">
-            <h3>الأعضاء</h3>
+            <h3>أعضاء التحالف</h3>
             <div id="members-list"></div>
             <button class="mega-btn" onclick="leaveClan()" style="background:none; color:#ff4757; margin-top:15px; border:1px solid #ff4757; font-size:0.8rem">مغادرة التحالف</button>
-        </div>
-    `;
+        </div>`;
     loadMembers(me.clanId);
     listenToChat(me.clanId);
     renderRewards(clan);
 }
 
-// --- نظام الشات المحدث (الأحدث بالأسفل) ---
+// --- نظام التزامن المطور (توزيع الجوائز تلقائياً) ---
+async function syncMyXpWithClan() {
+    const mRef = db.collection("clans").doc(me.clanId).collection("members").doc(me.uid);
+    const mDoc = await mRef.get();
+    if (mDoc.exists) {
+        const oldXp = mDoc.data().xp || 0;
+        const currentXp = me.xp || 0;
+        const diff = currentXp - oldXp;
+
+        if (diff > 0) {
+            const batch = db.batch();
+            // تحديث العضو داخل الكلان
+            batch.update(mRef, { xp: currentXp });
+            // تحديث الكلان ككل
+            batch.update(db.collection("clans").doc(me.clanId), { 
+                totalXp: firebase.firestore.FieldValue.increment(diff) 
+            });
+            // توزيع الجوائز للاعب (10 كوينز و 10 Cp لكل 1 Xp)
+            batch.update(db.collection("users").doc(me.uid), {
+                totalCoins: firebase.firestore.FieldValue.increment(diff * 10),
+                clanPoints: firebase.firestore.FieldValue.increment(diff * 10)
+            });
+            await batch.commit();
+        }
+    }
+}
+
+// --- متجر الشارات والجوائز ---
+function renderRewards(clan) {
+    const lvData = getClanLevelData(clan.totalXp);
+    const list = document.getElementById('reward-list');
+    if(!list) return;
+    list.innerHTML = "";
+
+    // 1. عرض الشارات الثلاث
+    Object.keys(CLAN_BADGES).forEach(key => {
+        const b = CLAN_BADGES[key];
+        const locked = (lvData.level < b.lv || (me.clanPoints || 0) < b.cp);
+        list.innerHTML += `
+            <div class="reward-item ${locked ? 'locked' : ''}" onclick="buyBadge('${key}')" style="background:${b.bg}">
+                <i class="fas ${b.icon}" style="font-size:1.8rem; color:white"></i>
+                <div style="font-weight:bold; margin-top:8px; font-size:0.8rem;">${b.name}</div>
+                <div style="font-size:0.65rem;">Lv.${b.lv} + ${b.cp} Cp</div>
+            </div>`;
+    });
+
+    // 2. أدوات الشوب الرهيبة
+    const items = [
+        { id: 'gem_60k', n: "1 جوهرة نادرة", price: 60000, icon: "fa-gem", type: "item" },
+        { id: 'pro_2d', n: "برو (يومين)", price: 1000, icon: "fa-crown", type: "pro" },
+        { id: 'rename_card', n: "بطاقة تغيير اسم", price: 5000, icon: "fa-id-card", type: "item" }
+    ];
+
+    items.forEach(item => {
+        const locked = (me.clanPoints || 0) < item.price;
+        list.innerHTML += `
+            <div class="reward-item ${locked ? 'locked' : ''}" onclick="buyItem('${item.id}', ${item.price})">
+                <i class="fas ${item.icon}" style="font-size:1.8rem; color:var(--gold)"></i>
+                <div style="font-weight:bold; margin-top:8px; font-size:0.85rem;">${item.n}</div>
+                <div style="font-size:0.7rem; color:var(--neon-blue)">${item.price} Cp</div>
+            </div>`;
+    });
+}
+
+async function buyBadge(key) {
+    const b = CLAN_BADGES[key];
+    const lvData = getClanLevelData(myClan.totalXp);
+    
+    if(lvData.level < b.lv) return alert(`تحتاج لفل ${b.lv} في الكلان!`);
+    if((me.clanPoints || 0) < b.cp) return alert(`تحتاج ${b.cp} من Cp!`);
+    
+    let owned = me.badges || [];
+    if(owned.includes(key)) return alert("تملك هذه الشارة بالفعل!");
+
+    if(confirm(`هل تريد شراء ${b.name} مقابل ${b.cp} Cp؟`)) {
+        await db.collection("users").doc(me.uid).update({
+            clanPoints: firebase.firestore.FieldValue.increment(-b.cp),
+            badges: firebase.firestore.FieldValue.arrayUnion(key)
+        });
+        alert("تم شراء الشارة بنجاح! تفقد ملفك الشخصي.");
+    }
+}
+
+async function buyItem(id, price) {
+    if((me.clanPoints || 0) < price) return alert("رصيدك من Cp غير كافٍ!");
+    
+    if(confirm(`تأكيد عملية الشراء؟`)) {
+        const userRef = db.collection("users").doc(me.uid);
+        if(id === 'gem_60k') {
+            await userRef.update({ s_gems: firebase.firestore.FieldValue.increment(1), clanPoints: firebase.firestore.FieldValue.increment(-price) });
+        } else if(id === 'pro_2d') {
+            const currentPro = me.proExpiryTime > Date.now() ? me.proExpiryTime : Date.now();
+            const twoDays = 2 * 24 * 60 * 60 * 1000;
+            await userRef.update({ proExpiryTime: currentPro + twoDays, clanPoints: firebase.firestore.FieldValue.increment(-price) });
+        } else if(id === 'rename_card') {
+            await userRef.update({ inventory: firebase.firestore.FieldValue.arrayUnion("بطاقة الاسم"), clanPoints: firebase.firestore.FieldValue.increment(-price) });
+        }
+        alert("تمت عملية الشراء بنجاح! 🎊");
+    }
+}
+
+// --- نظام الشات ---
 function listenToChat(cid) {
     if (chatSub) chatSub();
     chatSub = db.collection("clans").doc(cid).collection("chat")
@@ -304,11 +425,10 @@ function listenToChat(cid) {
             snap.forEach(doc => {
                 const m = doc.data();
                 const isMe = m.senderId === me.uid;
-                box.innerHTML += `
-                    <div class="msg ${isMe ? 'me' : 'others'}">
-                        ${!isMe ? `<span class="sender-n">${m.senderName}</span>` : ''}
-                        ${m.text}
-                    </div>`;
+                box.innerHTML += `<div class="msg ${isMe ? 'me' : 'others'}">
+                    ${!isMe ? `<span class="sender-n">${m.senderName}</span>` : ''}
+                    ${m.text}
+                </div>`;
             });
             box.scrollTop = box.scrollHeight;
         });
@@ -320,95 +440,38 @@ async function sendMsg() {
     if (!txt || !me.clanId) return;
     inp.value = "";
     await db.collection("clans").doc(me.clanId).collection("chat").add({
-        text: txt,
-        senderId: me.uid,
-        senderName: me.displayName || "محارب",
-        time: firebase.firestore.FieldValue.serverTimestamp()
+        text: txt, senderId: me.uid, senderName: me.displayName || "لاعب", time: firebase.firestore.FieldValue.serverTimestamp()
     });
 }
 
-// --- نظام البحث المصلح ---
+// --- وظائف عامة ---
 async function searchClans() {
     const val = document.getElementById('search-in').value.trim();
     const res = document.getElementById('search-results');
     if (val.length < 2) { res.innerHTML = ""; return; }
-
     const snap = await db.collection("clans").where("name", ">=", val).where("name", "<=", val + '\uf8ff').limit(6).get();
     res.innerHTML = "";
     snap.forEach(doc => {
         const c = doc.data();
-        res.innerHTML += `
-            <div class="member-row" style="justify-content:space-between">
-                <div style="display:flex; align-items:center; gap:10px">
-                    <div style="width:40px; height:40px; background:${c.bgColor}; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid ${c.iconColor}">
-                        <i class="fas ${c.icon}" style="color:${c.iconColor}"></i>
-                    </div>
-                    <div><b>${c.name}</b><br><small>الأعضاء: ${c.membersCount}</small></div>
-                </div>
-                <button class="mega-btn" onclick="joinClan('${doc.id}')" style="width:auto; padding:5px 15px; font-size:0.7rem">انضمام</button>
-            </div>`;
+        res.innerHTML += `<div class="member-row" style="justify-content:space-between">
+            <div style="display:flex; align-items:center; gap:10px">
+                <div style="width:40px; height:40px; background:${c.bgColor}; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid ${c.iconColor}"><i class="fas ${c.icon}" style="color:${c.iconColor}"></i></div>
+                <div><b>${c.name}</b><br><small>أعضاء: ${c.membersCount}</small></div>
+            </div>
+            <button class="mega-btn" onclick="joinClan('${doc.id}')" style="width:auto; padding:5px 15px; font-size:0.7rem">انضمام</button>
+        </div>`;
     });
 }
 
-// --- نظام الجوائز والبطاقة الأسبوعية ---
-function renderRewards(clan) {
-    const lvData = getClanLevelData(clan.totalXp);
-    const list = document.getElementById('reward-list');
-    if(!list) return;
-
-    const isLvl20 = lvData.level >= 20;
-    const rewards = [
-        { id: 'card', n: "بطاقة تغيير اسم", lv: 20, icon: "fa-id-card", special: true },
-        { id: 'chat', n: "دردشة متميزة", lv: 1, icon: "fa-comments" },
-        { id: 'gold', n: "أيقونة ذهبية", lv: 10, icon: "fa-crown" },
-        { id: 'xp', n: "مضاعف القوة", lv: 30, icon: "fa-bolt" }
-    ];
-
-    list.innerHTML = "";
-    rewards.forEach(r => {
-        const locked = lvData.level < r.lv;
-        list.innerHTML += `
-            <div class="reward-item ${locked ? 'locked' : ''}" style="${r.special ? 'grid-column: span 2; border:1px solid var(--gold)' : ''}" onclick="${r.id==='card' && !locked ? 'claimWeeklyCard()' : ''}">
-                <i class="fas ${r.icon}" style="font-size:1.8rem; color:${locked ? '#4b5563' : 'var(--gold)'}"></i>
-                <div style="font-weight:bold; margin-top:8px; font-size:0.85rem;">${r.n}</div>
-                <div style="font-size:0.7rem; color:${locked ? 'var(--neon-pink)' : '#10b981'}">
-                    ${locked ? 'لفل ' + r.lv : r.id==='card' ? 'استلم الآن' : 'مفعل'}
-                </div>
-            </div>`;
-    });
-}
-
-async function claimWeeklyCard() {
-    const now = Date.now();
-    const last = me.lastWeeklyCard || 0;
-    const week = 7 * 24 * 60 * 60 * 1000;
-
-    if (now - last < week) {
-        const remaining = Math.ceil((week - (now - last)) / (1000 * 60 * 60 * 24));
-        return alert(`لقد استلمت البطاقة بالفعل! عد بعد ${remaining} يوم.`);
-    }
-
-    await db.collection("users").doc(me.uid).update({
-        lastWeeklyCard: now,
-        s_gems: firebase.firestore.FieldValue.increment(1) // أو إضافة بطاقة فعلية في inventory
-    });
-    alert("🎉 مبروك! حصلت على بطاقة تغيير الاسم الأسبوعية.");
-}
-
-// --- دوال النظام الأساسية ---
 async function createClan() {
     const name = document.getElementById('c-name').value.trim();
     const icon = document.getElementById('c-icon').value;
     const color = document.getElementById('c-color').value;
     const bg = document.getElementById('c-bg').value;
-
     if (name.length < 3) return alert("الاسم قصير!");
-    if ((me.s_gems || 0) < 1) return alert("تحتاج 1 جوهرة!");
-
+    if ((me.s_gems || 0) < 1) return alert("تحتاج جوهرة!");
     const clanRef = db.collection("clans").doc(name);
-    const doc = await clanRef.get();
-    if (doc.exists) return alert("الاسم محجوز!");
-
+    if ((await clanRef.get()).exists) return alert("الاسم محجوز!");
     const batch = db.batch();
     batch.set(clanRef, { name, icon, iconColor: color, bgColor: bg, leaderId: me.uid, membersCount: 1, totalXp: me.xp || 0, createdAt: Date.now() });
     batch.set(clanRef.collection("members").doc(me.uid), { name: me.displayName || "لاعب", role: "leader", xp: me.xp || 0 });
@@ -418,7 +481,7 @@ async function createClan() {
 }
 
 async function joinClan(cName) {
-    if (me.clanId) return alert("غادر كلانك أولاً!");
+    if (me.clanId) return alert("غادر كلانك الحالي أولاً!");
     const batch = db.batch();
     const cRef = db.collection("clans").doc(cName);
     batch.set(cRef.collection("members").doc(me.uid), { name: me.displayName || "لاعب", role: "member", xp: me.xp || 0 });
@@ -437,20 +500,6 @@ async function leaveClan() {
     batch.update(db.collection("users").doc(me.uid), { clanId: null });
     await batch.commit();
     refreshHome();
-}
-
-async function syncMyXpWithClan() {
-    const mRef = db.collection("clans").doc(me.clanId).collection("members").doc(me.uid);
-    const mDoc = await mRef.get();
-    if (mDoc.exists) {
-        const diff = (me.xp || 0) - (mDoc.data().xp || 0);
-        if (diff > 0) {
-            const batch = db.batch();
-            batch.update(mRef, { xp: me.xp });
-            batch.update(db.collection("clans").doc(me.clanId), { totalXp: firebase.firestore.FieldValue.increment(diff) });
-            await batch.commit();
-        }
-    }
 }
 
 async function loadMembers(cid) {
@@ -487,6 +536,7 @@ function tab(id) {
     document.getElementById('tab-'+id).classList.add('active');
     if(event && event.currentTarget) event.currentTarget.classList.add('active');
 }
+
 </script>
 </body>
 </html>
