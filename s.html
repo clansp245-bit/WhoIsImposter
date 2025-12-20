@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🛡️ تحالفات الأساطير - تخصيص كامل</title>
+    <title>🛡️ أساطير التحالفات - Pro System</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -17,288 +17,412 @@
         :root {
             --primary: #6366f1;
             --clan-gold: #fbbf24;
-            --clan-bg: rgba(30, 41, 59, 0.7);
-            --danger: #ef4444;
+            --clan-bg: #1e293b;
             --glass: rgba(255, 255, 255, 0.05);
-            --gem-color: #06b6d4;
+            --pro-glow: 0 0 10px #fbbf24, 0 0 20px #fbbf24;
         }
 
         body {
             font-family: 'Cairo', sans-serif;
-            background: #0a0f1e;
-            background-image: radial-gradient(circle at top right, #1e1b4b, transparent);
-            color: #f1f5f9; padding: 20px; min-height: 100vh; margin: 0;
+            background: #0f172a;
+            color: #f1f5f9; padding: 15px; margin: 0; min-height: 100vh;
         }
 
-        .clan-header { text-align: center; margin-bottom: 30px; }
-        .clan-header h1 { font-weight: 900; font-size: 2.2rem; color: var(--clan-gold); text-shadow: 0 0 20px rgba(251, 191, 36, 0.3); }
+        /* رأس الصفحة */
+        .clan-header { text-align: center; margin-bottom: 25px; }
+        .clan-header h1 { 
+            font-weight: 900; color: var(--clan-gold); margin: 0;
+            background: linear-gradient(to bottom, #fbbf24, #b45309);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
 
+        /* التبويبات */
         .tabs {
-            display: flex; gap: 10px; background: var(--clan-bg); padding: 5px; border-radius: 15px;
-            max-width: 500px; margin: 0 auto 25px;
+            display: flex; gap: 8px; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 15px;
+            overflow-x: auto; margin-bottom: 20px;
         }
         .tab-btn {
-            flex: 1; padding: 12px; border: none; background: transparent; color: #94a3b8;
-            cursor: pointer; font-family: 'Cairo'; font-weight: bold; border-radius: 12px; transition: 0.3s;
+            flex: 1; padding: 10px; border: none; background: transparent; color: #94a3b8;
+            cursor: pointer; font-family: 'Cairo'; font-weight: bold; border-radius: 10px; 
+            white-space: nowrap; transition: 0.3s;
         }
-        .tab-btn.active { background: var(--primary); color: white; }
+        .tab-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4); }
 
-        .clan-container { max-width: 600px; margin: 0 auto; }
-
+        /* البطاقات */
         .card {
-            background: var(--clan-bg); backdrop-filter: blur(15px); border: 1px solid var(--glass);
-            border-radius: 24px; padding: 25px; margin-bottom: 20px; transition: 0.5s;
+            background: var(--clan-bg); border: 1px solid var(--glass);
+            border-radius: 20px; padding: 20px; margin-bottom: 15px; position: relative;
+            animation: fadeIn 0.5s ease;
         }
 
-        .clan-item {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 15px; border-radius: 18px; margin-bottom: 10px;
-            transition: 0.3s; border: 1px solid var(--glass);
+        /* قائمة المتصدرين */
+        .leader-item {
+            display: flex; align-items: center; padding: 12px; margin-bottom: 8px;
+            background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid transparent;
         }
-        
-        .clan-icon { 
-            width: 50px; height: 50px; border-radius: 12px; 
-            display: flex; align-items: center; justify-content: center; font-size: 1.5rem; 
+        .rank-num { font-size: 1.2rem; font-weight: 900; width: 40px; text-align: center; }
+        .rank-1 { color: #fbbf24; text-shadow: 0 0 10px #fbbf24; }
+        .rank-2 { color: #c0c0c0; }
+        .rank-3 { color: #cd7f32; }
+
+        /* عناصر الكلان */
+        .clan-xp-bar {
+            height: 6px; background: rgba(0,0,0,0.5); border-radius: 3px; margin-top: 5px; overflow: hidden;
+        }
+        .clan-xp-fill {
+            height: 100%; background: linear-gradient(90deg, var(--primary), #a855f7); width: 0%; transition: 1s;
         }
 
-        /* تنسيقات فورم الإنشاء */
-        .create-form { display: flex; flex-direction: column; gap: 12px; }
-        .create-form label { font-size: 0.8rem; color: #94a3b8; margin-bottom: -8px; }
+        /* تأثيرات البرو */
+        .is-pro-member {
+            border: 1px solid #fbbf24 !important;
+            background: linear-gradient(45deg, rgba(251, 191, 36, 0.1), transparent) !important;
+        }
+        .pro-badge { color: #fbbf24; margin-left: 5px; animation: pulse 2s infinite; }
+        .badge-icon { background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-right: 5px; }
+
+        /* صندوق المكافآت */
+        .reward-box {
+            background: linear-gradient(135deg, #4f46e5, #ec4899);
+            padding: 20px; border-radius: 20px; text-align: center; margin-top: 20px;
+            cursor: pointer; transition: transform 0.2s;
+        }
+        .reward-box:active { transform: scale(0.95); }
+        .reward-icon { font-size: 3rem; margin-bottom: 10px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }
+
+        /* النماذج */
         .create-form input, .create-form select {
-            padding: 12px; border-radius: 12px; border: 1px solid var(--glass); background: #0f172a; color: white; font-family: 'Cairo';
+            width: 100%; padding: 12px; margin-bottom: 10px;
+            background: #0f172a; border: 1px solid var(--glass); color: white; border-radius: 10px;
+            box-sizing: border-box; font-family: 'Cairo';
         }
-        .color-pickers { display: flex; gap: 10px; }
-        .color-field { flex: 1; display: flex; flex-direction: column; gap: 5px; }
-        .color-field input { height: 45px; padding: 2px; cursor: pointer; }
-
-        .btn-create {
-            background: var(--clan-gold); color: #000; font-weight: 900; padding: 15px;
-            border: none; border-radius: 12px; cursor: pointer; transition: 0.3s; margin-top: 10px;
+        .btn-action {
+            width: 100%; padding: 15px; background: var(--clan-gold); color: black; font-weight: 900;
+            border: none; border-radius: 12px; cursor: pointer; margin-top: 10px;
         }
 
-        .member-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid var(--glass); }
-        .role-tag { font-size: 0.75rem; padding: 3px 10px; border-radius: 6px; background: var(--primary); font-weight: bold; }
-        
-        .gem-requirement { 
-            color: var(--gem-color); font-weight: 900; font-size: 1.1rem; 
-            background: rgba(6, 182, 212, 0.1); padding: 10px; border-radius: 10px; display: inline-block;
-        }
-        .loader { text-align: center; padding: 30px; font-size: 1.2rem; color: var(--primary); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { opacity: 0.7; } 50% { opacity: 1; text-shadow: 0 0 10px #fbbf24; } 100% { opacity: 0.7; } }
     </style>
 </head>
 <body>
 
     <div class="clan-header">
-        <h1>🛡️ تحالفات الأساطير</h1>
-        <p>صمم هويتك الخاصة وسيطر على الساحة</p>
+        <h1>🛡️ ساحة الأساطير</h1>
+        <p>تنافس، سيطر، واربح الجوائز</p>
     </div>
 
     <div class="tabs">
-        <button class="tab-btn active" onclick="showTab('explore')"><i class="fas fa-compass"></i> استكشاف</button>
-        <button class="tab-btn" onclick="showTab('myclan')"><i class="fas fa-shield-halved"></i> كلاني</button>
-        <button class="tab-btn" onclick="showTab('create')"><i class="fas fa-plus"></i> إنشاء</button>
+        <button class="tab-btn active" onclick="showTab('leaderboard')"><i class="fas fa-trophy"></i> المتصدرين</button>
+        <button class="tab-btn" onclick="showTab('myclan')"><i class="fas fa-home"></i> مقري</button>
+        <button class="tab-btn" onclick="showTab('explore')"><i class="fas fa-search"></i> بحث</button>
+        <button class="tab-btn" onclick="showTab('create')"><i class="fas fa-plus"></i> تأسيس</button>
     </div>
 
     <div class="clan-container">
-        <div id="tab-explore" class="tab-content card">
-            <div id="explore-list">
-                <div class="loader"><i class="fas fa-spinner fa-spin"></i> جاري استحضار التحالفات...</div>
-            </div>
-        </div>
-
-        <div id="tab-create" class="tab-content card" style="display:none;">
-            <div class="create-form">
-                <h2 style="margin:0; text-align: center;">تأسيس تحالفك</h2>
-                <div style="text-align:center;">
-                    <p class="gem-requirement"><i class="fas fa-gem"></i> التكلفة: 1 جوهرة</p>
-                </div>
-
-                <label>اسم التحالف</label>
-                <input type="text" id="newClanName" placeholder="مثلاً: صقور الجحيم">
-                
-                <label>وصف التحالف</label>
-                <input type="text" id="newClanDesc" placeholder="شعارنا هو الفوز دائماً...">
-
-                <label>اختر أيقونة الكلان</label>
-                <select id="newClanIcon">
-                    <option value="fa-shield-alt">🛡️ درع</option>
-                    <option value="fa-fire">🔥 نار</option>
-                    <option value="fa-skull">💀 جمجمة</option>
-                    <option value="fa-crown">👑 تاج</option>
-                    <option value="fa-dragon">🐉 تنين</option>
-                    <option value="fa-ghost">👻 شبح</option>
-                    <option value="fa-bolt">⚡ صاعقة</option>
-                    <option value="fa-khanda">⚔️ سيوف</option>
-                </select>
-
-                <div class="color-pickers">
-                    <div class="color-field">
-                        <label>لون الخلفية</label>
-                        <input type="color" id="newClanBgColor" value="#1e293b">
-                    </div>
-                    <div class="color-field">
-                        <label>لون الأيقونة</label>
-                        <input type="color" id="newClanIconColor" value="#fbbf24">
-                    </div>
-                </div>
-
-                <button class="btn-create" onclick="createNewClan()">تأسيس التحالف الآن</button>
+        
+        <div id="tab-leaderboard" class="tab-content card">
+            <h3 style="text-align:center; margin-top:0">🏆 أقوى التحالفات (XP)</h3>
+            <div id="leaderboard-list">
+                <div style="text-align:center; padding:20px;"><i class="fas fa-spinner fa-spin"></i> تحميل الترتيب...</div>
             </div>
         </div>
 
         <div id="tab-myclan" class="tab-content card" style="display:none;">
-            <div id="my-clan-details">
-                <div class="loader">جاري التحميل...</div>
-            </div>
+            <div id="my-clan-view"></div>
         </div>
+
+        <div id="tab-explore" class="tab-content card" style="display:none;">
+            <div id="explore-list"></div>
+        </div>
+
+        <div id="tab-create" class="tab-content card" style="display:none;">
+            <div style="text-align:center; margin-bottom:15px;">
+                <i class="fas fa-gem" style="color:#06b6d4;"></i> التكلفة: <b>1 جوهرة</b>
+            </div>
+            <input type="text" id="cName" placeholder="اسم الكلان" class="create-form">
+            <input type="text" id="cDesc" placeholder="الوصف" class="create-form">
+            <select id="cIcon" class="create-form">
+                <option value="fa-dragon">🐉 تنين</option>
+                <option value="fa-crown">👑 تاج</option>
+                <option value="fa-skull">💀 جمجمة</option>
+                <option value="fa-shield-alt">🛡️ درع</option>
+                <option value="fa-bolt">⚡ صاعقة</option>
+            </select>
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <input type="color" id="cColor" value="#fbbf24" style="height:40px; padding:0;">
+                <input type="color" id="cBg" value="#1e293b" style="height:40px; padding:0;">
+            </div>
+            <button class="btn-action" onclick="createClan()">تأسيس الآن</button>
+        </div>
+
     </div>
 
 <script>
-    let userData = {};
+    let currentUserData = {};
+    let isProUser = false;
 
     auth.onAuthStateChanged(async (user) => {
         if (user) {
-            const userDoc = await db.collection("users").doc(user.uid).get();
-            userData = userDoc.data() || {};
-            loadClans();
+            // جلب بيانات المستخدم
+            const snap = await db.collection("users").doc(user.uid).get();
+            currentUserData = snap.data() || {};
+            
+            // التحقق من حالة البرو
+            isProUser = (currentUserData.proExpiryTime && currentUserData.proExpiryTime > Date.now());
+
+            loadLeaderboard();
             checkMyClan();
+            loadExplore();
         } else { window.location.href = "auth.html"; }
     });
 
-    function showTab(tabName) {
-        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+    function showTab(t) {
+        document.querySelectorAll('.tab-content').forEach(e => e.style.display = 'none');
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('tab-' + tabName).style.display = 'block';
+        document.getElementById('tab-' + t).style.display = 'block';
         event.currentTarget.classList.add('active');
     }
 
-    async function loadClans() {
-        const list = document.getElementById('explore-list');
-        const snap = await db.collection("clans").orderBy("power", "desc").limit(15).get();
-        list.innerHTML = "";
+    /* ===========================
+       1. لوحة المتصدرين (XP)
+       =========================== */
+    async function loadLeaderboard() {
+        const list = document.getElementById('leaderboard-list');
+        // ترتيب تنازلي حسب totalXp
+        const snap = await db.collection("clans").orderBy("totalXp", "desc").limit(10).get();
         
+        list.innerHTML = "";
+        let rank = 1;
+
         snap.forEach(doc => {
-            const clan = doc.data();
+            const c = doc.data();
+            let rankClass = rank === 1 ? 'rank-1' : (rank === 2 ? 'rank-2' : (rank === 3 ? 'rank-3' : ''));
+            
             list.innerHTML += `
-                <div class="clan-item" style="background: ${clan.bgColor || 'rgba(255,255,255,0.05)'}">
-                    <div class="clan-info">
-                        <div class="clan-icon" style="color: ${clan.iconColor || '#fff'}; background: rgba(0,0,0,0.3)">
-                            <i class="fas ${clan.icon || 'fa-shield-alt'}"></i>
+                <div class="leader-item" style="border-right: 3px solid ${c.iconColor}">
+                    <div class="rank-num ${rankClass}">#${rank}</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:bold; display:flex; align-items:center; gap:5px;">
+                            <i class="fas ${c.icon}" style="color:${c.iconColor}"></i> ${c.name}
                         </div>
-                        <div>
-                            <div class="clan-name" style="font-weight:900">${clan.name}</div>
-                            <div style="font-size:0.7rem; opacity:0.7">${clan.membersCount}/20 عضو</div>
+                        <div style="font-size:0.8rem; color:#94a3b8;">${c.membersCount} محارب</div>
+                        <div class="clan-xp-bar">
+                            <div class="clan-xp-fill" style="width: ${Math.min(c.totalXp / 1000, 100)}%"></div>
                         </div>
                     </div>
-                    <button class="tab-btn active" style="padding:5px 15px; width:auto; flex:none;" onclick="joinClan('${doc.id}')">انضمام</button>
+                    <div style="font-weight:900; color:var(--primary);">${c.totalXp || 0} XP</div>
+                </div>
+            `;
+            rank++;
+        });
+    }
+
+    /* ===========================
+       2. منطق الكلان والمكافآت
+       =========================== */
+    async function checkMyClan() {
+        const container = document.getElementById('my-clan-view');
+        if (!currentUserData.clanId) {
+            container.innerHTML = `<div style="text-align:center; padding:40px; color:#94a3b8;">لا تنتمي لأي تحالف حالياً.<br>انضم أو أنشئ واحداً!</div>`;
+            return;
+        }
+
+        const cDoc = await db.collection("clans").doc(currentUserData.clanId).get();
+        const clan = cDoc.data();
+
+        // تحديث مجموع XP الكلان بناء على الأعضاء (نظام ذكي)
+        updateClanTotalXP(currentUserData.clanId);
+
+        // واجهة الكلان
+        container.innerHTML = `
+            <div style="background:${clan.bgColor}; padding:20px; border-radius:15px; text-align:center; margin-bottom:15px;">
+                <i class="fas ${clan.icon}" style="font-size:3rem; color:${clan.iconColor}; background:rgba(0,0,0,0.3); padding:15px; border-radius:50%;"></i>
+                <h2 style="margin:10px 0;">${clan.name}</h2>
+                <span style="background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:10px; font-size:0.9rem;">
+                    Level ${Math.floor((clan.totalXp || 0) / 5000) + 1}
+                </span>
+            </div>
+
+            <div class="reward-box" onclick="claimClanReward('${currentUserData.clanId}')">
+                <div class="reward-icon">🎁</div>
+                <h3>صندوق التحالف اليومي</h3>
+                <p style="font-size:0.8rem; opacity:0.9">اضغط لاستلام XP وكوينز!</p>
+            </div>
+
+            <h3 style="margin-top:20px;">الأعضاء (${clan.membersCount}/20)</h3>
+            <div id="members-list"></div>
+            
+            <button onclick="leaveClan()" style="width:100%; padding:10px; background:transparent; border:1px solid #ef4444; color:#ef4444; border-radius:10px; margin-top:20px;">مغادرة</button>
+        `;
+
+        loadMembers(currentUserData.clanId);
+    }
+
+    async function loadMembers(cid) {
+        const snap = await db.collection("clans").doc(cid).collection("members").orderBy("xp", "desc").get();
+        const list = document.getElementById('members-list');
+        list.innerHTML = "";
+
+        snap.forEach(doc => {
+            const m = doc.data();
+            // تحديد الشارات والمميزات
+            let badgesHTML = "";
+            if (m.role === 'leader') badgesHTML += `<span class="badge-icon" style="color:gold">👑 قائد</span>`;
+            if (m.isPro) badgesHTML += `<i class="fas fa-star pro-badge" title="لاعب محترف"></i>`;
+            
+            list.innerHTML += `
+                <div class="leader-item ${m.isPro ? 'is-pro-member' : ''}">
+                    <div style="flex:1;">
+                        <b>${m.name}</b> ${badgesHTML}
+                        <div style="font-size:0.75rem; opacity:0.6;">${m.xp || 0} XP مساهمة</div>
+                    </div>
                 </div>
             `;
         });
     }
 
-    async function createNewClan() {
-        const name = document.getElementById('newClanName').value.trim();
-        const desc = document.getElementById('newClanDesc').value.trim();
-        const icon = document.getElementById('newClanIcon').value;
-        const iconColor = document.getElementById('newClanIconColor').value;
-        const bgColor = document.getElementById('newClanBgColor').value;
-        const user = auth.currentUser;
-
-        if (name.length < 3) return alert("الاسم قصير!");
-        if ((userData.s_gems || 0) < 1) return alert("تحتاج جوهرة واحدة!");
-
-        try {
-            await db.collection("users").doc(user.uid).update({
-                s_gems: firebase.firestore.FieldValue.increment(-1),
-                clanId: name 
-            });
-
-            await db.collection("clans").doc(name).set({
-                name: name,
-                description: desc,
-                icon: icon,
-                iconColor: iconColor,
-                bgColor: bgColor,
-                leaderId: user.uid,
-                leaderName: userData.displayName || "لاعب",
-                membersCount: 1,
-                power: 0,
-                createdAt: Date.now()
-            });
-
-            await db.collection("clans").doc(name).collection("members").doc(user.uid).set({
-                name: userData.displayName || "لاعب",
-                role: 'leader',
-                joinedAt: Date.now()
-            });
-
-            alert("تم التأسيس بنجاح!");
-            location.reload();
-        } catch(e) { alert("خطأ في الإنشاء"); }
-    }
-
-    async function checkMyClan() {
-        const container = document.getElementById('my-clan-details');
-        if (!userData.clanId) {
-            container.innerHTML = `<p style="text-align:center;">ليس لديك تحالف حالياً.</p>`;
-            return;
+    /* ===========================
+       3. نظام المكافآت (جديد)
+       =========================== */
+    async function claimClanReward(cid) {
+        const today = new Date().toDateString();
+        const userRef = db.collection("users").doc(auth.currentUser.uid);
+        
+        // التحقق من الاستلام
+        if (currentUserData.lastClanReward === today) {
+            return alert("✋ لقد استلمت جائزتك اليوم بالفعل! عد غداً.");
         }
 
-        const clanDoc = await db.collection("clans").doc(userData.clanId).get();
-        const clan = clanDoc.data();
-        
-        // تغيير خلفية البطاقة لتناسب لون الكلان
-        document.getElementById('tab-myclan').style.background = `linear-gradient(135deg, ${clan.bgColor}, rgba(10,15,30,0.9))`;
+        // الجائزة: 50 كوينز + 100 XP
+        const rewardCoins = isProUser ? 100 : 50; // البرو يأخذ الضعف
+        const rewardXP = 100;
 
-        container.innerHTML = `
-            <div style="text-align:center;">
-                <div class="clan-icon" style="margin: 0 auto 15px; width:80px; height:80px; font-size:2.5rem; color:${clan.iconColor}; background:rgba(0,0,0,0.3); border-radius:20px;">
-                    <i class="fas ${clan.icon}"></i>
-                </div>
-                <h2 style="margin:0; text-shadow: 0 0 10px ${clan.iconColor}55;">${clan.name}</h2>
-                <p style="opacity:0.8;">${clan.description}</p>
-                <div style="display:flex; justify-content:space-around; margin:20px 0; background:rgba(0,0,0,0.2); padding:10px; border-radius:15px;">
-                    <div><small>الأعضاء</small><br><b>${clan.membersCount}/20</b></div>
-                    <div><small>القوة</small><br><b>${clan.power}</b></div>
-                </div>
-            </div>
-            <div id="members-list-box"></div>
-            <button class="btn-leave" style="color:#ff4444; background:none; border:none; cursor:pointer; margin-top:20px;" onclick="leaveClan()">مغادرة التحالف</button>
-        `;
-        loadClanMembers(userData.clanId);
+        await userRef.update({
+            totalCoins: firebase.firestore.FieldValue.increment(rewardCoins),
+            xp: firebase.firestore.FieldValue.increment(rewardXP),
+            lastClanReward: today
+        });
+        
+        // تحديث مساهمة العضو داخل الكلان
+        await db.collection("clans").doc(cid).collection("members").doc(auth.currentUser.uid).update({
+            xp: firebase.firestore.FieldValue.increment(rewardXP)
+        });
+
+        alert(`🎉 مبروك! حصلت على ${rewardCoins} عملة و ${rewardXP} XP!`);
+        location.reload();
     }
 
-    async function loadClanMembers(clanId) {
-        const snap = await db.collection("clans").doc(clanId).collection("members").get();
-        const box = document.getElementById('members-list-box');
-        box.innerHTML = "<h3>المحاربون:</h3>";
+    /* ===========================
+       4. تحديث XP الكلان (تلقائي)
+       =========================== */
+    async function updateClanTotalXP(cid) {
+        // هذه الدالة تجمع XP كل الأعضاء وتحدث وثيقة الكلان الرئيسية ليظهر في الليدربورد
+        const memSnap = await db.collection("clans").doc(cid).collection("members").get();
+        let total = 0;
+        memSnap.forEach(d => total += (d.data().xp || 0));
+        
+        await db.collection("clans").doc(cid).update({ totalXp: total });
+    }
+
+    /* ===========================
+       5. وظائف التأسيس والبحث
+       =========================== */
+    async function createClan() {
+        const name = document.getElementById('cName').value;
+        const icon = document.getElementById('cIcon').value;
+        const color = document.getElementById('cColor').value;
+        const bg = document.getElementById('cBg').value;
+
+        if((currentUserData.s_gems || 0) < 1) return alert("تحتاج 1 جوهرة!");
+        if(name.length < 3) return alert("الاسم قصير");
+
+        const batch = db.batch();
+        const clanRef = db.collection("clans").doc(name);
+        const userRef = db.collection("users").doc(auth.currentUser.uid);
+        const memberRef = clanRef.collection("members").doc(auth.currentUser.uid);
+
+        batch.set(clanRef, {
+            name: name,
+            description: document.getElementById('cDesc').value,
+            icon: icon, iconColor: color, bgColor: bg,
+            leaderId: auth.currentUser.uid,
+            membersCount: 1,
+            totalXp: currentUserData.xp || 0, // يبدأ الكلان بـ XP القائد
+            createdAt: Date.now()
+        });
+
+        batch.set(memberRef, {
+            name: currentUserData.displayName,
+            role: 'leader',
+            xp: currentUserData.xp || 0,
+            isPro: isProUser, // تخزين حالة البرو للعرض السريع
+            joinedAt: Date.now()
+        });
+
+        batch.update(userRef, {
+            s_gems: firebase.firestore.FieldValue.increment(-1),
+            clanId: name
+        });
+
+        await batch.commit();
+        location.reload();
+    }
+
+    async function loadExplore() {
+        const list = document.getElementById('explore-list');
+        const snap = await db.collection("clans").limit(10).get();
+        list.innerHTML = "";
         snap.forEach(doc => {
-            const m = doc.data();
-            box.innerHTML += `<div class="member-item"><span>${m.name}</span><span class="role-tag">${m.role == 'leader' ? 'القائد' : 'محارب'}</span></div>`;
+            const c = doc.data();
+            list.innerHTML += `
+                <div class="leader-item">
+                    <i class="fas ${c.icon}" style="color:${c.iconColor}; font-size:1.5rem; margin-left:10px;"></i>
+                    <div style="flex:1">
+                        <b>${c.name}</b>
+                        <div style="font-size:0.7rem;">${c.totalXp || 0} XP • ${c.membersCount} عضو</div>
+                    </div>
+                    <button onclick="joinClan('${doc.id}')" style="background:var(--primary); border:none; color:white; padding:5px 15px; border-radius:8px;">انضمام</button>
+                </div>
+            `;
         });
     }
 
-    // دوال الانضمام والمغادرة تبقى كما هي في الكود السابق...
-    async function joinClan(clanId) {
-        if (userData.clanId) return alert("غادر تحالفك الحالي أولاً!");
-        try {
-            await db.collection("clans").doc(clanId).update({ membersCount: firebase.firestore.FieldValue.increment(1) });
-            await db.collection("clans").doc(clanId).collection("members").doc(auth.currentUser.uid).set({
-                name: userData.displayName || "لاعب", role: 'member', joinedAt: Date.now()
-            });
-            await db.collection("users").doc(auth.currentUser.uid).update({ clanId: clanId });
-            location.reload();
-        } catch(e) { alert("فشل الانضمام"); }
-    }
+    async function joinClan(cid) {
+        if(currentUserData.clanId) return alert("غادر كلانك الحالي أولاً");
+        
+        await db.collection("clans").doc(cid).collection("members").doc(auth.currentUser.uid).set({
+            name: currentUserData.displayName,
+            role: 'member',
+            xp: currentUserData.xp || 0,
+            isPro: isProUser,
+            joinedAt: Date.now()
+        });
+        
+        await db.collection("users").doc(auth.currentUser.uid).update({ clanId: cid });
+        
+        // تحديث عدد الأعضاء
+        await db.collection("clans").doc(cid).update({
+            membersCount: firebase.firestore.FieldValue.increment(1)
+        });
 
-    async function leaveClan() {
-        if (!confirm("متأكد؟")) return;
-        const cid = userData.clanId;
-        await db.collection("clans").doc(cid).collection("members").doc(auth.currentUser.uid).delete();
-        await db.collection("clans").doc(cid).update({ membersCount: firebase.firestore.FieldValue.increment(-1) });
-        await db.collection("users").doc(auth.currentUser.uid).update({ clanId: null });
+        alert("تم الانضمام!");
         location.reload();
     }
+    
+    async function leaveClan() {
+        if(!confirm("مغادرة؟")) return;
+        const cid = currentUserData.clanId;
+        const batch = db.batch();
+        
+        batch.delete(db.collection("clans").doc(cid).collection("members").doc(auth.currentUser.uid));
+        batch.update(db.collection("clans").doc(cid), { membersCount: firebase.firestore.FieldValue.increment(-1) });
+        batch.update(db.collection("users").doc(auth.currentUser.uid), { clanId: null });
+        
+        await batch.commit();
+        location.reload();
+    }
+
 </script>
 </body>
 </html>
